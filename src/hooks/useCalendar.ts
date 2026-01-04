@@ -1,0 +1,119 @@
+import { useState, useCallback } from 'react';
+import { 
+  addDays, 
+  addWeeks, 
+  subWeeks, 
+  startOfWeek, 
+  endOfWeek, 
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  format
+} from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { CalendarDay } from '@/types';
+
+export type CalendarView = 'day' | 'week' | 'month' | 'list';
+
+export function useCalendar(initialDate: Date = new Date()) {
+  const [currentDate, setCurrentDate] = useState(initialDate);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [view, setView] = useState<CalendarView>('week');
+
+  const goToToday = useCallback(() => {
+    const today = new Date();
+    setCurrentDate(today);
+    setSelectedDate(today);
+  }, []);
+
+  const goToPrevious = useCallback(() => {
+    setCurrentDate(prev => {
+      switch (view) {
+        case 'day':
+          return addDays(prev, -1);
+        case 'week':
+          return subWeeks(prev, 1);
+        case 'month':
+          return addDays(startOfMonth(prev), -1);
+        default:
+          return subWeeks(prev, 1);
+      }
+    });
+  }, [view]);
+
+  const goToNext = useCallback(() => {
+    setCurrentDate(prev => {
+      switch (view) {
+        case 'day':
+          return addDays(prev, 1);
+        case 'week':
+          return addWeeks(prev, 1);
+        case 'month':
+          return addDays(endOfMonth(prev), 1);
+        default:
+          return addWeeks(prev, 1);
+      }
+    });
+  }, [view]);
+
+  const selectDate = useCallback((date: Date) => {
+    setSelectedDate(date);
+    setCurrentDate(date);
+  }, []);
+
+  const getWeekDays = useCallback((): Date[] => {
+    const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+    const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [currentDate]);
+
+  const getMonthDays = useCallback((): CalendarDay[] => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    
+    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+    
+    return days.map(date => ({
+      date,
+      isToday: isToday(date),
+      isSelected: isSameDay(date, selectedDate),
+      isCurrentMonth: isSameMonth(date, currentDate),
+      hasAppointments: false, // Will be updated with actual data
+    }));
+  }, [currentDate, selectedDate]);
+
+  const getDateRangeLabel = useCallback((): string => {
+    switch (view) {
+      case 'day':
+        return format(currentDate, 'EEEE d MMMM yyyy', { locale: fr });
+      case 'week': {
+        const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return `${format(start, 'd', { locale: fr })} - ${format(end, 'd MMMM yyyy', { locale: fr })}`;
+      }
+      case 'month':
+        return format(currentDate, 'MMMM yyyy', { locale: fr });
+      default:
+        return format(currentDate, 'MMMM yyyy', { locale: fr });
+    }
+  }, [currentDate, view]);
+
+  return {
+    currentDate,
+    selectedDate,
+    view,
+    setView,
+    goToToday,
+    goToPrevious,
+    goToNext,
+    selectDate,
+    getWeekDays,
+    getMonthDays,
+    getDateRangeLabel,
+  };
+}

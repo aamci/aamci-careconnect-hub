@@ -1,96 +1,141 @@
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MediSync Pro Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Medical Palette - Ocean Blue & Teal */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Primary - Deep Ocean Blue */
+    --primary: 201 80% 20%;
     --primary-foreground: 210 40% 98%;
+    --primary-light: 201 70% 35%;
+    --primary-glow: 201 80% 50%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Soft Gray Blue */
+    --secondary: 210 25% 93%;
+    --secondary-foreground: 215 25% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Light Slate */
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 15% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Teal Medical */
+    --accent: 166 72% 35%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 166 60% 45%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Success - Soft Green */
+    --success: 158 60% 42%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Amber Gold */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 45 93% 58%;
+
+    /* Destructive - Coral Red */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders & Inputs */
+    --border: 214 25% 88%;
+    --input: 214 25% 88%;
+    --ring: 201 80% 45%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Sidebar - Deep Navy */
+    --sidebar-background: 201 80% 18%;
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 166 72% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 201 60% 28%;
+    --sidebar-accent-foreground: 210 30% 95%;
+    --sidebar-border: 201 50% 25%;
+    --sidebar-ring: 166 72% 50%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Appointment Colors */
+    --appointment-consultation: 38 92% 50%;
+    --appointment-followup: 200 80% 50%;
+    --appointment-emergency: 0 72% 55%;
+    --appointment-procedure: 280 60% 55%;
+    --appointment-checkup: 158 60% 42%;
+    --appointment-unavailable: 215 15% 75%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Status Colors */
+    --status-waiting: 38 92% 50%;
+    --status-in-progress: 200 80% 50%;
+    --status-completed: 158 60% 42%;
+    --status-absent: 0 72% 55%;
+    --status-cancelled: 215 15% 50%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(201 80% 20%) 0%, hsl(201 70% 30%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(166 72% 35%) 0%, hsl(166 60% 45%) 100%);
+    --gradient-sidebar: linear-gradient(180deg, hsl(201 80% 18%) 0%, hsl(201 85% 14%) 100%);
+    --gradient-card-hover: linear-gradient(135deg, hsl(210 20% 98%) 0%, hsl(210 25% 95%) 100%);
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.08), 0 2px 4px -2px hsl(215 25% 15% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.08);
+    --shadow-glow: 0 0 20px hsl(201 80% 50% / 0.15);
+    --shadow-accent: 0 4px 14px 0 hsl(166 72% 35% / 0.25);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 215 30% 8%;
+    --foreground: 210 30% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 28% 12%;
+    --card-foreground: 210 30% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 28% 12%;
+    --popover-foreground: 210 30% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 201 70% 50%;
+    --primary-foreground: 215 30% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 25% 18%;
+    --secondary-foreground: 210 30% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 25% 18%;
+    --muted-foreground: 215 20% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 166 60% 45%;
+    --accent-foreground: 215 30% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 210 30% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 201 70% 50%;
+
+    --sidebar-background: 215 35% 6%;
+    --sidebar-foreground: 210 30% 85%;
+    --sidebar-primary: 166 60% 50%;
+    --sidebar-primary-foreground: 215 30% 8%;
+    --sidebar-accent: 215 30% 15%;
+    --sidebar-accent-foreground: 210 30% 90%;
+    --sidebar-border: 215 25% 15%;
+    --sidebar-ring: 166 60% 50%;
   }
 }
 
@@ -99,7 +144,203 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@layer components {
+  /* Sidebar Navigation */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 
+           hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200;
+  }
+
+  .nav-item-active {
+    @apply bg-sidebar-accent text-sidebar-foreground font-medium shadow-sm;
+  }
+
+  /* Appointment Cards */
+  .appointment-card {
+    @apply relative px-2 py-1.5 rounded-md text-xs font-medium cursor-pointer 
+           transition-all duration-200 hover:shadow-md hover:scale-[1.02] 
+           border-l-3 overflow-hidden;
+  }
+
+  .appointment-consultation {
+    @apply bg-amber-50 border-l-amber-500 text-amber-900;
+  }
+
+  .appointment-followup {
+    @apply bg-sky-50 border-l-sky-500 text-sky-900;
+  }
+
+  .appointment-emergency {
+    @apply bg-red-50 border-l-red-500 text-red-900;
+  }
+
+  .appointment-procedure {
+    @apply bg-purple-50 border-l-purple-500 text-purple-900;
+  }
+
+  .appointment-checkup {
+    @apply bg-emerald-50 border-l-emerald-500 text-emerald-900;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-waiting {
+    @apply bg-amber-100 text-amber-800;
+  }
+
+  .status-in-progress {
+    @apply bg-sky-100 text-sky-800;
+  }
+
+  .status-completed {
+    @apply bg-emerald-100 text-emerald-800;
+  }
+
+  .status-absent {
+    @apply bg-red-100 text-red-800;
+  }
+
+  /* Calendar Grid */
+  .calendar-grid {
+    @apply grid gap-px bg-border;
+  }
+
+  .calendar-cell {
+    @apply bg-card min-h-[60px] p-1 relative;
+  }
+
+  .calendar-cell-today {
+    @apply bg-primary/5;
+  }
+
+  .time-slot {
+    @apply h-[60px] border-b border-border/50 relative;
+  }
+
+  .time-slot-hour {
+    @apply border-b-border;
+  }
+
+  /* Search Bar */
+  .search-bar {
+    @apply flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border
+           shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:border-transparent
+           transition-all duration-200;
+  }
+
+  /* Action Button */
+  .action-btn {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+           transition-all duration-200 active:scale-[0.98];
+  }
+
+  .action-btn-primary {
+    @apply bg-accent text-accent-foreground hover:bg-accent-light shadow-accent;
+  }
+
+  .action-btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  /* Mini Calendar */
+  .mini-calendar-day {
+    @apply w-8 h-8 flex items-center justify-center rounded-full text-sm 
+           cursor-pointer transition-all duration-150;
+  }
+
+  .mini-calendar-day-selected {
+    @apply bg-accent text-accent-foreground font-semibold;
+  }
+
+  .mini-calendar-day-today {
+    @apply ring-2 ring-accent ring-offset-2;
+  }
+
+  .mini-calendar-day-hover {
+    @apply hover:bg-muted;
+  }
+
+  /* Panel Cards */
+  .panel-card {
+    @apply bg-card rounded-xl border border-border shadow-sm;
+  }
+
+  .panel-header {
+    @apply px-4 py-3 border-b border-border flex items-center justify-between;
+  }
+
+  /* Unavailable Slot Pattern */
+  .unavailable-slot {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      hsl(var(--muted)) 4px,
+      hsl(var(--muted)) 8px
+    );
+  }
+
+  /* Scrollbar Styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-muted-foreground/30;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-foreground/40 backdrop-blur-sm z-50;
+  }
+
+  /* Toast Animations */
+  .toast-enter {
+    animation: toast-slide-in 0.3s ease-out;
+  }
+
+  @keyframes toast-slide-in {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@layer utilities {
+  .border-l-3 {
+    border-left-width: 3px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
