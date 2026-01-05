@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      patient_antecedents: {
+        Row: {
+          category: Database["public"]["Enums"]["antecedent_category"]
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          occurrence_date: string | null
+          patient_id: string
+          severity: Database["public"]["Enums"]["antecedent_severity"] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["antecedent_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          occurrence_date?: string | null
+          patient_id: string
+          severity?: Database["public"]["Enums"]["antecedent_severity"] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["antecedent_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          occurrence_date?: string | null
+          patient_id?: string
+          severity?: Database["public"]["Enums"]["antecedent_severity"] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      patient_memos: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +88,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      antecedent_category:
+        | "medical"
+        | "cardiovascular"
+        | "surgical"
+        | "allergies"
+        | "family"
+        | "lifestyle"
+      antecedent_severity: "low" | "medium" | "high" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +222,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      antecedent_category: [
+        "medical",
+        "cardiovascular",
+        "surgical",
+        "allergies",
+        "family",
+        "lifestyle",
+      ],
+      antecedent_severity: ["low", "medium", "high", "critical"],
+    },
   },
 } as const
