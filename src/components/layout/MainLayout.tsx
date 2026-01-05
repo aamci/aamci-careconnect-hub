@@ -14,9 +14,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activeNav, onNavChang
       <Sidebar activeItem={activeNav} onItemChange={onNavChange} />
       
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Header - Always on top with highest z-index */}
         <Header />
         
-        <main className="flex-1 overflow-hidden">
+        {/* Main content area - panels will open within this area */}
+        <main className="flex-1 overflow-hidden relative">
           {children}
         </main>
       </div>
