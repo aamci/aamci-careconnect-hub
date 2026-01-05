@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Patient, Appointment, Note } from '@/types';
 import { format, differenceInYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -20,7 +21,8 @@ import {
   Heart,
   Building,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +48,7 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   onNewNote
 }) => {
   const [activeTab, setActiveTab] = useState('info');
+  const navigate = useNavigate();
   
   const age = differenceInYears(new Date(), patient.dateOfBirth);
   const displayName = patient.usedFirstName || patient.firstName;
@@ -64,6 +67,11 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   // Get patient notes
   const patientNotes = mockNotes.filter(note => note.patientId === patient.id);
 
+  const handleOpenFullDossier = () => {
+    navigate(`/patients/${patient.id}/home`);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -74,43 +82,58 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
         className="absolute top-0 right-0 h-full w-full sm:w-96 md:w-[420px] lg:max-w-md bg-card border-l border-border shadow-xl z-40 flex flex-col"
       >
         {/* Header - Sticky */}
-        <div className="sticky top-0 z-10 p-4 border-b border-border bg-card">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-12 h-12 border-2 border-primary/30">
-                <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+        <div className="sticky top-0 z-10 p-5 border-b border-border bg-gradient-to-b from-card to-muted/20">
+          <div className="flex items-start justify-between mb-4 gap-3">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <Avatar className="h-14 w-14 border-2 border-primary/30 flex-shrink-0">
+                <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
                   {displayName[0]}{displayLastName[0]}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     {patient.gender === 'male' ? 'Monsieur' : 'Madame'}
                   </span>
                   {hasVipAlert && (
                     <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                   )}
                 </div>
-                <h2 className="font-semibold text-lg">
+                <h2 className="text-lg font-bold text-foreground leading-tight truncate">
                   {displayLastName.toUpperCase()} {displayName}
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  {patient.gender === 'male' ? 'H' : 'F'}, {format(patient.dateOfBirth, 'dd/MM/yyyy')} ({age} ans)
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  <span className="font-medium">{patient.gender === 'male' ? 'H' : 'F'}</span>
+                  <span className="mx-1.5">•</span>
+                  <span>{format(patient.dateOfBirth, 'dd/MM/yyyy')}</span>
+                  <span className="mx-1.5">•</span>
+                  <span className="font-semibold text-foreground">{age} ans</span>
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-full hover:bg-muted">
               <X className="w-5 h-5" />
             </Button>
           </div>
 
+          {/* Open Full Dossier Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenFullDossier}
+            className="w-full mb-3 gap-2 justify-center text-sm font-medium border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ouvrir le dossier complet
+          </Button>
+
           {/* Quick Actions */}
           <div className="flex gap-2">
-            <Button onClick={onNewAppointment} size="sm" className="gap-1.5 flex-1">
+            <Button onClick={onNewAppointment} size="sm" className="gap-1.5 flex-1 font-medium">
               <Plus className="w-4 h-4" />
               Nouveau RDV
             </Button>
-            <Button onClick={onNewNote} variant="outline" size="sm" className="gap-1.5 flex-1">
+            <Button onClick={onNewNote} variant="outline" size="sm" className="gap-1.5 flex-1 font-medium">
               <FileText className="w-4 h-4" />
               Ajouter note
             </Button>
@@ -122,11 +145,11 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
         {/* Alerts */}
         {patient.alerts && patient.alerts.length > 0 && (
-          <div className="px-4 py-3 bg-warning/10 border-b border-warning/20">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-warning mt-0.5" />
+          <div className="px-5 py-3 bg-warning/10 border-b border-warning/20">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-warning">Alertes patient</p>
+                <p className="text-sm font-semibold text-warning">Alertes patient</p>
                 <ul className="mt-1 space-y-1">
                   {patient.alerts.map((alert) => (
                     <li key={alert.id} className="text-sm text-warning/80">
@@ -142,55 +165,61 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className="mx-4 mt-4 bg-muted/50">
-              <TabsTrigger value="info" className="gap-1.5">
+            <TabsList className="mx-5 mt-4 bg-muted/50">
+              <TabsTrigger value="info" className="gap-1.5 font-medium">
                 <User className="w-4 h-4" />
                 Infos
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="gap-1.5">
+              <TabsTrigger value="appointments" className="gap-1.5 font-medium">
                 <Calendar className="w-4 h-4" />
                 RDV ({patientAppointments.length})
               </TabsTrigger>
-              <TabsTrigger value="notes" className="gap-1.5">
+              <TabsTrigger value="notes" className="gap-1.5 font-medium">
                 <FileText className="w-4 h-4" />
                 Notes ({patientNotes.length})
               </TabsTrigger>
             </TabsList>
 
             {/* Info Tab */}
-            <TabsContent value="info" className="p-4 space-y-6 flex-1">
+            <TabsContent value="info" className="p-5 space-y-6 flex-1">
               {/* Contact */}
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
                   Contact
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {patient.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <a href={`tel:${patient.phone}`} className="text-accent hover:underline">
+                    <a 
+                      href={`tel:${patient.phone}`}
+                      className="flex items-center gap-3 text-sm p-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <Phone className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                      <span className="font-medium text-accent group-hover:text-primary">
                         {patient.phone}
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {patient.phoneSecondary && (
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-3 text-sm p-2.5 rounded-lg bg-muted/30">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{patient.phoneSecondary}</span>
+                      <span className="text-foreground">{patient.phoneSecondary}</span>
                     </div>
                   )}
                   {patient.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <a href={`mailto:${patient.email}`} className="text-accent hover:underline">
+                    <a 
+                      href={`mailto:${patient.email}`}
+                      className="flex items-center gap-3 text-sm p-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <Mail className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                      <span className="font-medium text-accent group-hover:text-primary truncate">
                         {patient.email}
-                      </a>
-                    </div>
+                      </span>
+                    </a>
                   )}
                   {(patient.address || patient.city) && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>
+                    <div className="flex items-start gap-3 text-sm p-2.5 rounded-lg bg-muted/30">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="text-foreground">
                         {patient.address && `${patient.address}, `}
                         {patient.postalCode} {patient.city}
                       </span>
@@ -203,26 +232,26 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
               {/* Medical Info */}
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
                   Informations médicales
                 </h3>
                 <div className="space-y-3">
                   {patient.referringDoctor && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <span className="text-sm text-muted-foreground">Médecin traitant</span>
-                      <span className="text-sm font-medium">{patient.referringDoctor}</span>
+                      <span className="text-sm font-semibold text-foreground">{patient.referringDoctor}</span>
                     </div>
                   )}
                   {patient.insuranceProvider && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <span className="text-sm text-muted-foreground">Couverture</span>
-                      <span className="text-sm font-medium">{patient.insuranceProvider}</span>
+                      <span className="text-sm font-semibold text-foreground">{patient.insuranceProvider}</span>
                     </div>
                   )}
                   {patient.insuranceNumber && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <span className="text-sm text-muted-foreground">N° SS</span>
-                      <span className="text-sm font-medium">{patient.insuranceNumber}</span>
+                      <span className="text-sm font-medium text-foreground">{patient.insuranceNumber}</span>
                     </div>
                   )}
                 </div>
@@ -232,22 +261,22 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
               {/* Administrative */}
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
                   Administratif
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between py-1">
                     <span className="text-sm text-muted-foreground">Créé le</span>
-                    <span className="text-sm">{format(patient.createdAt, 'dd/MM/yyyy', { locale: fr })}</span>
+                    <span className="text-sm font-medium text-foreground">{format(patient.createdAt, 'dd/MM/yyyy', { locale: fr })}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between py-1">
                     <span className="text-sm text-muted-foreground">Modifié le</span>
-                    <span className="text-sm">{format(patient.updatedAt, 'dd/MM/yyyy', { locale: fr })}</span>
+                    <span className="text-sm font-medium text-foreground">{format(patient.updatedAt, 'dd/MM/yyyy', { locale: fr })}</span>
                   </div>
                   {patient.birthPlace && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <span className="text-sm text-muted-foreground">Lieu de naissance</span>
-                      <span className="text-sm">{patient.birthPlace}</span>
+                      <span className="text-sm font-medium text-foreground">{patient.birthPlace}</span>
                     </div>
                   )}
                 </div>
@@ -255,10 +284,10 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </TabsContent>
 
             {/* Appointments Tab */}
-            <TabsContent value="appointments" className="p-4 space-y-6 flex-1">
+            <TabsContent value="appointments" className="p-5 space-y-6 flex-1">
               {/* Upcoming */}
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
                   À venir ({upcomingAppointments.length})
                 </h3>
                 {upcomingAppointments.length > 0 ? (
@@ -268,7 +297,7 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
+                  <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
                     Aucun rendez-vous à venir
                   </p>
                 )}
@@ -276,7 +305,7 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
               {/* Past */}
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
                   Historique ({pastAppointments.length})
                 </h3>
                 {pastAppointments.length > 0 ? (
@@ -286,7 +315,7 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
+                  <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
                     Aucun historique
                   </p>
                 )}
@@ -294,17 +323,17 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </TabsContent>
 
             {/* Notes Tab */}
-            <TabsContent value="notes" className="p-4 space-y-4 flex-1">
+            <TabsContent value="notes" className="p-5 space-y-4 flex-1">
               {patientNotes.length > 0 ? (
                 patientNotes.map((note) => (
                   <NoteItem key={note.id} note={note} />
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground">Aucune note pour ce patient</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={onNewNote}>
-                    <Plus className="w-4 h-4 mr-1.5" />
+                <div className="text-center py-12">
+                  <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground mb-4">Aucune note pour ce patient</p>
+                  <Button variant="outline" size="sm" className="gap-1.5 font-medium" onClick={onNewNote}>
+                    <Plus className="w-4 h-4" />
                     Ajouter une note
                   </Button>
                 </div>
@@ -314,12 +343,12 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
+        <div className="flex-shrink-0 p-4 border-t border-border flex gap-3 bg-card">
+          <Button variant="outline" className="flex-1 font-medium" onClick={onClose}>
             Fermer
           </Button>
-          <Button className="flex-1" onClick={onEdit}>
-            Modifier le dossier
+          <Button className="flex-1 font-medium" onClick={handleOpenFullDossier}>
+            Dossier complet
           </Button>
         </div>
       </motion.div>
@@ -334,12 +363,12 @@ const AppointmentItem: React.FC<{ appointment: Appointment; isUpcoming?: boolean
 }) => {
   const statusColors: Record<string, string> = {
     'scheduled': 'bg-blue-100 text-blue-700',
-    'completed': 'bg-green-100 text-green-700',
-    'cancelled': 'bg-red-100 text-red-700',
-    'absent-excused': 'bg-amber-100 text-amber-700',
-    'absent-unexcused': 'bg-red-100 text-red-700',
+    'completed': 'bg-success/20 text-success',
+    'cancelled': 'bg-destructive/20 text-destructive',
+    'absent-excused': 'bg-warning/20 text-warning',
+    'absent-unexcused': 'bg-destructive/20 text-destructive',
     'in-progress': 'bg-primary/10 text-primary',
-    'waiting': 'bg-amber-100 text-amber-700',
+    'waiting': 'bg-warning/20 text-warning',
   };
 
   const statusLabels: Record<string, string> = {
@@ -354,31 +383,28 @@ const AppointmentItem: React.FC<{ appointment: Appointment; isUpcoming?: boolean
 
   return (
     <div className={cn(
-      'p-3 rounded-lg border transition-colors hover:border-primary/30',
+      'p-3.5 rounded-lg border transition-colors hover:border-primary/30 cursor-pointer',
       isUpcoming ? 'bg-primary/5 border-primary/20' : 'bg-card border-border'
     )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <div 
-            className="w-1 h-10 rounded-full"
+            className="w-1 h-12 rounded-full flex-shrink-0"
             style={{ backgroundColor: appointment.motif.color }}
           />
-          <div>
-            <p className="font-medium text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-sm text-foreground capitalize truncate">
               {format(appointment.startTime, 'EEEE d MMMM', { locale: fr })}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {format(appointment.startTime, 'HH:mm')} - {format(appointment.endTime, 'HH:mm')} • {appointment.motif.name}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge className={cn('text-xs', statusColors[appointment.status])}>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Badge className={cn('text-xs font-medium', statusColors[appointment.status])}>
             {statusLabels[appointment.status]}
           </Badge>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
@@ -395,15 +421,15 @@ const NoteItem: React.FC<{ note: Note }> = ({ note }) => {
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {note.isUrgent && (
-            <Badge variant="destructive" className="text-xs">Urgent</Badge>
+            <Badge variant="destructive" className="text-xs font-semibold">Urgent</Badge>
           )}
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-medium">
             {format(note.createdAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
           </span>
         </div>
-        <span className="text-xs text-muted-foreground">{note.authorName}</span>
+        <span className="text-xs text-muted-foreground font-medium">{note.authorName}</span>
       </div>
-      <p className="text-sm text-foreground">{note.content}</p>
+      <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
     </div>
   );
 };
