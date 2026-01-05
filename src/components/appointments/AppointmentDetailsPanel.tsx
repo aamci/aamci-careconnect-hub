@@ -73,7 +73,7 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 right-0 h-screen w-full max-w-md bg-card border-l border-border shadow-lg z-50 flex flex-col"
+          className="absolute top-0 right-0 h-full w-full sm:w-96 md:w-[420px] lg:max-w-md bg-card border-l border-border shadow-xl z-40 flex flex-col"
         >
           {/* Header */}
           <div className="p-4 border-b border-border">
