@@ -148,24 +148,16 @@ const PatientsPage: React.FC = () => {
           </ScrollArea>
         </div>
 
-        {/* Patient Detail Panel */}
+        {/* Patient Detail Panel - Fixed Overlay */}
         <AnimatePresence>
           {selectedPatient && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 480, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="overflow-hidden"
-            >
-              <PatientDetailView
-                patient={selectedPatient}
-                onClose={() => setSelectedPatient(null)}
-                onEdit={handleEditPatient}
-                onNewAppointment={handleNewAppointment}
-                onNewNote={() => setIsNewNoteModalOpen(true)}
-              />
-            </motion.div>
+            <PatientDetailView
+              patient={selectedPatient}
+              onClose={() => setSelectedPatient(null)}
+              onEdit={handleEditPatient}
+              onNewAppointment={handleNewAppointment}
+              onNewNote={() => setIsNewNoteModalOpen(true)}
+            />
           )}
         </AnimatePresence>
       </div>

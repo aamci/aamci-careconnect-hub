@@ -25,7 +25,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { mockAppointments, mockNotes } from '@/data/mockData';
 
@@ -64,286 +65,265 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   const patientNotes = mockNotes.filter(note => note.patientId === patient.id);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      className="h-full flex flex-col bg-card border-l border-border"
-    >
-      {/* Header */}
-      <div className="p-6 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-foreground">
+    <AnimatePresence>
+      <motion.div
+        initial={{ x: '100%', opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="fixed top-0 right-0 h-screen w-full max-w-md bg-card border-l border-border shadow-lg z-50 flex flex-col"
+      >
+        {/* Header - Sticky */}
+        <div className="sticky top-0 z-10 p-4 border-b border-border bg-card">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-12 h-12 border-2 border-primary/30">
+                <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+                  {displayName[0]}{displayLastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {patient.gender === 'male' ? 'Monsieur' : 'Madame'}
+                  </span>
+                  {hasVipAlert && (
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  )}
+                </div>
+                <h2 className="font-semibold text-lg">
                   {displayLastName.toUpperCase()} {displayName}
                 </h2>
-                {hasVipAlert && (
-                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                )}
+                <p className="text-sm text-muted-foreground">
+                  {patient.gender === 'male' ? 'H' : 'F'}, {format(patient.dateOfBirth, 'dd/MM/yyyy')} ({age} ans)
+                </p>
               </div>
-              <p className="text-muted-foreground">
-                {age} ans • {patient.gender === 'male' ? 'Homme' : patient.gender === 'female' ? 'Femme' : 'Autre'} • 
-                Né(e) le {format(patient.dateOfBirth, 'dd MMMM yyyy', { locale: fr })}
-              </p>
             </div>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={onEdit}>
+
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            <Button onClick={onNewAppointment} size="sm" className="gap-1.5 flex-1">
+              <Plus className="w-4 h-4" />
+              Nouveau RDV
+            </Button>
+            <Button onClick={onNewNote} variant="outline" size="sm" className="gap-1.5 flex-1">
+              <FileText className="w-4 h-4" />
+              Ajouter note
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={onEdit}>
               <Edit className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Button onClick={onNewAppointment} size="sm" className="gap-1.5">
-            <Plus className="w-4 h-4" />
-            Nouveau RDV
-          </Button>
-          <Button onClick={onNewNote} variant="outline" size="sm" className="gap-1.5">
-            <FileText className="w-4 h-4" />
-            Ajouter note
-          </Button>
-        </div>
-      </div>
-
-      {/* Alerts */}
-      {patient.alerts && patient.alerts.length > 0 && (
-        <div className="px-6 py-3 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Alertes patient</p>
-              <ul className="mt-1 space-y-1">
-                {patient.alerts.map((alert) => (
-                  <li key={alert.id} className="text-sm text-amber-700 dark:text-amber-300">
-                    • {alert.message}
-                  </li>
-                ))}
-              </ul>
+        {/* Alerts */}
+        {patient.alerts && patient.alerts.length > 0 && (
+          <div className="px-4 py-3 bg-warning/10 border-b border-warning/20">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-warning">Alertes patient</p>
+                <ul className="mt-1 space-y-1">
+                  {patient.alerts.map((alert) => (
+                    <li key={alert.id} className="text-sm text-warning/80">
+                      • {alert.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-6 mt-4 bg-muted/50">
-          <TabsTrigger value="info" className="gap-1.5">
-            <User className="w-4 h-4" />
-            Informations
-          </TabsTrigger>
-          <TabsTrigger value="appointments" className="gap-1.5">
-            <Calendar className="w-4 h-4" />
-            RDV ({patientAppointments.length})
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="gap-1.5">
-            <FileText className="w-4 h-4" />
-            Notes ({patientNotes.length})
-          </TabsTrigger>
-        </TabsList>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+            <TabsList className="mx-4 mt-4 bg-muted/50">
+              <TabsTrigger value="info" className="gap-1.5">
+                <User className="w-4 h-4" />
+                Infos
+              </TabsTrigger>
+              <TabsTrigger value="appointments" className="gap-1.5">
+                <Calendar className="w-4 h-4" />
+                RDV ({patientAppointments.length})
+              </TabsTrigger>
+              <TabsTrigger value="notes" className="gap-1.5">
+                <FileText className="w-4 h-4" />
+                Notes ({patientNotes.length})
+              </TabsTrigger>
+            </TabsList>
 
-        <ScrollArea className="flex-1">
-          {/* Info Tab */}
-          <TabsContent value="info" className="p-6 space-y-6">
-            {/* Contact */}
-            <section>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Contact
-              </h3>
-              <div className="space-y-3">
-                {patient.phone && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Phone className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.phone}</p>
-                      <p className="text-xs text-muted-foreground">Principal</p>
-                    </div>
-                  </div>
-                )}
-                {patient.phoneSecondary && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.phoneSecondary}</p>
-                      <p className="text-xs text-muted-foreground">Secondaire</p>
-                    </div>
-                  </div>
-                )}
-                {patient.email && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Mail className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.email}</p>
-                      <p className="text-xs text-muted-foreground">Email</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Address */}
-            {(patient.address || patient.city) && (
+            {/* Info Tab */}
+            <TabsContent value="info" className="p-4 space-y-6 flex-1">
+              {/* Contact */}
               <section>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  Adresse
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Contact
                 </h3>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    {patient.address && <p className="text-sm text-foreground">{patient.address}</p>}
-                    <p className="text-sm text-foreground">
-                      {patient.postalCode} {patient.city}
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  {patient.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <a href={`tel:${patient.phone}`} className="text-accent hover:underline">
+                        {patient.phone}
+                      </a>
+                    </div>
+                  )}
+                  {patient.phoneSecondary && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{patient.phoneSecondary}</span>
+                    </div>
+                  )}
+                  {patient.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <a href={`mailto:${patient.email}`} className="text-accent hover:underline">
+                        {patient.email}
+                      </a>
+                    </div>
+                  )}
+                  {(patient.address || patient.city) && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {patient.address && `${patient.address}, `}
+                        {patient.postalCode} {patient.city}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </section>
-            )}
 
-            {/* Medical Info */}
-            <section>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Informations médicales
-              </h3>
-              <div className="space-y-3">
-                {patient.referringDoctor && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Heart className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.referringDoctor}</p>
-                      <p className="text-xs text-muted-foreground">Médecin traitant</p>
-                    </div>
-                  </div>
-                )}
-                {patient.insuranceProvider && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.insuranceProvider}</p>
-                      <p className="text-xs text-muted-foreground">Couverture santé</p>
-                    </div>
-                  </div>
-                )}
-                {patient.insuranceNumber && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{patient.insuranceNumber}</p>
-                      <p className="text-xs text-muted-foreground">N° Sécurité Sociale</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
+              <Separator />
 
-            {/* Administrative */}
-            <section>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Administratif
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Créé le</p>
-                  <p className="font-medium">{format(patient.createdAt, 'dd/MM/yyyy', { locale: fr })}</p>
+              {/* Medical Info */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Informations médicales
+                </h3>
+                <div className="space-y-3">
+                  {patient.referringDoctor && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Médecin traitant</span>
+                      <span className="text-sm font-medium">{patient.referringDoctor}</span>
+                    </div>
+                  )}
+                  {patient.insuranceProvider && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Couverture</span>
+                      <span className="text-sm font-medium">{patient.insuranceProvider}</span>
+                    </div>
+                  )}
+                  {patient.insuranceNumber && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">N° SS</span>
+                      <span className="text-sm font-medium">{patient.insuranceNumber}</span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Modifié le</p>
-                  <p className="font-medium">{format(patient.updatedAt, 'dd/MM/yyyy', { locale: fr })}</p>
-                </div>
-                {patient.birthPlace && (
-                  <div>
-                    <p className="text-muted-foreground">Lieu de naissance</p>
-                    <p className="font-medium">{patient.birthPlace}</p>
-                  </div>
-                )}
-              </div>
-            </section>
-          </TabsContent>
+              </section>
 
-          {/* Appointments Tab */}
-          <TabsContent value="appointments" className="p-6 space-y-6">
-            {/* Upcoming */}
-            <section>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                À venir ({upcomingAppointments.length})
-              </h3>
-              {upcomingAppointments.length > 0 ? (
-                <div className="space-y-2">
-                  {upcomingAppointments.map((apt) => (
-                    <AppointmentItem key={apt.id} appointment={apt} isUpcoming />
-                  ))}
+              <Separator />
+
+              {/* Administrative */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Administratif
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Créé le</span>
+                    <span className="text-sm">{format(patient.createdAt, 'dd/MM/yyyy', { locale: fr })}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Modifié le</span>
+                    <span className="text-sm">{format(patient.updatedAt, 'dd/MM/yyyy', { locale: fr })}</span>
+                  </div>
+                  {patient.birthPlace && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Lieu de naissance</span>
+                      <span className="text-sm">{patient.birthPlace}</span>
+                    </div>
+                  )}
                 </div>
+              </section>
+            </TabsContent>
+
+            {/* Appointments Tab */}
+            <TabsContent value="appointments" className="p-4 space-y-6 flex-1">
+              {/* Upcoming */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  À venir ({upcomingAppointments.length})
+                </h3>
+                {upcomingAppointments.length > 0 ? (
+                  <div className="space-y-2">
+                    {upcomingAppointments.map((apt) => (
+                      <AppointmentItem key={apt.id} appointment={apt} isUpcoming />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
+                    Aucun rendez-vous à venir
+                  </p>
+                )}
+              </section>
+
+              {/* Past */}
+              <section>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Historique ({pastAppointments.length})
+                </h3>
+                {pastAppointments.length > 0 ? (
+                  <div className="space-y-2">
+                    {pastAppointments.slice(0, 10).map((apt) => (
+                      <AppointmentItem key={apt.id} appointment={apt} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
+                    Aucun historique
+                  </p>
+                )}
+              </section>
+            </TabsContent>
+
+            {/* Notes Tab */}
+            <TabsContent value="notes" className="p-4 space-y-4 flex-1">
+              {patientNotes.length > 0 ? (
+                patientNotes.map((note) => (
+                  <NoteItem key={note.id} note={note} />
+                ))
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
-                  Aucun rendez-vous à venir
-                </p>
-              )}
-            </section>
-
-            {/* Past */}
-            <section>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Historique ({pastAppointments.length})
-              </h3>
-              {pastAppointments.length > 0 ? (
-                <div className="space-y-2">
-                  {pastAppointments.slice(0, 10).map((apt) => (
-                    <AppointmentItem key={apt.id} appointment={apt} />
-                  ))}
+                <div className="text-center py-8">
+                  <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground">Aucune note pour ce patient</p>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={onNewNote}>
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Ajouter une note
+                  </Button>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center bg-muted/30 rounded-lg">
-                  Aucun historique
-                </p>
               )}
-            </section>
-          </TabsContent>
+            </TabsContent>
+          </Tabs>
+        </div>
 
-          {/* Notes Tab */}
-          <TabsContent value="notes" className="p-6 space-y-4">
-            {patientNotes.length > 0 ? (
-              patientNotes.map((note) => (
-                <NoteItem key={note.id} note={note} />
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground">Aucune note pour ce patient</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={onNewNote}>
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  Ajouter une note
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
-    </motion.div>
+        {/* Footer */}
+        <div className="p-4 border-t border-border flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            Fermer
+          </Button>
+          <Button className="flex-1" onClick={onEdit}>
+            Modifier le dossier
+          </Button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
