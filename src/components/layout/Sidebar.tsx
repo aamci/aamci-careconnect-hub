@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Calendar, 
   FileText, 
@@ -22,16 +23,26 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { id: 'agenda', label: 'Planning', icon: Calendar },
-  { id: 'notes', label: 'Notes', icon: FileText },
-  { id: 'tasks', label: 'Tâches', icon: CheckSquare, badge: 3 },
-  { id: 'patients', label: 'Patients', icon: Users },
-  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2 },
-  { id: 'teleconsult', label: 'Visio', icon: Video },
-  { id: 'stats', label: 'Activité', icon: BarChart3 },
+  { id: 'agenda', label: 'Planning', icon: Calendar, path: '/' },
+  { id: 'notes', label: 'Notes', icon: FileText, path: '/notes' },
+  { id: 'tasks', label: 'Tâches', icon: CheckSquare, badge: 3, path: '/tasks' },
+  { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
+  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2, path: '/messages' },
+  { id: 'teleconsult', label: 'Visio', icon: Video, path: '/teleconsult' },
+  { id: 'stats', label: 'Activité', icon: BarChart3, path: '/stats' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavClick = (item: typeof navItems[0]) => {
+    onItemChange(item.id);
+    navigate(item.path);
+  };
+
+  // Determine active item from current path
+  const currentActiveItem = navItems.find(item => item.path === location.pathname)?.id || activeItem;
   return (
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
@@ -55,10 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
             key={item.id}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onItemChange(item.id)}
+            onClick={() => handleNavClick(item)}
             className={cn(
               'relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg transition-all duration-200',
-              activeItem === item.id
+              currentActiveItem === item.id
                 ? 'bg-sidebar-accent text-sidebar-foreground'
                 : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
             )}
@@ -74,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
             <span className="text-[10px] font-medium">{item.label}</span>
             
             {/* Active indicator */}
-            {activeItem === item.id && (
+            {currentActiveItem === item.id && (
               <motion.div
                 layoutId="activeIndicator"
                 className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-sidebar-primary rounded-r-full"
