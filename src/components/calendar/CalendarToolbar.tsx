@@ -8,8 +8,10 @@ import {
   List, 
   Calendar as CalendarIcon,
   Clock,
-  Plus,
-  Settings2
+  Menu,
+  Settings2,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CalendarView } from '@/hooks/useCalendar';
@@ -22,6 +24,8 @@ interface CalendarToolbarProps {
   onPrevious: () => void;
   onNext: () => void;
   onNewAppointment?: () => void;
+  onToggleFilters?: () => void;
+  showFiltersToggle?: boolean;
 }
 
 const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
@@ -32,6 +36,8 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   onPrevious,
   onNext,
   onNewAppointment,
+  onToggleFilters,
+  showFiltersToggle = false,
 }) => {
   const viewOptions: { id: CalendarView; label: string; icon: React.ReactNode }[] = [
     { id: 'list', label: 'Liste', icon: <List className="w-4 h-4" /> },
@@ -41,70 +47,66 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   ];
 
   return (
-    <div className="flex items-center justify-between gap-4 pb-4">
-      {/* Left Section - New Appointment */}
+    <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border bg-card">
+      {/* Left Section - Toggle + Navigation */}
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-      >
-        <Button 
-          onClick={onNewAppointment}
-          className="action-btn action-btn-primary gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Trouver un créneau</span>
-          <span className="sm:hidden">Nouveau</span>
-        </Button>
-      </motion.div>
-
-      {/* Center Section - Navigation */}
-      <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-2"
       >
+        {/* Filters Toggle */}
+        {showFiltersToggle && (
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={onToggleFilters}
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+        )}
+
         <Button 
           variant="outline" 
           size="sm"
           onClick={onToday}
-          className="text-xs"
+          className="text-sm font-medium"
         >
           Aujourd'hui
         </Button>
 
-        <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1">
+        <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={onPrevious}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          
-          <span className="px-3 text-sm font-medium min-w-[180px] text-center capitalize">
-            {dateLabel}
-          </span>
-          
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={onNext}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
+        
+        <span className="text-sm font-medium min-w-[160px] capitalize">
+          {dateLabel}
+        </span>
       </motion.div>
 
       {/* Right Section - View Toggle & Settings */}
       <motion.div 
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex items-center gap-2"
+        className="flex items-center gap-3"
       >
         {/* View Toggle */}
-        <div className="flex items-center bg-secondary/50 rounded-lg p-1">
+        <div className="flex items-center bg-muted rounded-lg p-1">
           {viewOptions.map((option) => (
             <Button
               key={option.id}
@@ -112,10 +114,10 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
               size="sm"
               onClick={() => onViewChange(option.id)}
               className={cn(
-                'h-7 px-3 gap-1.5 text-xs font-medium transition-all',
+                'h-8 px-3 gap-1.5 text-sm font-medium transition-all rounded-md',
                 view === option.id 
                   ? 'bg-card shadow-sm text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-transparent'
               )}
             >
               {option.label}
@@ -123,11 +125,17 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
           ))}
         </div>
 
-        {/* Settings */}
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-          <Settings2 className="w-4 h-4" />
-          <span className="hidden lg:inline text-xs">Affichage</span>
-        </Button>
+        {/* Additional Settings */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+            <CalendarIcon className="w-4 h-4" />
+            <span className="hidden lg:inline text-sm">Modifier les plages d'ouverture</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden lg:inline text-sm">Paramètres d'affichage</span>
+          </Button>
+        </div>
       </motion.div>
     </div>
   );
