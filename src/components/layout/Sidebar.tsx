@@ -23,13 +23,13 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { id: 'agenda', label: 'Agenda', icon: Calendar, path: '/' },
+  { id: 'agenda', label: 'Planning', icon: Calendar, path: '/' },
   { id: 'notes', label: 'Notes', icon: FileText, path: '/notes' },
-  { id: 'patients', label: 'Gestion des patients', icon: Users, path: '/patients' },
   { id: 'tasks', label: 'Tâches', icon: CheckSquare, badge: 3, path: '/tasks' },
-  { id: 'messages', label: 'Messagerie patients', icon: MessageSquare, badge: 2, path: '/messages' },
-  { id: 'teleconsult', label: 'Consultation vidéo', icon: Video, path: '/teleconsult' },
-  { id: 'stats', label: 'Mon activité', icon: BarChart3, path: '/stats' },
+  { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
+  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2, path: '/messages' },
+  { id: 'teleconsult', label: 'Visio', icon: Video, path: '/teleconsult' },
+  { id: 'stats', label: 'Activité', icon: BarChart3, path: '/stats' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
