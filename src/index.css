@@ -60,14 +60,14 @@
 
     --radius: 0.625rem;
 
-    /* Sidebar - Deep Navy */
-    --sidebar-background: 201 80% 18%;
-    --sidebar-foreground: 210 30% 90%;
+    /* Sidebar - Doctolib Navy (very dark blue) */
+    --sidebar-background: 210 50% 15%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 166 72% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 201 60% 28%;
-    --sidebar-accent-foreground: 210 30% 95%;
-    --sidebar-border: 201 50% 25%;
+    --sidebar-accent: 210 45% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 40% 20%;
     --sidebar-ring: 166 72% 50%;
 
     /* Appointment Colors */

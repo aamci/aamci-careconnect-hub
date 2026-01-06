@@ -13,6 +13,9 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { currentPractitioner } from '@/data/mockData';
 
 interface SidebarProps {
   activeItem: string;
@@ -20,13 +23,13 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { id: 'agenda', label: 'Planning', icon: Calendar, path: '/' },
+  { id: 'agenda', label: 'Agenda', icon: Calendar, path: '/' },
   { id: 'notes', label: 'Notes', icon: FileText, path: '/notes' },
+  { id: 'patients', label: 'Gestion des patients', icon: Users, path: '/patients' },
   { id: 'tasks', label: 'Tâches', icon: CheckSquare, badge: 3, path: '/tasks' },
-  { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
-  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2, path: '/messages' },
-  { id: 'teleconsult', label: 'Visio', icon: Video, path: '/teleconsult' },
-  { id: 'stats', label: 'Activité', icon: BarChart3, path: '/stats' },
+  { id: 'messages', label: 'Messagerie patients', icon: MessageSquare, badge: 2, path: '/messages' },
+  { id: 'teleconsult', label: 'Consultation vidéo', icon: Video, path: '/teleconsult' },
+  { id: 'stats', label: 'Mon activité', icon: BarChart3, path: '/stats' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
@@ -47,70 +50,131 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
   })?.id || activeItem;
 
   return (
-    <motion.aside
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      className="w-16 sm:w-[72px] h-screen bg-gradient-sidebar flex flex-col items-center py-3 sm:py-4 border-r border-sidebar-border flex-shrink-0"
-    >
-      {/* Logo */}
-      <div className="mb-6 sm:mb-8">
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sidebar-primary flex items-center justify-center"
-        >
-          <span className="text-sidebar-primary-foreground font-bold text-base sm:text-lg">M</span>
-        </motion.div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 flex flex-col gap-0.5 sm:gap-1 w-full px-1.5 sm:px-2 overflow-hidden">
-        {navItems.map((item) => (
-          <motion.button
-            key={item.id}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleNavClick(item)}
-            className={cn(
-              'relative flex flex-col items-center gap-0.5 sm:gap-1 py-2 sm:py-2.5 px-1 rounded-lg transition-all duration-200',
-              currentActiveItem === item.id
-                ? 'bg-sidebar-accent text-sidebar-foreground'
-                : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
-            )}
+    <TooltipProvider delayDuration={100}>
+      <motion.aside
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="w-[72px] h-screen bg-sidebar flex flex-col items-center py-4 flex-shrink-0"
+      >
+        {/* Logo */}
+        <div className="mb-6">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center cursor-pointer"
           >
-            <div className="relative">
-              <item.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-              {item.badge && (
-                <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-accent text-[9px] sm:text-[10px] font-semibold flex items-center justify-center text-accent-foreground">
-                  {item.badge}
-                </span>
-              )}
-            </div>
-            <span className="text-[9px] sm:text-[10px] font-medium leading-tight text-center">{item.label}</span>
-            
-            {/* Active indicator */}
-            {currentActiveItem === item.id && (
-              <motion.div
-                layoutId="activeIndicator"
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 sm:h-8 bg-sidebar-primary rounded-r-full"
-              />
-            )}
-          </motion.button>
-        ))}
-      </nav>
+            <span className="text-white font-bold text-xl">M</span>
+          </motion.div>
+        </div>
 
-      {/* Bottom Section - Only Settings and Help */}
-      <div className="flex flex-col gap-1 sm:gap-2 w-full px-1.5 sm:px-2 pt-2 border-t border-sidebar-border mt-2">
-        <button className="flex flex-col items-center gap-0.5 sm:gap-1 py-1.5 sm:py-2 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors">
-          <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px]">Paramètres</span>
-        </button>
-        
-        <button className="flex flex-col items-center gap-0.5 sm:gap-1 py-1.5 sm:py-2 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors">
-          <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-[9px] sm:text-[10px]">Aide</span>
-        </button>
-      </div>
-    </motion.aside>
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col gap-1 w-full px-2 overflow-hidden">
+          {navItems.map((item) => {
+            const isActive = currentActiveItem === item.id;
+            
+            return (
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleNavClick(item)}
+                    className={cn(
+                      'relative flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg transition-all duration-150 group w-full',
+                      isActive
+                        ? 'text-white'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    )}
+                  >
+                    {/* Active indicator - left bar */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-white rounded-r-full"
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+
+                    <div className="relative">
+                      <item.icon className={cn(
+                        "w-5 h-5 transition-all duration-150",
+                        isActive ? "stroke-[2.5px]" : "stroke-[1.5px]"
+                      )} />
+                      
+                      {/* Badge notification */}
+                      {item.badge && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-warning text-[10px] font-bold flex items-center justify-center text-warning-foreground">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <span className={cn(
+                      "text-[10px] font-medium leading-tight text-center max-w-full px-0.5",
+                      isActive ? "font-semibold" : ""
+                    )}>
+                      {item.label}
+                    </span>
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8} className="bg-foreground text-background">
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="flex flex-col gap-1 w-full px-2 pt-3 border-t border-white/10 mt-2">
+          {/* Settings */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="flex flex-col items-center gap-1 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-150 w-full">
+                <Settings className="w-5 h-5 stroke-[1.5px]" />
+                <span className="text-[10px] font-medium">Paramètres</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="bg-foreground text-background">
+              <p>Paramètres</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Help */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="flex flex-col items-center gap-1 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-150 w-full">
+                <HelpCircle className="w-5 h-5 stroke-[1.5px]" />
+                <span className="text-[10px] font-medium">Aide</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="bg-foreground text-background">
+              <p>Aide</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* User Avatar */}
+          <div className="pt-3 flex justify-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative"
+                >
+                  <Avatar className="w-10 h-10 ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer">
+                    <AvatarFallback className="bg-gradient-to-br from-primary-light to-accent text-white text-sm font-semibold">
+                      {currentPractitioner.firstName[0]}{currentPractitioner.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="bg-foreground text-background">
+                <p>{currentPractitioner.title} {currentPractitioner.firstName} {currentPractitioner.lastName}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </motion.aside>
+    </TooltipProvider>
   );
 };
 
