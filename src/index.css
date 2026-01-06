@@ -11,7 +11,7 @@
 
 @layer base {
   :root {
-    /* Core Medical Palette - Ocean Blue & Teal */
+    /* Core Medical Palette - Doctolib Style */
     --background: 210 20% 98%;
     --foreground: 215 25% 15%;
 
@@ -21,11 +21,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    /* Primary - Deep Ocean Blue */
-    --primary: 201 80% 20%;
+    /* Primary - Deep Doctolib Navy Blue */
+    --primary: 210 60% 22%;
     --primary-foreground: 210 40% 98%;
-    --primary-light: 201 70% 35%;
-    --primary-glow: 201 80% 50%;
+    --primary-light: 210 55% 35%;
+    --primary-glow: 210 65% 50%;
 
     /* Secondary - Soft Gray Blue */
     --secondary: 210 25% 93%;
@@ -56,19 +56,23 @@
     /* Borders & Inputs */
     --border: 214 25% 88%;
     --input: 214 25% 88%;
-    --ring: 201 80% 45%;
+    --ring: 210 60% 40%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    /* Sidebar - Deep Navy */
-    --sidebar-background: 201 80% 18%;
-    --sidebar-foreground: 210 30% 90%;
-    --sidebar-primary: 166 72% 45%;
+    /* Sidebar - Doctolib Dark Navy */
+    --sidebar-background: 213 50% 15%;
+    --sidebar-foreground: 210 30% 92%;
+    --sidebar-primary: 210 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 201 60% 28%;
+    --sidebar-accent: 213 45% 22%;
     --sidebar-accent-foreground: 210 30% 95%;
-    --sidebar-border: 201 50% 25%;
-    --sidebar-ring: 166 72% 50%;
+    --sidebar-border: 213 40% 20%;
+    --sidebar-ring: 210 70% 55%;
+    
+    /* Filter Panel */
+    --filter-panel-bg: 0 0% 100%;
+    --filter-section-header: 215 25% 35%;
 
     /* Appointment Colors */
     --appointment-consultation: 38 92% 50%;
