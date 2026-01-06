@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 flex flex-col gap-0.5 sm:gap-1 w-full px-1.5 sm:px-2 overflow-y-auto">
+      <nav className="flex-1 flex flex-col gap-0.5 sm:gap-1 w-full px-1.5 sm:px-2 overflow-hidden">
         {navItems.map((item) => (
           <motion.button
             key={item.id}
