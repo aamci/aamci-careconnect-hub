@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-[72px] h-screen bg-sidebar-background flex flex-col items-center py-4 flex-shrink-0"
+      className="w-[72px] h-screen bg-sidebar flex flex-col items-center py-4 flex-shrink-0"
     >
       {/* Logo */}
       <div className="mb-6">
