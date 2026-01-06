@@ -1,0 +1,257 @@
+import React, { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Patient } from '@/types';
+import { format, differenceInYears } from 'date-fns';
+import { 
+  ChevronDown,
+  ChevronRight,
+  Home,
+  Stethoscope,
+  FileUser,
+  History,
+  HeartPulse,
+  FileText,
+  ClipboardList,
+  Pill,
+  FlaskConical,
+  Syringe,
+  Receipt,
+  AlertTriangle,
+  Info,
+  Eye,
+  EyeOff,
+  Folder,
+  CircleDot
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import MemoModal from './MemoModal';
+import { usePatientAntecedents } from '@/hooks/usePatientAntecedents';
+
+interface PatientDossierSidebarProps {
+  patient: Patient;
+}
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  path: string;
+  hasChildren?: boolean;
+  badge?: string;
+}
+
+const navItems: NavItem[] = [
+  { id: 'home', label: 'HOME', icon: Home, path: 'home' },
+  { id: 'consultation', label: 'CONSULTATION EN COURS', icon: Stethoscope, path: 'consultation' },
+  { id: 'infos', label: 'INFOS ADMINISTRATIVES', icon: FileUser, path: 'infos', hasChildren: true },
+  { id: 'historique', label: 'HISTORIQUE', icon: History, path: 'historique' },
+  { id: 'antecedents', label: 'ANTÉCÉDENTS ET MODE DE VIE', icon: HeartPulse, path: 'antecedents', hasChildren: true },
+  { id: 'documents', label: 'DOCUMENTS', icon: FileText, path: 'documents' },
+  { id: 'observations', label: 'OBSERVATIONS', icon: ClipboardList, path: 'observations' },
+  { id: 'traitement', label: 'TRAITEMENT EN COURS', icon: Pill, path: 'traitement', hasChildren: true },
+  { id: 'biologie', label: 'BIOLOGIE ET BIOMÉTRIE', icon: FlaskConical, path: 'biologie', hasChildren: true },
+  { id: 'vaccination', label: 'CARNET DE VACCINATION', icon: Syringe, path: 'vaccination' },
+  { id: 'factures', label: 'FACTURES', icon: Receipt, path: 'factures' },
+];
+
+const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }) => {
+  const location = useLocation();
+  const [showSSN, setShowSSN] = useState(false);
+  const [memoModalOpen, setMemoModalOpen] = useState(false);
+  
+  const { memo, saveMemo, isSaving } = usePatientAntecedents(patient.id);
+  
+  const age = differenceInYears(new Date(), patient.dateOfBirth);
+  const displayName = patient.usedFirstName || patient.firstName;
+  const displayLastName = patient.usedLastName || patient.lastName;
+  const civility = patient.gender === 'male' ? 'Monsieur' : 'Madame';
+  
+  // Mock SSN - in real app would come from patient data
+  const ssn = '1 60 03 75 108 142 56';
+  const maskedSSN = '1 60 03 ... ... ...';
+  
+  const hasVipAlert = patient.alerts?.some(a => a.type === 'vip');
+  const hasCriticalAlert = patient.alerts?.some(a => a.severity === 'critical');
+  const hasImportedRecord = false; // Mock - would come from patient data
+  
+  const hasMemoContent = memo && memo.content && memo.content.trim().length > 0;
+
+  const handleSaveMemo = async (content: string) => {
+    await saveMemo(content);
+    setMemoModalOpen(false);
+  };
+
+  return (
+    <div className="w-72 flex-shrink-0 bg-card border-r border-border flex flex-col h-full">
+      {/* Patient Identity Header */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-muted-foreground">{civility}</p>
+            <h2 className="text-lg font-bold text-foreground tracking-wide">
+              {displayLastName.toUpperCase()}
+            </h2>
+            <p className="text-base font-medium text-foreground">
+              {displayName}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {format(patient.dateOfBirth, 'dd/MM/yyyy')} ({age} ans)
+            </p>
+            
+            {/* Mutuelle */}
+            <p className="text-sm text-muted-foreground mt-1.5">
+              MT : <span className="text-primary underline cursor-pointer">
+                {patient.insuranceProvider || 'Inconnu'}
+              </span>
+              <Info className="inline-block ml-1 h-3.5 w-3.5 text-muted-foreground" />
+            </p>
+          </div>
+          
+          {/* Status badges */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {hasCriticalAlert && (
+              <div className="h-5 w-5 rounded-full bg-destructive flex items-center justify-center">
+                <AlertTriangle className="h-3 w-3 text-destructive-foreground" />
+              </div>
+            )}
+            {hasVipAlert && (
+              <div className="h-5 w-5 rounded-full bg-accent flex items-center justify-center">
+                <CircleDot className="h-3 w-3 text-accent-foreground" />
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* SSN Row */}
+        <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+          <span className="font-medium">N° SS :</span>
+          <span className="font-mono">{showSSN ? ssn : maskedSSN}</span>
+          <button 
+            onClick={() => setShowSSN(!showSSN)}
+            className="text-primary hover:text-primary/80 transition-colors"
+          >
+            {showSSN ? (
+              <EyeOff className="h-3.5 w-3.5" />
+            ) : (
+              <Eye className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {/* Alert Banner */}
+      {!hasImportedRecord && (
+        <div className="mx-3 mt-3 p-3 rounded-lg bg-warning/10 border border-warning/20">
+          <div className="flex gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-warning leading-relaxed">
+              Aucun dossier importé retrouvé. Si un dossier importé existe, vous pouvez le rechercher afin de fusionner les dossiers depuis{' '}
+              <NavLink to="/patients" className="underline font-medium hover:text-warning/80">
+                la liste de patients
+              </NavLink>.
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Navigation Tabs */}
+      <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+        <div className="space-y-0.5 px-2">
+          {navItems.map((item) => {
+            const isActive = location.pathname.includes(`/${item.path}`);
+            
+            if (item.hasChildren) {
+              return (
+                <Collapsible key={item.id} defaultOpen={isActive}>
+                  <div className="relative">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        className={cn(
+                          'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                          'hover:bg-muted/50 group',
+                          isActive 
+                            ? 'text-primary bg-primary/5' 
+                            : 'text-foreground'
+                        )}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {item.badge && (
+                          <span className="text-primary text-xs font-medium">{item.badge}</span>
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  <CollapsibleContent>
+                    <div className="ml-6 py-1 space-y-0.5">
+                      {/* Placeholder for sub-items */}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+            
+            return (
+              <div key={item.id} className="relative">
+                <NavLink
+                  to={item.path}
+                  className={({ isActive: linkActive }) => cn(
+                    'flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                    'hover:bg-muted/50',
+                    linkActive 
+                      ? 'text-primary bg-primary/5' 
+                      : 'text-foreground'
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <span className="w-3.5" /> {/* Spacer for alignment */}
+                  <span>{item.label}</span>
+                </NavLink>
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+      
+      {/* Memo Section - Bottom */}
+      <div className="flex-shrink-0 border-t border-border p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Folder className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Mémo</span>
+            {hasMemoContent && (
+              <div className="h-2 w-2 rounded-full bg-primary" />
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs gap-1 h-7"
+            onClick={() => setMemoModalOpen(true)}
+          >
+            Ouvrir
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+      
+      <MemoModal
+        isOpen={memoModalOpen}
+        onClose={() => setMemoModalOpen(false)}
+        onSave={handleSaveMemo}
+        initialContent={memo?.content || ''}
+        isLoading={isSaving}
+      />
+    </div>
+  );
+};
+
+export default PatientDossierSidebar;
