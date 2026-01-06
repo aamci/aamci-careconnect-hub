@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import MainLayout from '@/components/layout/MainLayout';
 import CalendarToolbar from '@/components/calendar/CalendarToolbar';
+import MiniCalendar from '@/components/calendar/MiniCalendar';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import FiltersPanel from '@/components/calendar/FiltersPanel';
+import PractitionerInfoPanel from '@/components/practitioner/PractitionerInfoPanel';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
@@ -21,7 +23,6 @@ const AgendaPage: React.FC = () => {
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isNewPatientOpen, setIsNewPatientOpen] = React.useState(false);
   const [isNewNoteOpen, setIsNewNoteOpen] = React.useState(false);
-  const [isFiltersPanelOpen, setIsFiltersPanelOpen] = React.useState(true);
   
   // Filters
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>(mockMotifs.map(m => m.id));
@@ -64,6 +65,7 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleSlotClick = (date: Date, hour: number) => {
+    // Open new appointment modal (future feature)
     console.log('Slot clicked:', date, hour);
   };
 
@@ -78,30 +80,33 @@ const AgendaPage: React.FC = () => {
   return (
     <MainLayout activeNav={activeNav} onNavChange={setActiveNav}>
       <div className="h-full flex">
-        {/* Left Filters Panel - Second Column */}
-        {isFiltersPanelOpen && (
-          <motion.aside 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="w-72 border-r border-border bg-card flex-shrink-0 overflow-hidden flex flex-col"
-          >
-            <FiltersPanel
-              selectedMotifs={selectedMotifs}
-              onMotifsChange={setSelectedMotifs}
-              selectedStatuses={selectedStatuses}
-              onStatusesChange={setSelectedStatuses}
-              selectedPractitioners={selectedPractitioners}
-              onPractitionersChange={setSelectedPractitioners}
-              currentDate={calendar.currentDate}
-              selectedDate={calendar.selectedDate}
-              onSelectDate={calendar.selectDate}
-              appointments={mockAppointments}
-            />
-          </motion.aside>
-        )}
+        {/* Left Sidebar */}
+        <motion.aside 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-64 border-r border-border bg-muted/20 p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
+        >
+          <PractitionerInfoPanel />
+          
+          <MiniCalendar
+            currentDate={calendar.currentDate}
+            selectedDate={calendar.selectedDate}
+            onSelectDate={calendar.selectDate}
+            appointments={mockAppointments}
+          />
 
-        {/* Main Content - Calendar */}
-        <main className="flex-1 flex flex-col min-w-0 bg-background">
+          <FiltersPanel
+            selectedMotifs={selectedMotifs}
+            onMotifsChange={setSelectedMotifs}
+            selectedStatuses={selectedStatuses}
+            onStatusesChange={setSelectedStatuses}
+            selectedPractitioners={selectedPractitioners}
+            onPractitionersChange={setSelectedPractitioners}
+          />
+        </motion.aside>
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col p-4 min-w-0">
           <CalendarToolbar
             dateLabel={calendar.getDateRangeLabel()}
             view={calendar.view}
@@ -110,18 +115,14 @@ const AgendaPage: React.FC = () => {
             onPrevious={calendar.goToPrevious}
             onNext={calendar.goToNext}
             onNewAppointment={() => setIsNewPatientOpen(true)}
-            onToggleFilters={() => setIsFiltersPanelOpen(!isFiltersPanelOpen)}
-            showFiltersToggle
           />
 
-          <div className="flex-1 overflow-hidden p-4">
-            <WeekGrid
-              days={calendar.getWeekDays()}
-              appointments={filteredAppointments}
-              onAppointmentClick={handleAppointmentClick}
-              onSlotClick={handleSlotClick}
-            />
-          </div>
+          <WeekGrid
+            days={calendar.getWeekDays()}
+            appointments={filteredAppointments}
+            onAppointmentClick={handleAppointmentClick}
+            onSlotClick={handleSlotClick}
+          />
         </main>
       </div>
 
