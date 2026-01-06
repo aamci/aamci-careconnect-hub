@@ -5,7 +5,7 @@ import CalendarToolbar from '@/components/calendar/CalendarToolbar';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import FiltersPanel from '@/components/calendar/FiltersPanel';
-import PractitionerInfoPanel from '@/components/practitioner/PractitionerInfoPanel';
+import AgendaSidebarHeader from '@/components/calendar/AgendaSidebarHeader';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
@@ -86,8 +86,10 @@ const AgendaPage: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           className="w-64 border-r border-border bg-muted/20 p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
         >
-          <PractitionerInfoPanel />
+          {/* Trouver un créneau button */}
+          <AgendaSidebarHeader onNewAppointment={() => setIsNewPatientOpen(true)} />
           
+          {/* Mini Calendar */}
           <MiniCalendar
             currentDate={calendar.currentDate}
             selectedDate={calendar.selectedDate}
@@ -95,6 +97,7 @@ const AgendaPage: React.FC = () => {
             appointments={mockAppointments}
           />
 
+          {/* Filters: Statuts, Motifs, Agendas */}
           <FiltersPanel
             selectedMotifs={selectedMotifs}
             onMotifsChange={setSelectedMotifs}

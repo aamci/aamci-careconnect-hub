@@ -42,20 +42,8 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
 
   return (
     <div className="flex items-center justify-between gap-4 pb-4">
-      {/* Left Section - New Appointment */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
-        <Button 
-          onClick={onNewAppointment}
-          className="action-btn action-btn-primary gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Trouver un créneau</span>
-          <span className="sm:hidden">Nouveau</span>
-        </Button>
-      </motion.div>
+      {/* Left Section - Spacer */}
+      <div className="w-4" />
 
       {/* Center Section - Navigation */}
       <motion.div 
