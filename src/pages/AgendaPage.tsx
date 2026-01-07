@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from '@/components/layout/MainLayout';
 import SecondaryHeader from '@/components/calendar/SecondaryHeader';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
-import WeekGrid from '@/components/calendar/WeekGrid';
+import { AgendaGrid } from '@/components/calendar/grid';
 import FiltersPanel from '@/components/calendar/FiltersPanel';
 import AgendaSidebarHeader from '@/components/calendar/AgendaSidebarHeader';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
@@ -12,6 +12,7 @@ import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
+import { useGridDensity } from '@/hooks/useGridDensity';
 import { mockAppointments, mockMotifs, mockPatients } from '@/data/mockData';
 import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -144,14 +145,18 @@ const AgendaPage: React.FC = () => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col p-4 min-w-0 overflow-hidden">
-          <WeekGrid
+        <main className="flex-1 flex flex-col p-3 min-w-0 overflow-hidden">
+          <AgendaGrid
+            view={calendar.view}
             days={calendar.getWeekDays()}
+            currentDate={calendar.currentDate}
+            selectedDate={calendar.selectedDate}
             appointments={filteredAppointments}
             onAppointmentClick={handleAppointmentClick}
             onAppointmentHover={hoverPreview.handleMouseEnter}
             onAppointmentLeave={hoverPreview.handleMouseLeave}
             onSlotClick={handleSlotClick}
+            onDayClick={calendar.selectDate}
           />
         </main>
       </div>

@@ -97,6 +97,11 @@
     --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.08);
     --shadow-glow: 0 0 20px hsl(201 80% 50% / 0.15);
     --shadow-accent: 0 4px 14px 0 hsl(166 72% 35% / 0.25);
+
+    /* Grid Variables */
+    --grid-slot-height: 36px;
+    --grid-header-height: 40px;
+    --grid-axis-width: 48px;
   }
 
   .dark {
