@@ -263,6 +263,10 @@
            cursor-pointer transition-all duration-150;
   }
 
+  .mini-calendar-day-compact {
+    @apply w-7 h-7 text-xs;
+  }
+
   .mini-calendar-day-selected {
     @apply bg-accent text-accent-foreground font-semibold;
   }
