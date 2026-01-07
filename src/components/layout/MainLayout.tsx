@@ -18,7 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, activeNav, onNavChang
         <Header />
         
         {/* Main content area with rounded top-left corner */}
-        <main className="flex-1 overflow-hidden relative bg-background rounded-tl-2xl">
+        <main className="flex-1 overflow-hidden relative bg-background rounded-tl-2xl flex flex-col">
           {children}
         </main>
       </div>
