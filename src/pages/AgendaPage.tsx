@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
 import MainLayout from '@/components/layout/MainLayout';
 import SecondaryHeader from '@/components/calendar/SecondaryHeader';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
@@ -8,6 +9,8 @@ import FiltersPanel from '@/components/calendar/FiltersPanel';
 import AgendaSidebarHeader from '@/components/calendar/AgendaSidebarHeader';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
 import AppointmentPreviewCard from '@/components/calendar/AppointmentPreviewCard';
+import OpeningPreviewCard from '@/components/calendar/openings/OpeningPreviewCard';
+import { OpeningWizardModal } from '@/components/calendar/openings';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -15,6 +18,7 @@ import { useHoverPreview } from '@/hooks/useHoverPreview';
 import { useMotifs, useWeekAppointments } from '@/hooks/data/useAppointments';
 import { usePractitioners } from '@/hooks/data/usePractitioners';
 import { usePatients } from '@/hooks/data/usePatients';
+import { useWeekOpenings, type PractitionerOpening } from '@/hooks/data/useOpenings';
 import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,6 +32,7 @@ const AgendaPage: React.FC = () => {
   const { data: practitioners = [] } = usePractitioners();
   const { data: patients = [] } = usePatients();
   const { data: appointments = [] } = useWeekAppointments(calendar.currentDate);
+  const { data: openings = [] } = useWeekOpenings(calendar.currentDate);
   
   const [activeNav, setActiveNav] = React.useState('agenda');
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
@@ -36,12 +41,26 @@ const AgendaPage: React.FC = () => {
   const [isNewNoteOpen, setIsNewNoteOpen] = React.useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = React.useState(true);
   
+  // Opening edit mode
+  const [isOpeningEditMode, setIsOpeningEditMode] = React.useState(false);
+  const [hoveredOpening, setHoveredOpening] = React.useState<PractitionerOpening | null>(null);
+  const [isOpeningWizardOpen, setIsOpeningWizardOpen] = React.useState(false);
+  const [editingOpening, setEditingOpening] = React.useState<PractitionerOpening | null>(null);
+  const [newOpeningData, setNewOpeningData] = React.useState<{
+    date: Date;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
+  
   // Filters - initialize with all motifs when loaded
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([
     'scheduled', 'waiting', 'in-progress', 'completed'
   ]);
   const [selectedPractitioners, setSelectedPractitioners] = React.useState<string[]>([]);
+
+  // Get first practitioner for opening creation
+  const activePractitioner = practitioners[0];
 
   // Update selected motifs when data loads
   React.useEffect(() => {
@@ -84,8 +103,66 @@ const AgendaPage: React.FC = () => {
   };
 
   const handleSlotClick = (date: Date, hour: number) => {
-    // Open new appointment modal (future feature)
-    console.log('Slot clicked:', date, hour);
+    if (isOpeningEditMode && activePractitioner) {
+      // Open wizard to create new opening
+      const startTime = `${hour.toString().padStart(2, '0')}:00`;
+      const endHour = Math.min(hour + 1, 20);
+      const endTime = `${endHour.toString().padStart(2, '0')}:00`;
+      
+      setNewOpeningData({ date, startTime, endTime });
+      setEditingOpening(null);
+      setIsOpeningWizardOpen(true);
+    }
+  };
+
+  // Handle opening slot creation via drag
+  const handleOpeningDragCreate = (date: Date, startTime: string, endTime: string) => {
+    if (activePractitioner) {
+      setNewOpeningData({ date, startTime, endTime });
+      setEditingOpening(null);
+      setIsOpeningWizardOpen(true);
+    }
+  };
+
+  // Handle opening hover for preview
+  const handleOpeningHover = (opening: PractitionerOpening) => {
+    setHoveredOpening(opening);
+  };
+
+  const handleOpeningLeave = () => {
+    setHoveredOpening(null);
+  };
+
+  // Handle opening edit
+  const handleOpeningEdit = (opening: PractitionerOpening) => {
+    setEditingOpening(opening);
+    setNewOpeningData(null);
+    setIsOpeningWizardOpen(true);
+  };
+
+  // Handle opening copy (create new from existing)
+  const handleOpeningCopy = (opening: PractitionerOpening) => {
+    setNewOpeningData({
+      date: opening.openingDate,
+      startTime: opening.startTime,
+      endTime: opening.endTime,
+    });
+    setEditingOpening(null);
+    setIsOpeningWizardOpen(true);
+  };
+
+  const handleCloseOpeningWizard = () => {
+    setIsOpeningWizardOpen(false);
+    setEditingOpening(null);
+    setNewOpeningData(null);
+  };
+
+  // Toggle opening edit mode
+  const handleToggleOpeningEditMode = () => {
+    setIsOpeningEditMode(!isOpeningEditMode);
+    if (isOpeningEditMode) {
+      setHoveredOpening(null);
+    }
   };
 
   // Filter appointments
@@ -97,6 +174,10 @@ const AgendaPage: React.FC = () => {
       return true;
     });
   }, [appointments, selectedMotifs, selectedStatuses, selectedPractitioners]);
+
+  // Check if showing opening preview (collapse filters)
+  const isShowingOpeningPreview = isOpeningEditMode && hoveredOpening !== null;
+  const isShowingAnyPreview = hoverPreview.isPreviewVisible || isShowingOpeningPreview;
 
   return (
     <MainLayout activeNav={activeNav} onNavChange={setActiveNav}>
@@ -110,6 +191,8 @@ const AgendaPage: React.FC = () => {
         onNext={calendar.goToNext}
         onToggleSidebar={() => setIsSidebarVisible(!isSidebarVisible)}
         isSidebarVisible={isSidebarVisible}
+        isOpeningEditMode={isOpeningEditMode}
+        onToggleOpeningEditMode={handleToggleOpeningEditMode}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -137,11 +220,22 @@ const AgendaPage: React.FC = () => {
               {/* Preview Card - appears when hovering an appointment */}
               <AppointmentPreviewCard
                 appointment={hoverPreview.previewData.appointment}
-                isVisible={hoverPreview.isPreviewVisible}
+                isVisible={hoverPreview.isPreviewVisible && !isOpeningEditMode}
                 type={hoverPreview.previewData.type}
                 onClick={() => {
                   if (hoverPreview.previewData.appointment) {
                     handleAppointmentClick(hoverPreview.previewData.appointment);
+                  }
+                }}
+              />
+
+              {/* Opening Preview Card - appears when hovering an opening in edit mode */}
+              <OpeningPreviewCard
+                opening={hoveredOpening}
+                isVisible={isShowingOpeningPreview}
+                onClick={() => {
+                  if (hoveredOpening) {
+                    handleOpeningEdit(hoveredOpening);
                   }
                 }}
               />
@@ -156,7 +250,7 @@ const AgendaPage: React.FC = () => {
                 onStatusesChange={setSelectedStatuses}
                 selectedPractitioners={selectedPractitioners}
                 onPractitionersChange={setSelectedPractitioners}
-                isCollapsed={hoverPreview.isPreviewVisible}
+                isCollapsed={isShowingAnyPreview}
               />
             </motion.aside>
           )}
@@ -170,9 +264,16 @@ const AgendaPage: React.FC = () => {
             currentDate={calendar.currentDate}
             selectedDate={calendar.selectedDate}
             appointments={filteredAppointments}
+            openings={openings}
+            isOpeningEditMode={isOpeningEditMode}
             onAppointmentClick={handleAppointmentClick}
             onAppointmentHover={hoverPreview.handleMouseEnter}
             onAppointmentLeave={hoverPreview.handleMouseLeave}
+            onOpeningHover={handleOpeningHover}
+            onOpeningLeave={handleOpeningLeave}
+            onOpeningEdit={handleOpeningEdit}
+            onOpeningCopy={handleOpeningCopy}
+            onOpeningDragCreate={handleOpeningDragCreate}
             onSlotClick={handleSlotClick}
             onDayClick={calendar.selectDate}
           />
@@ -200,6 +301,19 @@ const AgendaPage: React.FC = () => {
         patient={patients[0]}
         date={calendar.selectedDate}
       />
+
+      {/* Opening Wizard Modal */}
+      {activePractitioner && (
+        <OpeningWizardModal
+          isOpen={isOpeningWizardOpen}
+          onClose={handleCloseOpeningWizard}
+          practitionerId={activePractitioner.id}
+          initialDate={newOpeningData?.date}
+          initialStartTime={newOpeningData?.startTime}
+          initialEndTime={newOpeningData?.endTime}
+          editingOpening={editingOpening}
+        />
+      )}
     </MainLayout>
   );
 };

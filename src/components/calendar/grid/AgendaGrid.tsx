@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarView } from '@/hooks/useCalendar';
 import { Appointment } from '@/types';
+import { type PractitionerOpening } from '@/services/supabase/openingsService';
 import OptimizedWeekGrid from './OptimizedWeekGrid';
 import DayGrid from './DayGrid';
 import MonthGrid from './MonthGrid';
@@ -12,9 +13,16 @@ interface AgendaGridProps {
   currentDate: Date;
   selectedDate: Date;
   appointments: Appointment[];
+  openings?: PractitionerOpening[];
+  isOpeningEditMode?: boolean;
   onAppointmentClick: (appointment: Appointment) => void;
   onAppointmentHover?: (appointment: Appointment) => void;
   onAppointmentLeave?: () => void;
+  onOpeningHover?: (opening: PractitionerOpening) => void;
+  onOpeningLeave?: () => void;
+  onOpeningEdit?: (opening: PractitionerOpening) => void;
+  onOpeningCopy?: (opening: PractitionerOpening) => void;
+  onOpeningDragCreate?: (date: Date, startTime: string, endTime: string) => void;
   onSlotClick?: (date: Date, hour: number) => void;
   onDayClick?: (date: Date) => void;
   startHour?: number;
@@ -27,9 +35,16 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
   currentDate,
   selectedDate,
   appointments,
+  openings = [],
+  isOpeningEditMode = false,
   onAppointmentClick,
   onAppointmentHover,
   onAppointmentLeave,
+  onOpeningHover,
+  onOpeningLeave,
+  onOpeningEdit,
+  onOpeningCopy,
+  onOpeningDragCreate,
   onSlotClick,
   onDayClick,
   startHour = 7,
@@ -41,9 +56,16 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
         <DayGrid
           day={selectedDate}
           appointments={appointments}
+          openings={openings}
+          isOpeningEditMode={isOpeningEditMode}
           onAppointmentClick={onAppointmentClick}
           onAppointmentHover={onAppointmentHover}
           onAppointmentLeave={onAppointmentLeave}
+          onOpeningHover={onOpeningHover}
+          onOpeningLeave={onOpeningLeave}
+          onOpeningEdit={onOpeningEdit}
+          onOpeningCopy={onOpeningCopy}
+          onOpeningDragCreate={onOpeningDragCreate}
           onSlotClick={onSlotClick}
           startHour={startHour}
           endHour={endHour}
@@ -55,9 +77,16 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
         <OptimizedWeekGrid
           days={days}
           appointments={appointments}
+          openings={openings}
+          isOpeningEditMode={isOpeningEditMode}
           onAppointmentClick={onAppointmentClick}
           onAppointmentHover={onAppointmentHover}
           onAppointmentLeave={onAppointmentLeave}
+          onOpeningHover={onOpeningHover}
+          onOpeningLeave={onOpeningLeave}
+          onOpeningEdit={onOpeningEdit}
+          onOpeningCopy={onOpeningCopy}
+          onOpeningDragCreate={onOpeningDragCreate}
           onSlotClick={onSlotClick}
           onDayClick={onDayClick}
           startHour={startHour}
@@ -91,9 +120,16 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
         <OptimizedWeekGrid
           days={days}
           appointments={appointments}
+          openings={openings}
+          isOpeningEditMode={isOpeningEditMode}
           onAppointmentClick={onAppointmentClick}
           onAppointmentHover={onAppointmentHover}
           onAppointmentLeave={onAppointmentLeave}
+          onOpeningHover={onOpeningHover}
+          onOpeningLeave={onOpeningLeave}
+          onOpeningEdit={onOpeningEdit}
+          onOpeningCopy={onOpeningCopy}
+          onOpeningDragCreate={onOpeningDragCreate}
           onSlotClick={onSlotClick}
           startHour={startHour}
           endHour={endHour}
