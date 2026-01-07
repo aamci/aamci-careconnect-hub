@@ -11,6 +11,7 @@
 export * from './useSites';
 export * from './usePractitioners';
 export * from './usePatients';
+export * from './useOpenings';
 export * from './useAppointments';
 export * from './useNotes';
 export * from './useTasks';
