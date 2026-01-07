@@ -29,6 +29,7 @@ import AntecedentFormModal, {
   type AntecedentFormData 
 } from './AntecedentFormModal';
 import MemoModal from './MemoModal';
+import PatientAllergyManager from '@/components/patients/PatientAllergyManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +55,7 @@ const sections: AntecedentSection[] = [
   { id: 'medical', title: 'Antécédents médicaux', icon: Stethoscope },
   { id: 'cardiovascular', title: 'Appareil cardiovasculaire', icon: Heart },
   { id: 'surgical', title: 'Antécédents chirurgicaux', icon: Scissors },
-  { id: 'allergies', title: 'Allergies', icon: AlertTriangle },
+  // Note: allergies sont gérées par PatientAllergyManager maintenant
   { id: 'family', title: 'Antécédents familiaux', icon: Users },
   { id: 'lifestyle', title: 'Mode de vie', icon: Cigarette },
 ];
@@ -139,6 +140,11 @@ const PatientAntecedentsTab: React.FC = () => {
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-foreground">Antécédents et mode de vie</h2>
+      </div>
+
+      {/* Allergies Section - Dedicated Manager with real Supabase data */}
+      <div className="mb-6">
+        <PatientAllergyManager patientId={patient.id} />
       </div>
 
       {/* Main Sections List */}

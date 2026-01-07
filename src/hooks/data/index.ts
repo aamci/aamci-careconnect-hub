@@ -5,7 +5,7 @@
  * - Automatic caching and background refresh
  * - Optimistic updates where appropriate
  * - Toast notifications for mutations
- * - Fallback to mock data when Supabase fails
+ * - Real Supabase data (no mock fallback in production)
  */
 
 export * from './useSites';
@@ -14,3 +14,4 @@ export * from './usePatients';
 export * from './useAppointments';
 export * from './useNotes';
 export * from './useTasks';
+export * from './useAllergies';
