@@ -18,3 +18,12 @@ export * from './patientsService';
 export * from './appointmentsService';
 export * from './notesService';
 export * from './tasksService';
+
+// New services
+export * from './organizationsService';
+export * from './messagesService';
+export * from './invoicesService';
+export * from './consultationsService';
+export * from './waitingListService';
+export * from './medicalService';
+export * from './auditService';
