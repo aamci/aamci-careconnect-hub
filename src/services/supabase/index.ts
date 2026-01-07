@@ -2,7 +2,7 @@
  * Supabase Services - Central Export
  * 
  * All services provide:
- * - Automatic fallback to mockData when Supabase fails
+ * - Real Supabase data operations
  * - Type-safe mappers between DB and frontend types
  * - Audit trails (created_by, updated_by)
  * - Soft delete where appropriate
@@ -27,3 +27,4 @@ export * from './consultationsService';
 export * from './waitingListService';
 export * from './medicalService';
 export * from './auditService';
+export * from './allergiesService';

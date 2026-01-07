@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      allergen_reference: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          is_common: boolean
+          name: string
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          is_common?: boolean
+          name: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          is_common?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       appointment_history: {
         Row: {
           action: string
@@ -186,6 +210,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "appointment_recurrences_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointment_recurrences_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -285,6 +316,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
           {
@@ -419,6 +457,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consultations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "consultations_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -523,6 +568,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conversations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
         ]
       }
       documents: {
@@ -584,6 +636,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -759,6 +818,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -838,6 +904,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_results_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
           {
@@ -965,6 +1038,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -1155,6 +1235,83 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_alerts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_allergies: {
+        Row: {
+          allergen_code: string
+          confirmed_by: string | null
+          confirmed_date: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          patient_id: string
+          reaction_description: string | null
+          severity: Database["public"]["Enums"]["antecedent_severity"]
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          allergen_code: string
+          confirmed_by?: string | null
+          confirmed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          patient_id: string
+          reaction_description?: string | null
+          severity?: Database["public"]["Enums"]["antecedent_severity"]
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          allergen_code?: string
+          confirmed_by?: string | null
+          confirmed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          patient_id?: string
+          reaction_description?: string | null
+          severity?: Database["public"]["Enums"]["antecedent_severity"]
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_allergies_allergen_code_fkey"
+            columns: ["allergen_code"]
+            isOneToOne: false
+            referencedRelation: "allergen_reference"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "patient_allergies_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_allergies_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -1362,6 +1519,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -1608,6 +1772,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prescriptions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prescriptions_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -1802,6 +1973,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tasks_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_preferences: {
@@ -1916,6 +2094,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vaccinations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vaccinations_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -1995,6 +2180,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vital_signs_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
             referencedColumns: ["id"]
           },
         ]
@@ -2079,6 +2271,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "waiting_list_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "waiting_list_practitioner_id_fkey"
             columns: ["practitioner_id"]
             isOneToOne: false
@@ -2103,7 +2302,105 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_active_patient_alerts: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          message: string | null
+          patient_id: string | null
+          severity: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          message?: string | null
+          patient_id?: string | null
+          severity?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          message?: string | null
+          patient_id?: string | null
+          severity?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_alerts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_alerts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_active_patient_allergies: {
+        Row: {
+          allergen_category: string | null
+          allergen_code: string | null
+          allergen_name: string | null
+          confirmed_date: string | null
+          created_at: string | null
+          id: string | null
+          patient_id: string | null
+          reaction_description: string | null
+          severity: Database["public"]["Enums"]["antecedent_severity"] | null
+          source: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_allergies_allergen_code_fkey"
+            columns: ["allergen_code"]
+            isOneToOne: false
+            referencedRelation: "allergen_reference"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "patient_allergies_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_allergies_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_patient_summary: {
+        Row: {
+          active_alerts_count: number | null
+          active_allergies_count: number | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          first_name: string | null
+          gender: string | null
+          id: string | null
+          is_active: boolean | null
+          last_name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       broadcast_notification_to_tenant: {
@@ -2124,6 +2421,13 @@ export type Database = {
       }
       get_current_tenant_id: { Args: never; Returns: string }
       get_current_user_id: { Args: never; Returns: string }
+      get_patient_alert_counts: {
+        Args: { p_patient_id: string }
+        Returns: {
+          active_alerts: number
+          active_allergies: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { mockAppointments, mockNotes } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import PatientAllergiesBadge from '@/components/patients/PatientAllergiesBadge';
 
 interface OutletContext {
   patient: Patient;
@@ -402,9 +403,7 @@ const PatientHomeTab: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-1.5">Allergies</p>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="destructive" className="text-xs">Pénicilline</Badge>
-              </div>
+              <PatientAllergiesBadge patientId={patient.id} />
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-1.5">Traitements principaux</p>
