@@ -40,14 +40,18 @@ export function useMotifs() {
 // ==================== APPOINTMENTS QUERIES ====================
 
 export function useAppointments(
-  startDate: Date,
-  endDate: Date,
+  startDate?: Date,
+  endDate?: Date,
   practitionerIds?: string[]
 ) {
+  // Default to current month if no dates provided
+  const start = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const end = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0);
+  
   return useQuery({
-    queryKey: appointmentsKeys.byRange(startDate, endDate, practitionerIds),
+    queryKey: appointmentsKeys.byRange(start, end, practitionerIds),
     queryFn: async () => {
-      const result = await appointmentsService.fetchAppointments(startDate, endDate, practitionerIds);
+      const result = await appointmentsService.fetchAppointments(start, end, practitionerIds);
       if (result.error) throw result.error;
       return result.data || [];
     },

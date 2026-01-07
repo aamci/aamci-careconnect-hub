@@ -7,9 +7,11 @@ import PatientDetailView from '@/components/patients/PatientDetailView';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { Patient } from '@/types';
-import { mockPatients, mockAppointments } from '@/data/mockData';
+import { usePatients, useCreatePatient } from '@/hooks/data/usePatients';
+import { useAppointments } from '@/hooks/data/useAppointments';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Users, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -20,16 +22,23 @@ const PatientsPage: React.FC = () => {
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
 
+  // Fetch from Supabase with automatic fallback to mockData
+  const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
+  const { data: appointments = [] } = useAppointments();
+  const createPatient = useCreatePatient();
+
   // Filter patients based on search
   const filteredPatients = useMemo(() => {
-    if (!searchQuery.trim()) return mockPatients;
+    if (!searchQuery.trim()) return patients;
     
     const query = searchQuery.toLowerCase();
-    return mockPatients.filter(patient => {
+    return patients.filter(patient => {
       const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
       const reverseName = `${patient.lastName} ${patient.firstName}`.toLowerCase();
       const phone = patient.phone?.replace(/\s/g, '') || '';
-      const dob = patient.dateOfBirth.toLocaleDateString('fr-FR');
+      const dob = patient.dateOfBirth instanceof Date 
+        ? patient.dateOfBirth.toLocaleDateString('fr-FR')
+        : new Date(patient.dateOfBirth).toLocaleDateString('fr-FR');
       
       return (
         fullName.includes(query) ||
@@ -40,16 +49,16 @@ const PatientsPage: React.FC = () => {
         patient.city?.toLowerCase().includes(query)
       );
     });
-  }, [searchQuery]);
+  }, [searchQuery, patients]);
 
   // Count appointments per patient
   const appointmentCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockAppointments.forEach(apt => {
+    appointments.forEach(apt => {
       counts[apt.patientId] = (counts[apt.patientId] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [appointments]);
 
   const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -77,8 +86,8 @@ const PatientsPage: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Dossiers Patients</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {mockPatients.length} patients enregistrés
+                <p className="text-sm text-muted-foreground">
+                    {patients.length} patients enregistrés
                   </p>
                 </div>
               </div>
@@ -101,6 +110,13 @@ const PatientsPage: React.FC = () => {
           {/* Patient List */}
           <ScrollArea className="flex-1">
             <div className="p-6">
+              {isLoadingPatients ? (
+                <div className="grid gap-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : (
               <AnimatePresence mode="popLayout">
                 {filteredPatients.length > 0 ? (
                   <motion.div 
@@ -144,6 +160,7 @@ const PatientsPage: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+              )}
             </div>
           </ScrollArea>
         </div>
@@ -167,7 +184,18 @@ const PatientsPage: React.FC = () => {
         isOpen={isNewPatientModalOpen}
         onClose={() => setIsNewPatientModalOpen(false)}
         onSave={(data) => {
-          toast.success('Patient créé avec succès');
+          createPatient.mutate({
+            firstName: data.firstName || data.usedFirstName,
+            lastName: data.lastName || data.usedLastName,
+            usedFirstName: data.usedFirstName || undefined,
+            usedLastName: data.usedLastName || undefined,
+            gender: data.gender,
+            dateOfBirth: new Date(data.dateOfBirth),
+            phone: data.phone,
+            email: data.email || undefined,
+            city: data.city || undefined,
+            birthPlace: data.birthPlace || undefined,
+          });
           setIsNewPatientModalOpen(false);
         }}
       />
