@@ -13,6 +13,7 @@ interface FiltersPanelProps {
   onStatusesChange: (statuses: string[]) => void;
   selectedPractitioners: string[];
   onPractitionersChange: (practitioners: string[]) => void;
+  isCollapsed?: boolean;
 }
 
 const FiltersPanel: React.FC<FiltersPanelProps> = ({
@@ -22,6 +23,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   onStatusesChange,
   selectedPractitioners,
   onPractitionersChange,
+  isCollapsed = false,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState({
     statuses: false,
@@ -119,8 +121,24 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
     motif.name.toLowerCase().includes(motifSearch.toLowerCase())
   );
 
+  const prefersReducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
+
   return (
-    <div className="space-y-3">
+    <motion.div 
+      className="space-y-3"
+      initial={false}
+      animate={{ 
+        height: isCollapsed ? 0 : 'auto',
+        opacity: isCollapsed ? 0 : 1,
+      }}
+      transition={{ 
+        duration: prefersReducedMotion ? 0.1 : 0.2,
+        ease: 'easeInOut'
+      }}
+      style={{ overflow: 'hidden' }}
+    >
       {/* Status Filters */}
       <div className="panel-card overflow-hidden">
         <button 
@@ -327,10 +345,10 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
                 ))}
               </div>
             </div>
-          </motion.div>
+      </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
