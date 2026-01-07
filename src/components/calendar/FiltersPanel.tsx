@@ -125,20 +125,12 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;
 
+  if (isCollapsed) {
+    return null;
+  }
+
   return (
-    <motion.div 
-      className="space-y-3"
-      initial={false}
-      animate={{ 
-        height: isCollapsed ? 0 : 'auto',
-        opacity: isCollapsed ? 0 : 1,
-      }}
-      transition={{ 
-        duration: prefersReducedMotion ? 0.1 : 0.2,
-        ease: 'easeInOut'
-      }}
-      style={{ overflow: 'hidden' }}
-    >
+    <div className="space-y-3">
       {/* Status Filters */}
       <div className="panel-card overflow-hidden">
         <button 
@@ -348,7 +340,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
       </motion.div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
