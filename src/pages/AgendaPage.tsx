@@ -7,9 +7,11 @@ import WeekGrid from '@/components/calendar/WeekGrid';
 import FiltersPanel from '@/components/calendar/FiltersPanel';
 import AgendaSidebarHeader from '@/components/calendar/AgendaSidebarHeader';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
+import AppointmentPreviewCard from '@/components/calendar/AppointmentPreviewCard';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
+import { useHoverPreview } from '@/hooks/useHoverPreview';
 import { mockAppointments, mockMotifs, mockPatients } from '@/data/mockData';
 import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 const AgendaPage: React.FC = () => {
   const { toast } = useToast();
   const calendar = useCalendar();
+  const hoverPreview = useHoverPreview();
   
   const [activeNav, setActiveNav] = React.useState('agenda');
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
@@ -114,7 +117,19 @@ const AgendaPage: React.FC = () => {
                 appointments={mockAppointments}
               />
 
-              {/* Filters: Statuts, Motifs, Agendas */}
+              {/* Preview Card - appears when hovering an appointment */}
+              <AppointmentPreviewCard
+                appointment={hoverPreview.previewData.appointment}
+                isVisible={hoverPreview.isPreviewVisible}
+                type={hoverPreview.previewData.type}
+                onClick={() => {
+                  if (hoverPreview.previewData.appointment) {
+                    handleAppointmentClick(hoverPreview.previewData.appointment);
+                  }
+                }}
+              />
+
+              {/* Filters: Statuts, Motifs, Agendas - collapsed when preview is visible */}
               <FiltersPanel
                 selectedMotifs={selectedMotifs}
                 onMotifsChange={setSelectedMotifs}
@@ -122,6 +137,7 @@ const AgendaPage: React.FC = () => {
                 onStatusesChange={setSelectedStatuses}
                 selectedPractitioners={selectedPractitioners}
                 onPractitionersChange={setSelectedPractitioners}
+                isCollapsed={hoverPreview.isPreviewVisible}
               />
             </motion.aside>
           )}
@@ -133,6 +149,8 @@ const AgendaPage: React.FC = () => {
             days={calendar.getWeekDays()}
             appointments={filteredAppointments}
             onAppointmentClick={handleAppointmentClick}
+            onAppointmentHover={hoverPreview.handleMouseEnter}
+            onAppointmentLeave={hoverPreview.handleMouseLeave}
             onSlotClick={handleSlotClick}
           />
         </main>

@@ -9,6 +9,8 @@ interface WeekGridProps {
   days: Date[];
   appointments: Appointment[];
   onAppointmentClick: (appointment: Appointment) => void;
+  onAppointmentHover?: (appointment: Appointment) => void;
+  onAppointmentLeave?: () => void;
   onSlotClick?: (date: Date, hour: number) => void;
   startHour?: number;
   endHour?: number;
@@ -20,6 +22,8 @@ const WeekGrid: React.FC<WeekGridProps> = ({
   days,
   appointments,
   onAppointmentClick,
+  onAppointmentHover,
+  onAppointmentLeave,
   onSlotClick,
   startHour = 8,
   endHour = 19,
@@ -165,6 +169,13 @@ const WeekGrid: React.FC<WeekGridProps> = ({
                     )}
                     style={getAppointmentStyle(apt)}
                     onClick={() => onAppointmentClick(apt)}
+                    onMouseEnter={() => onAppointmentHover?.(apt)}
+                    onMouseLeave={() => onAppointmentLeave?.()}
+                    onFocus={() => onAppointmentHover?.(apt)}
+                    onBlur={() => onAppointmentLeave?.()}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${apt.patient.lastName} ${apt.patient.firstName} - ${format(apt.startTime, 'HH:mm')} - ${apt.motif.shortName}`}
                   >
                     <div className="flex items-start gap-1">
                       <span className="font-semibold text-[10px]">
