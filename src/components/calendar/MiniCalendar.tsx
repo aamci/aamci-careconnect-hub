@@ -54,16 +54,16 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
   };
 
   return (
-    <div className="panel-card p-3">
+    <div className="panel-card p-2">
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7"
+          className="h-6 w-6"
           onClick={() => setViewDate(subMonths(viewDate, 1))}
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         </Button>
         
         <span className="text-sm font-semibold capitalize">
@@ -73,19 +73,19 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7"
+          className="h-6 w-6"
           onClick={() => setViewDate(addMonths(viewDate, 1))}
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5" />
         </Button>
       </div>
 
       {/* Week Days Header */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-0.5 mb-0.5">
         {weekDays.map((day) => (
           <div 
             key={day} 
-            className="text-center text-[10px] font-medium text-muted-foreground py-1"
+            className="text-center text-[10px] font-medium text-muted-foreground leading-none py-0.5"
           >
             {day}
           </div>
@@ -93,7 +93,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {days.map((day, index) => {
           const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
           const isTodayDate = isToday(day);
@@ -104,13 +104,13 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
           return (
             <motion.button
               key={index}
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onSelectDate(day)}
               className={cn(
-                'mini-calendar-day relative',
+                'mini-calendar-day mini-calendar-day-compact relative',
                 isSelected && 'mini-calendar-day-selected',
-                isTodayDate && !isSelected && 'ring-2 ring-accent/50 ring-offset-1',
+                isTodayDate && !isSelected && 'ring-1 ring-accent/50 ring-offset-1',
                 !isCurrentMonth && 'text-muted-foreground/40',
                 isCurrentMonth && !isSelected && 'mini-calendar-day-hover text-foreground',
               )}

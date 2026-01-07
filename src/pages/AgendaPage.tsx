@@ -104,7 +104,7 @@ const AgendaPage: React.FC = () => {
               animate={{ width: 256, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="border-r border-border bg-muted/20 p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
+              className="border-r border-border bg-muted/20 p-3 flex flex-col gap-2 overflow-y-auto custom-scrollbar"
             >
               {/* Trouver un créneau button */}
               <AgendaSidebarHeader onNewAppointment={() => setIsNewPatientOpen(true)} />
