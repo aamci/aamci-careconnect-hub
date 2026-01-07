@@ -1,17 +1,35 @@
 import React from 'react';
 import { useParams, useNavigate, Outlet } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import { mockPatients } from '@/data/mockData';
+import { usePatient } from '@/hooks/data/usePatients';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import PatientDossierSidebar from '@/components/patients/dossier/PatientDossierSidebar';
 
 const PatientDossierPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   
-  const patient = mockPatients.find(p => p.id === patientId);
+  const { data: patient, isLoading, error } = usePatient(patientId || '');
   
-  if (!patient) {
+  if (isLoading) {
+    return (
+      <MainLayout activeNav="patients" onNavChange={() => {}}>
+        <div className="h-full flex bg-background">
+          <div className="w-64 p-4 space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="flex-1 p-4">
+            <Skeleton className="h-full w-full" />
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  if (!patient || error) {
     return (
       <MainLayout activeNav="patients" onNavChange={() => {}}>
         <div className="h-full flex items-center justify-center">

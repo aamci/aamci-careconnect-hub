@@ -12,8 +12,9 @@ import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
-import { useGridDensity } from '@/hooks/useGridDensity';
-import { mockAppointments, mockMotifs, mockPatients } from '@/data/mockData';
+import { useMotifs, useWeekAppointments } from '@/hooks/data/useAppointments';
+import { usePractitioners } from '@/hooks/data/usePractitioners';
+import { usePatients } from '@/hooks/data/usePatients';
 import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,6 +23,12 @@ const AgendaPage: React.FC = () => {
   const calendar = useCalendar();
   const hoverPreview = useHoverPreview();
   
+  // Fetch data from Supabase with fallback
+  const { data: motifs = [] } = useMotifs();
+  const { data: practitioners = [] } = usePractitioners();
+  const { data: patients = [] } = usePatients();
+  const { data: appointments = [] } = useWeekAppointments(calendar.currentDate);
+  
   const [activeNav, setActiveNav] = React.useState('agenda');
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
@@ -29,12 +36,19 @@ const AgendaPage: React.FC = () => {
   const [isNewNoteOpen, setIsNewNoteOpen] = React.useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = React.useState(true);
   
-  // Filters
-  const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>(mockMotifs.map(m => m.id));
+  // Filters - initialize with all motifs when loaded
+  const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([
     'scheduled', 'waiting', 'in-progress', 'completed'
   ]);
   const [selectedPractitioners, setSelectedPractitioners] = React.useState<string[]>([]);
+
+  // Update selected motifs when data loads
+  React.useEffect(() => {
+    if (motifs.length > 0 && selectedMotifs.length === 0) {
+      setSelectedMotifs(motifs.map(m => m.id));
+    }
+  }, [motifs, selectedMotifs.length]);
 
   const handleAppointmentClick = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
@@ -75,12 +89,14 @@ const AgendaPage: React.FC = () => {
   };
 
   // Filter appointments
-  const filteredAppointments = mockAppointments.filter(apt => {
-    if (!selectedMotifs.includes(apt.motifId)) return false;
-    if (!selectedStatuses.includes(apt.status)) return false;
-    if (selectedPractitioners.length > 0 && !selectedPractitioners.includes(apt.practitionerId)) return false;
-    return true;
-  });
+  const filteredAppointments = React.useMemo(() => {
+    return appointments.filter(apt => {
+      if (selectedMotifs.length > 0 && !selectedMotifs.includes(apt.motifId)) return false;
+      if (!selectedStatuses.includes(apt.status)) return false;
+      if (selectedPractitioners.length > 0 && !selectedPractitioners.includes(apt.practitionerId)) return false;
+      return true;
+    });
+  }, [appointments, selectedMotifs, selectedStatuses, selectedPractitioners]);
 
   return (
     <MainLayout activeNav={activeNav} onNavChange={setActiveNav}>
@@ -115,7 +131,7 @@ const AgendaPage: React.FC = () => {
                 currentDate={calendar.currentDate}
                 selectedDate={calendar.selectedDate}
                 onSelectDate={calendar.selectDate}
-                appointments={mockAppointments}
+                appointments={appointments}
               />
 
               {/* Preview Card - appears when hovering an appointment */}
@@ -132,6 +148,8 @@ const AgendaPage: React.FC = () => {
 
               {/* Filters: Statuts, Motifs, Agendas - collapsed when preview is visible */}
               <FiltersPanel
+                motifs={motifs}
+                practitioners={practitioners}
                 selectedMotifs={selectedMotifs}
                 onMotifsChange={setSelectedMotifs}
                 selectedStatuses={selectedStatuses}
@@ -179,7 +197,7 @@ const AgendaPage: React.FC = () => {
         isOpen={isNewNoteOpen}
         onClose={() => setIsNewNoteOpen(false)}
         onSave={handleNewNote}
-        patient={mockPatients[0]}
+        patient={patients[0]}
         date={calendar.selectedDate}
       />
     </MainLayout>

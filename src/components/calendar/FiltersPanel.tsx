@@ -2,11 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { mockMotifs, mockPractitioners } from '@/data/mockData';
+import { AppointmentMotif, Practitioner } from '@/types';
 import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface FiltersPanelProps {
+  motifs: AppointmentMotif[];
+  practitioners: Practitioner[];
   selectedMotifs: string[];
   onMotifsChange: (motifs: string[]) => void;
   selectedStatuses: string[];
@@ -19,6 +21,8 @@ interface FiltersPanelProps {
 type SectionKey = 'statuses' | 'motifs' | 'agendas';
 
 const FiltersPanel: React.FC<FiltersPanelProps> = ({
+  motifs,
+  practitioners,
   selectedMotifs,
   onMotifsChange,
   selectedStatuses,
@@ -73,29 +77,29 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   };
 
   const toggleAllMotifs = () => {
-    if (selectedMotifs.length === mockMotifs.length) {
+    if (selectedMotifs.length === motifs.length) {
       onMotifsChange([]);
     } else {
-      onMotifsChange(mockMotifs.map(m => m.id));
+      onMotifsChange(motifs.map(m => m.id));
     }
   };
 
   const toggleAllPractitioners = () => {
-    if (selectedPractitioners.length === mockPractitioners.length) {
+    if (selectedPractitioners.length === practitioners.length) {
       onPractitionersChange([]);
     } else {
-      onPractitionersChange(mockPractitioners.map(p => p.id));
+      onPractitionersChange(practitioners.map(p => p.id));
     }
   };
 
-  const filteredMotifs = mockMotifs.filter(motif =>
+  const filteredMotifs = motifs.filter(motif =>
     motif.name.toLowerCase().includes(motifSearch.toLowerCase())
   );
 
   // Indicateurs de filtres actifs (pour headers fermés)
   const statusFilterActive = selectedStatuses.length !== actualStatuses.length;
-  const motifFilterActive = selectedMotifs.length !== mockMotifs.length;
-  const agendaFilterActive = selectedPractitioners.length > 0 && selectedPractitioners.length !== mockPractitioners.length;
+  const motifFilterActive = selectedMotifs.length !== motifs.length;
+  const agendaFilterActive = selectedPractitioners.length > 0 && selectedPractitioners.length !== practitioners.length;
 
   if (isCollapsed) {
     return null;
@@ -178,7 +182,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-medium text-muted-foreground/70">
-              {selectedMotifs.length}/{mockMotifs.length}
+              {selectedMotifs.length}/{motifs.length}
             </span>
             {openSection === 'motifs' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </div>
@@ -207,7 +211,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
             {/* Select All */}
             <label className="flex items-center gap-2 cursor-pointer group pb-1.5 border-b border-border px-1">
               <Checkbox 
-                checked={selectedMotifs.length === mockMotifs.length}
+                checked={selectedMotifs.length === motifs.length}
                 onCheckedChange={toggleAllMotifs}
                 className="h-3.5 w-3.5"
               />
@@ -256,7 +260,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-medium text-muted-foreground/70">
-              {selectedPractitioners.length || 'Tous'}/{mockPractitioners.length}
+              {selectedPractitioners.length || 'Tous'}/{practitioners.length}
             </span>
             {openSection === 'agendas' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </div>
@@ -273,7 +277,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
             {/* Select All */}
             <label className="flex items-center gap-2 cursor-pointer group pb-1.5 border-b border-border px-1">
               <Checkbox 
-                checked={selectedPractitioners.length === mockPractitioners.length}
+                checked={selectedPractitioners.length === practitioners.length}
                 onCheckedChange={toggleAllPractitioners}
                 className="h-3.5 w-3.5"
               />
@@ -284,7 +288,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
 
             {/* Practitioners list */}
             <div className="max-h-[100px] overflow-y-auto custom-scrollbar space-y-0.5">
-              {mockPractitioners.map((pract) => (
+              {practitioners.map((pract) => (
                 <label 
                   key={pract.id}
                   className="flex items-center gap-2 cursor-pointer group py-0.5 px-1 rounded-md hover:bg-muted/50 transition-colors"
