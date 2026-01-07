@@ -1,7 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from '@/components/layout/MainLayout';
-import CalendarToolbar from '@/components/calendar/CalendarToolbar';
+import SecondaryHeader from '@/components/calendar/SecondaryHeader';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import FiltersPanel from '@/components/calendar/FiltersPanel';
@@ -23,6 +23,7 @@ const AgendaPage: React.FC = () => {
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isNewPatientOpen, setIsNewPatientOpen] = React.useState(false);
   const [isNewNoteOpen, setIsNewNoteOpen] = React.useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = React.useState(true);
   
   // Filters
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>(mockMotifs.map(m => m.id));
@@ -79,47 +80,55 @@ const AgendaPage: React.FC = () => {
 
   return (
     <MainLayout activeNav={activeNav} onNavChange={setActiveNav}>
-      <div className="h-full flex">
-        {/* Left Sidebar */}
-        <motion.aside 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-64 border-r border-border bg-muted/20 p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
-        >
-          {/* Trouver un créneau button */}
-          <AgendaSidebarHeader onNewAppointment={() => setIsNewPatientOpen(true)} />
-          
-          {/* Mini Calendar */}
-          <MiniCalendar
-            currentDate={calendar.currentDate}
-            selectedDate={calendar.selectedDate}
-            onSelectDate={calendar.selectDate}
-            appointments={mockAppointments}
-          />
+      {/* Secondary Header - Below main blue header */}
+      <SecondaryHeader
+        dateLabel={calendar.getDateRangeLabel()}
+        view={calendar.view}
+        onViewChange={calendar.setView}
+        onToday={calendar.goToToday}
+        onPrevious={calendar.goToPrevious}
+        onNext={calendar.goToNext}
+        onToggleSidebar={() => setIsSidebarVisible(!isSidebarVisible)}
+        isSidebarVisible={isSidebarVisible}
+      />
 
-          {/* Filters: Statuts, Motifs, Agendas */}
-          <FiltersPanel
-            selectedMotifs={selectedMotifs}
-            onMotifsChange={setSelectedMotifs}
-            selectedStatuses={selectedStatuses}
-            onStatusesChange={setSelectedStatuses}
-            selectedPractitioners={selectedPractitioners}
-            onPractitionersChange={setSelectedPractitioners}
-          />
-        </motion.aside>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar */}
+        <AnimatePresence>
+          {isSidebarVisible && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 256, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-r border-border bg-muted/20 p-4 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
+            >
+              {/* Trouver un créneau button */}
+              <AgendaSidebarHeader onNewAppointment={() => setIsNewPatientOpen(true)} />
+              
+              {/* Mini Calendar */}
+              <MiniCalendar
+                currentDate={calendar.currentDate}
+                selectedDate={calendar.selectedDate}
+                onSelectDate={calendar.selectDate}
+                appointments={mockAppointments}
+              />
+
+              {/* Filters: Statuts, Motifs, Agendas */}
+              <FiltersPanel
+                selectedMotifs={selectedMotifs}
+                onMotifsChange={setSelectedMotifs}
+                selectedStatuses={selectedStatuses}
+                onStatusesChange={setSelectedStatuses}
+                selectedPractitioners={selectedPractitioners}
+                onPractitionersChange={setSelectedPractitioners}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col p-4 min-w-0">
-          <CalendarToolbar
-            dateLabel={calendar.getDateRangeLabel()}
-            view={calendar.view}
-            onViewChange={calendar.setView}
-            onToday={calendar.goToToday}
-            onPrevious={calendar.goToPrevious}
-            onNext={calendar.goToNext}
-            onNewAppointment={() => setIsNewPatientOpen(true)}
-          />
-
+        <main className="flex-1 flex flex-col p-4 min-w-0 overflow-hidden">
           <WeekGrid
             days={calendar.getWeekDays()}
             appointments={filteredAppointments}
