@@ -111,14 +111,11 @@ const AppointmentPreviewCard: React.FC<AppointmentPreviewCardProps> = ({
               </div>
             )}
 
-            {/* Practitioner Badge */}
-            <div className="pt-2">
-              <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 text-xs text-muted-foreground">
-                <span 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: appointment.practitioner.color }}
-                />
-                <span>{appointment.practitioner.title} {appointment.practitioner.lastName}</span>
+            {/* Practitioner/Agenda Badge */}
+            <div className="pt-2 border-t border-border">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-muted/60 text-xs text-foreground font-medium">
+                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>{appointment.practitioner.firstName} {appointment.practitioner.lastName}</span>
               </div>
             </div>
           </div>
