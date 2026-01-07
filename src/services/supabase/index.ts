@@ -28,3 +28,4 @@ export * from './waitingListService';
 export * from './medicalService';
 export * from './auditService';
 export * from './allergiesService';
+export * from './openingsService';

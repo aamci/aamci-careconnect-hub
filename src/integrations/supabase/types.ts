@@ -1082,6 +1082,125 @@ export type Database = {
         }
         Relationships: []
       }
+      opening_motifs: {
+        Row: {
+          created_at: string
+          id: string
+          max_appointments: number | null
+          motif_id: string
+          opening_id: string | null
+          series_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_appointments?: number | null
+          motif_id: string
+          opening_id?: string | null
+          series_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_appointments?: number | null
+          motif_id?: string
+          opening_id?: string | null
+          series_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opening_motifs_motif_id_fkey"
+            columns: ["motif_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_motifs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opening_motifs_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "practitioner_openings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opening_motifs_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "v_openings_with_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opening_motifs_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "opening_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opening_series: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          practitioner_id: string
+          recurrence_days: number[] | null
+          recurrence_end_date: string | null
+          recurrence_interval: number | null
+          recurrence_type: string
+          site_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          practitioner_id: string
+          recurrence_days?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type: string
+          site_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          practitioner_id?: string
+          recurrence_days?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string
+          site_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opening_series_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opening_series_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -1625,6 +1744,89 @@ export type Database = {
           {
             foreignKeyName: "practitioner_exceptions_practitioner_id_fkey"
             columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practitioner_openings: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          is_cancelled: boolean | null
+          is_exception: boolean | null
+          opening_date: string
+          practitioner_id: string
+          series_id: string | null
+          site_id: string | null
+          start_time: string
+          substitute_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          is_cancelled?: boolean | null
+          is_exception?: boolean | null
+          opening_date: string
+          practitioner_id: string
+          series_id?: string | null
+          site_id?: string | null
+          start_time: string
+          substitute_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          is_cancelled?: boolean | null
+          is_exception?: boolean | null
+          opening_date?: string
+          practitioner_id?: string
+          series_id?: string | null
+          site_id?: string | null
+          start_time?: string
+          substitute_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_openings_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "opening_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_substitute_id_fkey"
+            columns: ["substitute_id"]
             isOneToOne: false
             referencedRelation: "practitioners"
             referencedColumns: ["id"]
@@ -2380,6 +2582,63 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "v_patient_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_openings_with_details: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          end_time: string | null
+          id: string | null
+          is_cancelled: boolean | null
+          is_exception: boolean | null
+          is_recurring: boolean | null
+          motifs: Json | null
+          opening_date: string | null
+          practitioner_color: string | null
+          practitioner_first_name: string | null
+          practitioner_id: string | null
+          practitioner_last_name: string | null
+          recurrence_days: number[] | null
+          recurrence_interval: number | null
+          recurrence_type: string | null
+          series_id: string | null
+          site_id: string | null
+          site_name: string | null
+          start_time: string | null
+          substitute_id: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_openings_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "opening_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_openings_substitute_id_fkey"
+            columns: ["substitute_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
             referencedColumns: ["id"]
           },
         ]

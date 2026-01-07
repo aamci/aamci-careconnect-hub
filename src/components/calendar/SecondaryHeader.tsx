@@ -22,6 +22,8 @@ interface SecondaryHeaderProps {
   onNext: () => void;
   onToggleSidebar?: () => void;
   isSidebarVisible?: boolean;
+  isOpeningEditMode?: boolean;
+  onToggleOpeningEditMode?: () => void;
 }
 
 const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
@@ -33,6 +35,8 @@ const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
   onNext,
   onToggleSidebar,
   isSidebarVisible = true,
+  isOpeningEditMode = false,
+  onToggleOpeningEditMode,
 }) => {
   const viewOptions: { id: CalendarView; label: string }[] = [
     { id: 'list', label: 'Liste' },
@@ -114,15 +118,29 @@ const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
         ))}
       </div>
 
-      {/* Right Section - Display Settings */}
-      <div className="flex items-center">
+      {/* Right Section - Openings Edit & Display Settings */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={isOpeningEditMode ? "default" : "outline"}
+          size="sm"
+          className={cn(
+            "h-8 gap-2 text-xs",
+            isOpeningEditMode && "bg-amber-400 hover:bg-amber-500 text-amber-950"
+          )}
+          onClick={onToggleOpeningEditMode}
+        >
+          <CalendarIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {isOpeningEditMode ? 'Revenir à l\'agenda' : 'Modifier les plages d\'ouverture'}
+          </span>
+        </Button>
         <Button
           variant="ghost"
           size="sm"
           className="h-8 gap-2 text-muted-foreground hover:text-foreground"
         >
           <Settings2 className="w-4 h-4" />
-          <span className="text-xs hidden sm:inline">Paramètres d'affichage</span>
+          <span className="text-xs hidden sm:inline">Affichage de l'agenda</span>
         </Button>
       </div>
     </div>
