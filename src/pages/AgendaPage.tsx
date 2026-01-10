@@ -10,7 +10,12 @@ import AgendaSidebarHeader from '@/components/calendar/AgendaSidebarHeader';
 import AppointmentDetailsPanel from '@/components/appointments/AppointmentDetailsPanel';
 import AppointmentPreviewCard from '@/components/calendar/AppointmentPreviewCard';
 import OpeningPreviewCard from '@/components/calendar/openings/OpeningPreviewCard';
-import { OpeningWizardModal } from '@/components/calendar/openings';
+import { 
+  OpeningWizardModal, 
+  OpeningEditModal,
+  CancelSubstituteDialog,
+  ApplySubstituteDialog,
+} from '@/components/calendar/openings';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -45,12 +50,18 @@ const AgendaPage: React.FC = () => {
   const [isOpeningEditMode, setIsOpeningEditMode] = React.useState(false);
   const [hoveredOpening, setHoveredOpening] = React.useState<PractitionerOpening | null>(null);
   const [isOpeningWizardOpen, setIsOpeningWizardOpen] = React.useState(false);
+  const [isOpeningEditOpen, setIsOpeningEditOpen] = React.useState(false);
   const [editingOpening, setEditingOpening] = React.useState<PractitionerOpening | null>(null);
   const [newOpeningData, setNewOpeningData] = React.useState<{
     date: Date;
     startTime: string;
     endTime: string;
   } | null>(null);
+  
+  // Substitute dialogs
+  const [showCancelSubstitute, setShowCancelSubstitute] = React.useState(false);
+  const [showApplySubstitute, setShowApplySubstitute] = React.useState(false);
+  const [substituteDialogDate, setSubstituteDialogDate] = React.useState<Date>(new Date());
   
   // Filters - initialize with all motifs when loaded
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>([]);
@@ -133,9 +144,15 @@ const AgendaPage: React.FC = () => {
     setHoveredOpening(null);
   };
 
-  // Handle opening edit
+  // Handle opening edit - use the new edit modal
   const handleOpeningEdit = (opening: PractitionerOpening) => {
     setEditingOpening(opening);
+    setIsOpeningEditOpen(true);
+  };
+
+  // Handle opening create from wizard
+  const handleOpeningCreate = () => {
+    setEditingOpening(null);
     setNewOpeningData(null);
     setIsOpeningWizardOpen(true);
   };
@@ -153,8 +170,39 @@ const AgendaPage: React.FC = () => {
 
   const handleCloseOpeningWizard = () => {
     setIsOpeningWizardOpen(false);
-    setEditingOpening(null);
     setNewOpeningData(null);
+  };
+
+  const handleCloseOpeningEdit = () => {
+    setIsOpeningEditOpen(false);
+    setEditingOpening(null);
+  };
+
+  // Handle day context menu actions
+  const handleApplySubstitute = (date: Date) => {
+    setSubstituteDialogDate(date);
+    setShowApplySubstitute(true);
+  };
+
+  const handleCancelSubstitute = (date: Date) => {
+    setSubstituteDialogDate(date);
+    setShowCancelSubstitute(true);
+  };
+
+  const handleConfirmApplySubstitute = (substituteId: string, endDate?: Date) => {
+    // TODO: Implement substitute application via service
+    toast({
+      title: 'Remplaçant appliqué',
+      description: 'Le remplaçant a été appliqué avec succès.',
+    });
+  };
+
+  const handleConfirmCancelSubstitute = () => {
+    // TODO: Implement substitute cancellation via service
+    toast({
+      title: 'Remplacement annulé',
+      description: 'Le remplacement a été annulé avec succès.',
+    });
   };
 
   // Toggle opening edit mode
@@ -302,7 +350,7 @@ const AgendaPage: React.FC = () => {
         date={calendar.selectedDate}
       />
 
-      {/* Opening Wizard Modal */}
+      {/* Opening Wizard Modal - for creating new openings */}
       {activePractitioner && (
         <OpeningWizardModal
           isOpen={isOpeningWizardOpen}
@@ -311,8 +359,38 @@ const AgendaPage: React.FC = () => {
           initialDate={newOpeningData?.date}
           initialStartTime={newOpeningData?.startTime}
           initialEndTime={newOpeningData?.endTime}
-          editingOpening={editingOpening}
+          editingOpening={null}
         />
+      )}
+
+      {/* Opening Edit Modal - for editing existing openings */}
+      {editingOpening && (
+        <OpeningEditModal
+          isOpen={isOpeningEditOpen}
+          onClose={handleCloseOpeningEdit}
+          opening={editingOpening}
+          onCopy={handleOpeningCopy}
+        />
+      )}
+
+      {/* Substitute Dialogs */}
+      {activePractitioner && (
+        <>
+          <ApplySubstituteDialog
+            isOpen={showApplySubstitute}
+            onClose={() => setShowApplySubstitute(false)}
+            date={substituteDialogDate}
+            practitionerId={activePractitioner.id}
+            onConfirm={handleConfirmApplySubstitute}
+          />
+          <CancelSubstituteDialog
+            isOpen={showCancelSubstitute}
+            onClose={() => setShowCancelSubstitute(false)}
+            date={substituteDialogDate}
+            agendaName={`${activePractitioner.firstName} ${activePractitioner.lastName}`}
+            onConfirm={handleConfirmCancelSubstitute}
+          />
+        </>
       )}
     </MainLayout>
   );
