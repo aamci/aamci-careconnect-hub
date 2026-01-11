@@ -42,17 +42,24 @@ const OpeningSlot: React.FC<OpeningSlotProps> = ({
     return null; // In non-edit mode, openings are represented by white (available) slots
   }
 
+  // Handle click to edit directly
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit?.(opening);
+  };
+
   // Edit mode: show the opening with controls
   return (
     <motion.div
       className={cn(
-        'absolute left-1 right-1 rounded-md overflow-hidden',
+        'absolute left-1 right-1 rounded-md overflow-hidden cursor-pointer',
         'bg-white dark:bg-slate-900',
         'border-2 border-dashed border-amber-400',
         'transition-all duration-150',
         isHovered && 'shadow-lg border-solid z-20'
       )}
       style={style}
+      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       initial={{ opacity: 0 }}

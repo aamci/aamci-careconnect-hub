@@ -220,9 +220,9 @@ const OpeningWizardModal: React.FC<OpeningWizardModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-2xl h-[85vh] p-0 flex flex-col" hideCloseButton>
         {/* Header */}
-        <div className="bg-amber-400 text-amber-950 px-6 py-4 flex items-center justify-between">
+        <div className="bg-amber-400 text-amber-950 px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
             {step !== 'schedule' && (
               <Button
@@ -247,8 +247,8 @@ const OpeningWizardModal: React.FC<OpeningWizardModalProps> = ({
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        {/* Content - scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
           <AnimatePresence mode="wait">
             {/* Step 1: Schedule */}
             {step === 'schedule' && (
@@ -663,7 +663,7 @@ const OpeningWizardModal: React.FC<OpeningWizardModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-100 dark:bg-slate-800 border-t flex justify-end">
+        <div className="px-6 py-4 bg-muted/50 border-t flex justify-end flex-shrink-0">
           <Button
             onClick={() => {
               if (step === 'schedule') setStep('motifs');
