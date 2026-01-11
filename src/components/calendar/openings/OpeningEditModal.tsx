@@ -174,24 +174,27 @@ const OpeningEditModal: React.FC<OpeningEditModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => onClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
-          <div className="flex h-full">
+        <DialogContent 
+          className="max-w-4xl h-[85vh] p-0 gap-0 flex flex-col" 
+          hideCloseButton
+        >
+          <div className="flex flex-1 min-h-0">
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0">
               {/* Header */}
-              <div className="bg-slate-100 dark:bg-slate-800 px-6 py-4 flex items-center justify-between border-b">
-                <h2 className="text-lg font-semibold">Modifier la plage d'ouverture</h2>
+              <div className="bg-amber-400 px-6 py-4 flex items-center justify-between flex-shrink-0">
+                <h2 className="text-lg font-semibold text-amber-950">Modifier la plage d'ouverture</h2>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="rounded-full"
+                  className="rounded-full hover:bg-amber-500/20 text-amber-950"
                 >
                   <X className="w-5 h-5" />
                 </Button>
               </div>
 
-              {/* Form Content */}
+              {/* Form Content - scrollable */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Title */}
                 <div className="flex items-start gap-4">
@@ -422,7 +425,7 @@ const OpeningEditModal: React.FC<OpeningEditModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-slate-100 dark:bg-slate-800 border-t flex justify-end">
+              <div className="px-6 py-4 bg-muted/50 border-t flex justify-end flex-shrink-0">
                 <Button
                   onClick={handleSubmit}
                   className="bg-amber-400 hover:bg-amber-500 text-amber-950 font-semibold px-8"
@@ -434,11 +437,11 @@ const OpeningEditModal: React.FC<OpeningEditModalProps> = ({
             </div>
 
             {/* Side Panel */}
-            <div className="w-48 border-l bg-muted/30 flex flex-col">
-              <div className="p-2 space-y-1">
+            <div className="w-52 border-l bg-muted/30 flex flex-col flex-shrink-0">
+              <div className="p-3 space-y-1">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 h-10"
+                  className="w-full justify-start gap-2 h-10 text-sm"
                   onClick={handleCopy}
                 >
                   <Copy className="w-4 h-4" />
@@ -447,20 +450,20 @@ const OpeningEditModal: React.FC<OpeningEditModalProps> = ({
 
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 h-10"
+                  className="w-full justify-start gap-2 h-10 text-sm"
                   onClick={() => setShowHistory(!showHistory)}
                 >
                   <History className="w-4 h-4" />
-                  Historique des actions
+                  Historique
                 </Button>
               </div>
 
               <div className="flex-1" />
 
-              <div className="p-2">
+              <div className="p-3 border-t">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="w-full justify-start gap-2 h-10 text-sm text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => setShowDeleteDialog(true)}
                 >
                   <Trash2 className="w-4 h-4" />
