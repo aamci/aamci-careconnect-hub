@@ -1,5 +1,6 @@
 export { default as OpeningPreviewCard } from './OpeningPreviewCard';
 export { default as OpeningSlot } from './OpeningSlot';
+export { default as ModifyScopeDialog, type ModifyScope } from './ModifyScopeDialog';
 export { default as OpeningWizardModal } from './OpeningWizardModal';
 export { default as OpeningEditModal } from './OpeningEditModal';
 export { default as DeleteOpeningDialog } from './DeleteOpeningDialog';
