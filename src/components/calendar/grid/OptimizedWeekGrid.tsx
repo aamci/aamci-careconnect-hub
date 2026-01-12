@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { format, isToday } from 'date-fns';
+import { format, isToday, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Appointment } from '@/types';
 import { type PractitionerOpening } from '@/services/supabase/openingsService';
@@ -11,6 +11,7 @@ import EventCard from './EventCard';
 import OpeningSlot from '../openings/OpeningSlot';
 import { useOverlapLayout, getEventPosition } from '@/hooks/useOverlapLayout';
 import { useGridDensity } from '@/hooks/useGridDensity';
+import { useAgendaPreferences } from '@/hooks/useAgendaPreferences';
 
 interface OptimizedWeekGridProps {
   days: Date[];
@@ -47,41 +48,70 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   onOpeningDragCreate,
   onSlotClick,
   onDayClick,
-  startHour = 7,
-  endHour = 20,
+  startHour: propStartHour = 7,
+  endHour: propEndHour = 20,
   unavailableSlots = [],
 }) => {
   const { config, isCompact } = useGridDensity();
+  const { preferences, isDayVisible } = useAgendaPreferences();
+  
+  // Use preferences for time range, fallback to props
+  const startHour = parseInt(preferences.displayStartTime.split(':')[0]) || propStartHour;
+  const endHour = parseInt(preferences.displayEndTime.split(':')[0]) || propEndHour;
+  
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
+
+  // Filter days based on visibility preferences
+  const visibleDays = useMemo(() => {
+    return days.filter(day => {
+      // Convert getDay() (0=Sun, 1=Mon, ..., 6=Sat) to our format (0=Mon, ..., 6=Sun)
+      const jsDay = getDay(day); // 0=Sunday
+      const ourDay = jsDay === 0 ? 6 : jsDay - 1; // Convert to 0=Monday format
+      
+      // Check if today or future if showOnlyUpcomingDays is enabled
+      if (preferences.showOnlyUpcomingDays) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (day < today) return false;
+      }
+      
+      return isDayVisible(ourDay);
+    });
+  }, [days, isDayVisible, preferences.showOnlyUpcomingDays]);
 
   // Group appointments by day
   const appointmentsByDay = useMemo(() => {
     const grouped: Record<string, Appointment[]> = {};
-    days.forEach(day => {
+    visibleDays.forEach(day => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = appointments.filter(apt =>
-        format(apt.startTime, 'yyyy-MM-dd') === key
-      );
+      // Filter appointments within time range
+      grouped[key] = appointments.filter(apt => {
+        if (format(apt.startTime, 'yyyy-MM-dd') !== key) return false;
+        
+        // Check if appointment is within display time range
+        const aptHour = apt.startTime.getHours();
+        return aptHour >= startHour && aptHour < endHour;
+      });
     });
     return grouped;
-  }, [days, appointments]);
+  }, [visibleDays, appointments, startHour, endHour]);
 
   // Group openings by day
   const openingsByDay = useMemo(() => {
     const grouped: Record<string, PractitionerOpening[]> = {};
-    days.forEach(day => {
+    visibleDays.forEach(day => {
       const key = format(day, 'yyyy-MM-dd');
       grouped[key] = openings.filter(op =>
         format(op.openingDate, 'yyyy-MM-dd') === key && !op.isCancelled
       );
     });
     return grouped;
-  }, [days, openings]);
+  }, [visibleDays, openings]);
 
   // Calculate counts for header
   const appointmentCounts = useMemo(() => {
     const counts: Record<string, { current: number; total: number }> = {};
-    days.forEach(day => {
+    visibleDays.forEach(day => {
       const key = format(day, 'yyyy-MM-dd');
       counts[key] = {
         current: appointmentsByDay[key]?.length || 0,
@@ -89,7 +119,7 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
       };
     });
     return counts;
-  }, [days, appointmentsByDay]);
+  }, [visibleDays, appointmentsByDay]);
 
   return (
     <div className={cn(
@@ -106,7 +136,7 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
 
       {/* Sticky Header */}
       <DayHeaderRow
-        days={days}
+        days={visibleDays}
         appointmentCounts={appointmentCounts}
         onDayClick={onDayClick}
         showTimeAxisSpacer
@@ -123,7 +153,7 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
           />
 
           {/* Day Columns */}
-          {days.map((day, dayIndex) => {
+          {visibleDays.map((day, dayIndex) => {
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayAppointments = appointmentsByDay[dateKey] || [];
             const dayOpenings = openingsByDay[dateKey] || [];

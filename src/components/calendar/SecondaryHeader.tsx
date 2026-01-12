@@ -24,6 +24,7 @@ interface SecondaryHeaderProps {
   isSidebarVisible?: boolean;
   isOpeningEditMode?: boolean;
   onToggleOpeningEditMode?: () => void;
+  onOpenSettings?: () => void;
 }
 
 const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
@@ -37,6 +38,7 @@ const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
   isSidebarVisible = true,
   isOpeningEditMode = false,
   onToggleOpeningEditMode,
+  onOpenSettings,
 }) => {
   const viewOptions: { id: CalendarView; label: string }[] = [
     { id: 'list', label: 'Liste' },
@@ -138,6 +140,7 @@ const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
           variant="ghost"
           size="sm"
           className="h-8 gap-2 text-muted-foreground hover:text-foreground"
+          onClick={onOpenSettings}
         >
           <Settings2 className="w-4 h-4" />
           <span className="text-xs hidden sm:inline">Affichage de l'agenda</span>
