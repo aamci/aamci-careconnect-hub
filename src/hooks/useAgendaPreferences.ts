@@ -44,7 +44,7 @@ export interface AgendaPreferences {
 }
 
 const DEFAULT_PREFERENCES: AgendaPreferences = {
-  zoomLevel: 'standard',
+  zoomLevel: 'standard', // Standard is the default
   displayStartTime: '07:00',
   displayEndTime: '19:00',
   hoverGranularityMinutes: 'default',
@@ -64,7 +64,7 @@ const DEFAULT_PREFERENCES: AgendaPreferences = {
   enablePatientNameBlurOption: false,
 };
 
-const STORAGE_KEY = 'agenda_display_preferences';
+const STORAGE_KEY = 'agenda_display_preferences_v2'; // v2 to reset defaults
 
 // Zoom level to slot height mapping
 const ZOOM_SLOT_HEIGHTS: Record<ZoomLevel, number> = {
