@@ -16,6 +16,7 @@ import {
   CancelSubstituteDialog,
   ApplySubstituteDialog,
 } from '@/components/calendar/openings';
+import { AgendaSettingsModal } from '@/components/calendar/settings';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -62,6 +63,9 @@ const AgendaPage: React.FC = () => {
   const [showCancelSubstitute, setShowCancelSubstitute] = React.useState(false);
   const [showApplySubstitute, setShowApplySubstitute] = React.useState(false);
   const [substituteDialogDate, setSubstituteDialogDate] = React.useState<Date>(new Date());
+  
+  // Settings modal
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   
   // Filters - initialize with all motifs when loaded
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>([]);
@@ -241,6 +245,7 @@ const AgendaPage: React.FC = () => {
         isSidebarVisible={isSidebarVisible}
         isOpeningEditMode={isOpeningEditMode}
         onToggleOpeningEditMode={handleToggleOpeningEditMode}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -392,6 +397,12 @@ const AgendaPage: React.FC = () => {
           />
         </>
       )}
+
+      {/* Agenda Display Settings Modal */}
+      <AgendaSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </MainLayout>
   );
 };
