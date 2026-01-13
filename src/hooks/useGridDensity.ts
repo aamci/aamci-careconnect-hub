@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
+import { useAgendaPreferences, type ZoomLevel } from './useAgendaPreferences';
 
 export type DensityMode = 'comfort' | 'compact';
 
@@ -10,62 +11,63 @@ interface DensityConfig {
   axisWidth: number;
 }
 
-const DENSITY_CONFIGS: Record<DensityMode, DensityConfig> = {
-  comfort: {
-    slotHeight: 48,
-    eventPadding: 'px-2 py-1',
-    fontSize: 'text-[10px]',
-    headerHeight: 44,
-    axisWidth: 52,
-  },
-  compact: {
-    slotHeight: 36,
-    eventPadding: 'px-1.5 py-0.5',
-    fontSize: 'text-[9px]',
-    headerHeight: 40,
-    axisWidth: 48,
-  },
+// Map zoom levels to slot heights
+const getSlotHeightForZoom = (zoomLevel: ZoomLevel): number => {
+  switch (zoomLevel) {
+    case 'minimum': return 24;
+    case 'standard': return 36;
+    case 'maximum': return 60;
+    default: return 36;
+  }
 };
 
-const STORAGE_KEY = 'agenda_density_mode';
+// Get density config based on zoom level
+const getDensityConfig = (zoomLevel: ZoomLevel): DensityConfig => {
+  const slotHeight = getSlotHeightForZoom(zoomLevel);
+  
+  if (zoomLevel === 'minimum') {
+    return {
+      slotHeight,
+      eventPadding: 'px-1 py-0',
+      fontSize: 'text-[8px]',
+      headerHeight: 36,
+      axisWidth: 44,
+    };
+  }
+  
+  if (zoomLevel === 'maximum') {
+    return {
+      slotHeight,
+      eventPadding: 'px-2 py-1.5',
+      fontSize: 'text-xs',
+      headerHeight: 48,
+      axisWidth: 56,
+    };
+  }
+  
+  // Standard
+  return {
+    slotHeight,
+    eventPadding: 'px-1.5 py-0.5',
+    fontSize: 'text-[10px]',
+    headerHeight: 40,
+    axisWidth: 52,
+  };
+};
 
 export function useGridDensity() {
-  const [mode, setModeState] = useState<DensityMode>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'comfort' || stored === 'compact') {
-        return stored;
-      }
-    }
-    return 'compact'; // Default to compact
-  });
+  const { preferences } = useAgendaPreferences();
+  
+  const config = useMemo(() => {
+    return getDensityConfig(preferences.zoomLevel);
+  }, [preferences.zoomLevel]);
 
-  const setMode = useCallback((newMode: DensityMode) => {
-    setModeState(newMode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, newMode);
-    }
-  }, []);
-
-  const toggleMode = useCallback(() => {
-    setMode(mode === 'comfort' ? 'compact' : 'comfort');
-  }, [mode, setMode]);
-
-  const config = DENSITY_CONFIGS[mode];
-
-  // Apply CSS variables
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty('--grid-slot-height', `${config.slotHeight}px`);
-    root.style.setProperty('--grid-header-height', `${config.headerHeight}px`);
-    root.style.setProperty('--grid-axis-width', `${config.axisWidth}px`);
-  }, [config]);
+  const isCompact = preferences.zoomLevel === 'minimum';
 
   return {
-    mode,
-    setMode,
-    toggleMode,
+    mode: isCompact ? 'compact' : 'comfort' as DensityMode,
     config,
-    isCompact: mode === 'compact',
+    isCompact,
+    zoomLevel: preferences.zoomLevel,
   };
 }

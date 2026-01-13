@@ -127,6 +127,10 @@ const AgendaPage: React.FC = () => {
       setNewOpeningData({ date, startTime, endTime });
       setEditingOpening(null);
       setIsOpeningWizardOpen(true);
+    } else {
+      // Normal mode - open new patient modal for booking
+      calendar.selectDate(date);
+      setIsNewPatientOpen(true);
     }
   };
 
