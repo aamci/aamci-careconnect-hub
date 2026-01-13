@@ -64,8 +64,8 @@ const DEFAULT_PREFERENCES: AgendaPreferences = {
   enablePatientNameBlurOption: false,
 };
 
-// Force reset to v3 to ensure new defaults are applied
-const STORAGE_KEY = 'agenda_display_preferences_v3';
+// Force reset to v4 to ensure new defaults are applied (standard zoom)
+const STORAGE_KEY = 'agenda_display_preferences_v4';
 
 // Zoom level to slot height mapping
 const ZOOM_SLOT_HEIGHTS: Record<ZoomLevel, number> = {
@@ -81,11 +81,14 @@ export function useAgendaPreferences() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
+        const parsed = { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
+        console.log('[AgendaPreferences] Loaded from storage:', parsed);
+        return parsed;
       }
     } catch (e) {
       console.error('Failed to load agenda preferences:', e);
     }
+    console.log('[AgendaPreferences] Using defaults:', DEFAULT_PREFERENCES);
     return DEFAULT_PREFERENCES;
   });
 

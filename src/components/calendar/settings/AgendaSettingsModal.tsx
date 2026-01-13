@@ -98,11 +98,15 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
       <DialogContent 
         className="max-w-2xl h-[90vh] flex flex-col p-0 gap-0 bg-background"
         hideCloseButton={false}
+        aria-describedby="agenda-settings-description"
       >
         <DialogHeader className="px-6 py-4 border-b border-border flex-shrink-0 bg-background">
           <DialogTitle className="text-xl font-semibold text-center">
             Affichage de l'agenda
           </DialogTitle>
+          <p id="agenda-settings-description" className="sr-only">
+            Paramètres d'affichage de l'agenda pour personnaliser la vue
+          </p>
         </DialogHeader>
 
         {/* Scrollable Content */}
