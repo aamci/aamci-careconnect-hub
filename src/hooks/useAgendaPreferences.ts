@@ -44,14 +44,14 @@ export interface AgendaPreferences {
 }
 
 const DEFAULT_PREFERENCES: AgendaPreferences = {
-  zoomLevel: 'standard', // Standard is the default
+  zoomLevel: 'standard', // Standard is the default - IMPORTANT
   displayStartTime: '07:00',
   displayEndTime: '19:00',
   hoverGranularityMinutes: 'default',
   schoolHolidaysRegion: null,
   showHolidaysMiniCalendar: false,
   showHolidaysMainCalendar: false,
-  weekVisibleDays: [0, 1, 2, 3, 4], // Mon-Fri
+  weekVisibleDays: [0, 1, 2, 3, 4, 5, 6], // All days visible by default (Mon-Sun)
   showOnlyUpcomingDays: false,
   showConsultationReasonsInDayView: true,
   showSideBySideAgendasInWeekView: false,
@@ -64,7 +64,8 @@ const DEFAULT_PREFERENCES: AgendaPreferences = {
   enablePatientNameBlurOption: false,
 };
 
-const STORAGE_KEY = 'agenda_display_preferences_v2'; // v2 to reset defaults
+// Force reset to v3 to ensure new defaults are applied
+const STORAGE_KEY = 'agenda_display_preferences_v3';
 
 // Zoom level to slot height mapping
 const ZOOM_SLOT_HEIGHTS: Record<ZoomLevel, number> = {
