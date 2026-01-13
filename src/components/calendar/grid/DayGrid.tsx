@@ -10,7 +10,7 @@ import UnavailableSlot from './UnavailableSlot';
 import EventCard from './EventCard';
 import OpeningSlot from '../openings/OpeningSlot';
 import { useOverlapLayout, getEventPosition } from '@/hooks/useOverlapLayout';
-import { useGridDensity } from '@/hooks/useGridDensity';
+import { useGridDensity, type ZoomLevel } from '@/hooks/useGridDensity';
 
 interface DayGridProps {
   day: Date;
@@ -29,6 +29,7 @@ interface DayGridProps {
   startHour?: number;
   endHour?: number;
   unavailableSlots?: Array<{ startHour: number; endHour: number }>;
+  zoomLevel?: ZoomLevel;
 }
 
 const DayGrid: React.FC<DayGridProps> = ({
@@ -48,8 +49,9 @@ const DayGrid: React.FC<DayGridProps> = ({
   startHour = 7,
   endHour = 20,
   unavailableSlots = [],
+  zoomLevel = 'standard',
 }) => {
-  const { config, isCompact } = useGridDensity();
+  const { config, isCompact } = useGridDensity(zoomLevel);
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
   const isTodayDate = isToday(day);
 

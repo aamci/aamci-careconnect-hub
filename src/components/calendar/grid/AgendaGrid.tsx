@@ -2,6 +2,7 @@ import React from 'react';
 import { CalendarView } from '@/hooks/useCalendar';
 import { Appointment } from '@/types';
 import { type PractitionerOpening } from '@/services/supabase/openingsService';
+import { type ZoomLevel } from '@/hooks/useGridDensity';
 import OptimizedWeekGrid from './OptimizedWeekGrid';
 import DayGrid from './DayGrid';
 import MonthGrid from './MonthGrid';
@@ -27,6 +28,7 @@ interface AgendaGridProps {
   onDayClick?: (date: Date) => void;
   startHour?: number;
   endHour?: number;
+  zoomLevel?: ZoomLevel;
 }
 
 const AgendaGrid: React.FC<AgendaGridProps> = ({
@@ -49,6 +51,7 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
   onDayClick,
   startHour = 7,
   endHour = 20,
+  zoomLevel = 'standard',
 }) => {
   switch (view) {
     case 'day':
@@ -69,6 +72,7 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
           onSlotClick={onSlotClick}
           startHour={startHour}
           endHour={endHour}
+          zoomLevel={zoomLevel}
         />
       );
 
@@ -91,6 +95,7 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
           onDayClick={onDayClick}
           startHour={startHour}
           endHour={endHour}
+          zoomLevel={zoomLevel}
         />
       );
 
@@ -133,6 +138,7 @@ const AgendaGrid: React.FC<AgendaGridProps> = ({
           onSlotClick={onSlotClick}
           startHour={startHour}
           endHour={endHour}
+          zoomLevel={zoomLevel}
         />
       );
   }

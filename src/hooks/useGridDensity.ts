@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useAgendaPreferences, type ZoomLevel } from './useAgendaPreferences';
 
+export type ZoomLevel = 'minimum' | 'standard' | 'maximum';
 export type DensityMode = 'comfort' | 'compact';
 
 interface DensityConfig {
@@ -55,19 +55,18 @@ const getDensityConfig = (zoomLevel: ZoomLevel): DensityConfig => {
   };
 };
 
-export function useGridDensity() {
-  const { preferences } = useAgendaPreferences();
-  
+// Use with explicit zoomLevel parameter to avoid hook ordering issues
+export function useGridDensity(zoomLevel: ZoomLevel = 'standard') {
   const config = useMemo(() => {
-    return getDensityConfig(preferences.zoomLevel);
-  }, [preferences.zoomLevel]);
+    return getDensityConfig(zoomLevel);
+  }, [zoomLevel]);
 
-  const isCompact = preferences.zoomLevel === 'minimum';
+  const isCompact = zoomLevel === 'minimum';
 
   return {
     mode: isCompact ? 'compact' : 'comfort' as DensityMode,
     config,
     isCompact,
-    zoomLevel: preferences.zoomLevel,
+    zoomLevel,
   };
 }

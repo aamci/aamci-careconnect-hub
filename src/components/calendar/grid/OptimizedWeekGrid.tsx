@@ -10,7 +10,7 @@ import UnavailableSlot from './UnavailableSlot';
 import EventCard from './EventCard';
 import OpeningSlot from '../openings/OpeningSlot';
 import { useOverlapLayout, getEventPosition } from '@/hooks/useOverlapLayout';
-import { useGridDensity } from '@/hooks/useGridDensity';
+import { useGridDensity, type ZoomLevel } from '@/hooks/useGridDensity';
 
 interface OptimizedWeekGridProps {
   days: Date[];
@@ -30,6 +30,7 @@ interface OptimizedWeekGridProps {
   startHour?: number;
   endHour?: number;
   unavailableSlots?: Array<{ dayIndex: number; startHour: number; endHour: number }>;
+  zoomLevel?: ZoomLevel;
 }
 
 const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
@@ -50,8 +51,9 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   startHour: propStartHour = 7,
   endHour: propEndHour = 20,
   unavailableSlots = [],
+  zoomLevel = 'standard',
 }) => {
-  const { config, isCompact } = useGridDensity();
+  const { config, isCompact } = useGridDensity(zoomLevel);
   
   // Use props directly - do NOT filter days here to avoid blocking slots
   // The preferences should only affect visual styling, not hide content
