@@ -21,6 +21,7 @@ import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
+import { useAgendaPreferences } from '@/hooks/useAgendaPreferences';
 import { useMotifs, useWeekAppointments } from '@/hooks/data/useAppointments';
 import { usePractitioners } from '@/hooks/data/usePractitioners';
 import { usePatients } from '@/hooks/data/usePatients';
@@ -32,6 +33,7 @@ const AgendaPage: React.FC = () => {
   const { toast } = useToast();
   const calendar = useCalendar();
   const hoverPreview = useHoverPreview();
+  const { preferences } = useAgendaPreferences();
   
   // Fetch data from Supabase with fallback
   const { data: motifs = [] } = useMotifs();
@@ -333,6 +335,7 @@ const AgendaPage: React.FC = () => {
             onOpeningDragCreate={handleOpeningDragCreate}
             onSlotClick={handleSlotClick}
             onDayClick={calendar.selectDate}
+            zoomLevel={preferences.zoomLevel}
           />
         </main>
       </div>
