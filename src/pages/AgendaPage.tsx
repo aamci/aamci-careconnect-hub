@@ -336,6 +336,8 @@ const AgendaPage: React.FC = () => {
             onSlotClick={handleSlotClick}
             onDayClick={calendar.selectDate}
             zoomLevel={preferences.zoomLevel}
+            startHour={parseInt(preferences.displayStartTime.split(':')[0], 10)}
+            endHour={parseInt(preferences.displayEndTime.split(':')[0], 10)}
           />
         </main>
       </div>
