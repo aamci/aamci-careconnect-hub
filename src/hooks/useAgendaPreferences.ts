@@ -45,8 +45,8 @@ export interface AgendaPreferences {
 
 // DEFAULT VALUES - Exactly matching the reference images
 const DEFAULT_PREFERENCES: AgendaPreferences = {
-  // Zoom: Standard (middle position) - Image 1
-  zoomLevel: 'standard',
+  // Zoom: Minimum (first position) - Default
+  zoomLevel: 'minimum',
   // Time range: 07:00 to 19:00 - Image 1
   displayStartTime: '07:00',
   displayEndTime: '19:00',
