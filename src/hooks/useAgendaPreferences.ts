@@ -43,29 +43,41 @@ export interface AgendaPreferences {
   enablePatientNameBlurOption: boolean;
 }
 
+// DEFAULT VALUES - Exactly matching the reference images
 const DEFAULT_PREFERENCES: AgendaPreferences = {
-  zoomLevel: 'standard', // Standard is the default - IMPORTANT
+  // Zoom: Standard (middle position) - Image 1
+  zoomLevel: 'standard',
+  // Time range: 07:00 to 19:00 - Image 1
   displayStartTime: '07:00',
   displayEndTime: '19:00',
+  // Mouse precision: Default - Image 2
   hoverGranularityMinutes: 'default',
-  schoolHolidaysRegion: null,
+  // School holidays: Zone A selected but checkboxes unchecked - Image 2
+  schoolHolidaysRegion: 'A',
   showHolidaysMiniCalendar: false,
   showHolidaysMainCalendar: false,
-  weekVisibleDays: [0, 1, 2, 3, 4, 5, 6], // All days visible by default (Mon-Sun)
+  // All days visible (lun-dim all selected) - Image 3
+  weekVisibleDays: [0, 1, 2, 3, 4, 5, 6],
+  // Upcoming days: unchecked - Image 3
   showOnlyUpcomingDays: false,
+  // Show consultation reasons: checked - Image 3
   showConsultationReasonsInDayView: true,
   showSideBySideAgendasInWeekView: false,
   sidebarGroupingPrimary: 'alphabetical',
   sidebarGroupingSecondary: null,
+  // Statistics: Hidden (Masquées selected) - Image 3
   statsMode: 'hidden',
   afternoonStartTime: '14:00',
+  // Notifications: checked - Image 3
   notificationsOnlineBookings: true,
+  // Sound: unchecked - Image 3
   waitingRoomSound: false,
+  // Blur option: unchecked - Image 3
   enablePatientNameBlurOption: false,
 };
 
-// Force reset to v4 to ensure new defaults are applied (standard zoom)
-const STORAGE_KEY = 'agenda_display_preferences_v4';
+// Force reset to v5 to ensure new defaults are applied
+const STORAGE_KEY = 'agenda_display_preferences_v5';
 
 // Zoom level to slot height mapping
 const ZOOM_SLOT_HEIGHTS: Record<ZoomLevel, number> = {
@@ -95,23 +107,23 @@ export function useAgendaPreferences() {
   const [isSaving, setIsSaving] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Save to localStorage with debounce
+  // Save to localStorage IMMEDIATELY (no debounce for instant effect)
   const persistPreferences = useCallback((prefs: AgendaPreferences) => {
+    // Clear any pending debounce
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = setTimeout(() => {
-      setIsSaving(true);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-        // TODO: Also save to Supabase when user_preferences table exists
-      } catch (e) {
-        console.error('Failed to save agenda preferences:', e);
-      } finally {
-        setIsSaving(false);
-      }
-    }, 500);
+    // Save immediately for instant application
+    setIsSaving(true);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+      console.log('[AgendaPreferences] Saved immediately:', prefs);
+    } catch (e) {
+      console.error('Failed to save agenda preferences:', e);
+    } finally {
+      setIsSaving(false);
+    }
   }, []);
 
   // Update a single preference
