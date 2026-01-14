@@ -51,9 +51,9 @@ const HOVER_GRANULARITY_OPTIONS: { value: HoverGranularity; label: string }[] = 
 
 const SCHOOL_HOLIDAY_REGIONS: { value: SchoolHolidayRegion; label: string }[] = [
   { value: null, label: 'Veuillez sélectionner une région' },
-  { value: 'A', label: 'Zone A' },
-  { value: 'B', label: 'Zone B' },
-  { value: 'C', label: 'Zone C' },
+  { value: 'A', label: 'Zone A (Besançon, Bordeaux, Clermont-Ferrand, Dijon, Grenoble, Limoges, Lyon, Poitiers)' },
+  { value: 'B', label: 'Zone B (Aix-Marseille, Amiens, Lille, Nancy-Metz, Nantes, Nice, Orléans-Tours, Reims, Rennes, Rouen, Strasbourg)' },
+  { value: 'C', label: 'Zone C (Créteil, Montpellier, Paris, Toulouse, Versailles)' },
   { value: 'corse', label: 'Corse' },
 ];
 
@@ -77,7 +77,7 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
     toggleDayVisibility,
   } = useAgendaPreferences();
 
-  // Convert zoom level to slider value (0-100)
+  // Convert zoom level to slider value (0, 50, 100 for 3 distinct positions)
   const zoomToSlider = (zoom: ZoomLevel): number => {
     switch (zoom) {
       case 'minimum': return 0;
@@ -88,9 +88,16 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
   };
 
   const sliderToZoom = (value: number): ZoomLevel => {
-    if (value <= 25) return 'minimum';
-    if (value >= 75) return 'maximum';
+    if (value < 25) return 'minimum';
+    if (value > 75) return 'maximum';
     return 'standard';
+  };
+
+  // Handle zoom change with immediate effect
+  const handleZoomChange = ([value]: number[]) => {
+    const newZoom = sliderToZoom(value);
+    console.log('[AgendaSettings] Zoom changed to:', newZoom);
+    updatePreference('zoomLevel', newZoom);
   };
 
   return (
@@ -128,11 +135,11 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
               <Label className="text-sm font-medium">Zoom</Label>
               <Slider
                 value={[zoomToSlider(preferences.zoomLevel)]}
-                onValueChange={([value]) => updatePreference('zoomLevel', sliderToZoom(value))}
+                onValueChange={handleZoomChange}
                 min={0}
                 max={100}
                 step={50}
-                className="w-full"
+                className="w-full cursor-pointer"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span className={cn(preferences.zoomLevel === 'minimum' && 'text-primary font-medium')}>
@@ -155,7 +162,10 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
                 <Label className="text-sm">de</Label>
                 <Select
                   value={preferences.displayStartTime}
-                  onValueChange={(value) => updatePreference('displayStartTime', value)}
+                  onValueChange={(value) => {
+                    console.log('[AgendaSettings] Start time changed to:', value);
+                    updatePreference('displayStartTime', value);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -173,7 +183,10 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
                 <Label className="text-sm">à</Label>
                 <Select
                   value={preferences.displayEndTime}
-                  onValueChange={(value) => updatePreference('displayEndTime', value)}
+                  onValueChange={(value) => {
+                    console.log('[AgendaSettings] End time changed to:', value);
+                    updatePreference('displayEndTime', value);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -235,7 +248,7 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
                 updatePreference('schoolHolidaysRegion', value === 'none' ? null : value as SchoolHolidayRegion)
               }
             >
-              <SelectTrigger className="w-full max-w-sm">
+              <SelectTrigger className="w-full max-w-md">
                 <SelectValue placeholder="Veuillez sélectionner une région" />
               </SelectTrigger>
               <SelectContent>
