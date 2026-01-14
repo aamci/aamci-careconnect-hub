@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useSyncExternalStore, useEffect } from 'react';
 
 // Types for agenda display preferences
 export type ZoomLevel = 'minimum' | 'standard' | 'maximum';
@@ -8,36 +8,21 @@ export type SidebarGrouping = 'alphabetical' | 'center' | 'location' | 'specialt
 export type SchoolHolidayRegion = 'A' | 'B' | 'C' | 'corse' | null;
 
 export interface AgendaPreferences {
-  // Density
   zoomLevel: ZoomLevel;
-  
-  // Time range
-  displayStartTime: string; // HH:MM
-  displayEndTime: string; // HH:MM
-  
-  // Mouse precision
+  displayStartTime: string;
+  displayEndTime: string;
   hoverGranularityMinutes: HoverGranularity;
-  
-  // School holidays
   schoolHolidaysRegion: SchoolHolidayRegion;
   showHolidaysMiniCalendar: boolean;
   showHolidaysMainCalendar: boolean;
-  
-  // Display options
-  weekVisibleDays: number[]; // 0=Mon, 1=Tue, ..., 6=Sun
+  weekVisibleDays: number[];
   showOnlyUpcomingDays: boolean;
   showConsultationReasonsInDayView: boolean;
   showSideBySideAgendasInWeekView: boolean;
-  
-  // Sidebar grouping
   sidebarGroupingPrimary: SidebarGrouping;
   sidebarGroupingSecondary: SidebarGrouping | null;
-  
-  // Statistics
   statsMode: StatsMode;
-  afternoonStartTime: string; // HH:MM
-  
-  // Other options
+  afternoonStartTime: string;
   notificationsOnlineBookings: boolean;
   waitingRoomSound: boolean;
   enablePatientNameBlurOption: boolean;
@@ -45,129 +30,111 @@ export interface AgendaPreferences {
 
 // DEFAULT VALUES - Exactly matching the reference images
 const DEFAULT_PREFERENCES: AgendaPreferences = {
-  // Zoom: Minimum (first position) - Default
   zoomLevel: 'minimum',
-  // Time range: 07:00 to 19:00 - Image 1
   displayStartTime: '07:00',
   displayEndTime: '19:00',
-  // Mouse precision: Default - Image 2
   hoverGranularityMinutes: 'default',
-  // School holidays: Zone A selected but checkboxes unchecked - Image 2
   schoolHolidaysRegion: 'A',
   showHolidaysMiniCalendar: false,
   showHolidaysMainCalendar: false,
-  // All days visible (lun-dim all selected) - Image 3
   weekVisibleDays: [0, 1, 2, 3, 4, 5, 6],
-  // Upcoming days: unchecked - Image 3
   showOnlyUpcomingDays: false,
-  // Show consultation reasons: checked - Image 3
   showConsultationReasonsInDayView: true,
   showSideBySideAgendasInWeekView: false,
   sidebarGroupingPrimary: 'alphabetical',
   sidebarGroupingSecondary: null,
-  // Statistics: Hidden (Masquées selected) - Image 3
   statsMode: 'hidden',
   afternoonStartTime: '14:00',
-  // Notifications: checked - Image 3
   notificationsOnlineBookings: true,
-  // Sound: unchecked - Image 3
   waitingRoomSound: false,
-  // Blur option: unchecked - Image 3
   enablePatientNameBlurOption: false,
 };
 
-// Force reset to v5 to ensure new defaults are applied
-const STORAGE_KEY = 'agenda_display_preferences_v5';
+const STORAGE_KEY = 'agenda_display_preferences_v6';
 
-// Zoom level to slot height mapping
 const ZOOM_SLOT_HEIGHTS: Record<ZoomLevel, number> = {
   minimum: 24,
   standard: 36,
   maximum: 60,
 };
 
+// ============ ULTRA-FAST STORE (No React state, direct mutation + sync) ============
+let currentPreferences: AgendaPreferences = DEFAULT_PREFERENCES;
+const listeners = new Set<() => void>();
+
+// Load from localStorage on module init
+if (typeof window !== 'undefined') {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      currentPreferences = { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
+    }
+  } catch (e) {
+    console.error('Failed to load preferences:', e);
+  }
+  // Apply CSS immediately on load
+  applyZoomCSS(currentPreferences.zoomLevel);
+}
+
+function applyZoomCSS(zoomLevel: ZoomLevel) {
+  const root = document.documentElement;
+  const slotHeight = ZOOM_SLOT_HEIGHTS[zoomLevel];
+  root.style.setProperty('--grid-slot-height', `${slotHeight}px`);
+  const headerHeight = zoomLevel === 'minimum' ? 36 : zoomLevel === 'maximum' ? 48 : 40;
+  root.style.setProperty('--grid-header-height', `${headerHeight}px`);
+}
+
+function getSnapshot(): AgendaPreferences {
+  return currentPreferences;
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function setPreferences(newPrefs: AgendaPreferences) {
+  currentPreferences = newPrefs;
+  // Save to localStorage synchronously
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newPrefs));
+  } catch (e) {
+    console.error('Failed to save preferences:', e);
+  }
+  // Apply CSS immediately for zoom
+  applyZoomCSS(newPrefs.zoomLevel);
+  // Notify all listeners synchronously
+  listeners.forEach(listener => listener());
+}
+
+// ============ HOOK ============
 export function useAgendaPreferences() {
-  const [preferences, setPreferencesState] = useState<AgendaPreferences>(() => {
-    if (typeof window === 'undefined') return DEFAULT_PREFERENCES;
-    
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
-        console.log('[AgendaPreferences] Loaded from storage:', parsed);
-        return parsed;
-      }
-    } catch (e) {
-      console.error('Failed to load agenda preferences:', e);
-    }
-    console.log('[AgendaPreferences] Using defaults:', DEFAULT_PREFERENCES);
-    return DEFAULT_PREFERENCES;
-  });
+  const preferences = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  const [isSaving, setIsSaving] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Apply CSS on mount and when zoomLevel changes
+  useEffect(() => {
+    applyZoomCSS(preferences.zoomLevel);
+  }, [preferences.zoomLevel]);
 
-  // Save to localStorage IMMEDIATELY (no debounce for instant effect)
-  const persistPreferences = useCallback((prefs: AgendaPreferences) => {
-    // Clear any pending debounce
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    // Save immediately for instant application
-    setIsSaving(true);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-      console.log('[AgendaPreferences] Saved immediately:', prefs);
-    } catch (e) {
-      console.error('Failed to save agenda preferences:', e);
-    } finally {
-      setIsSaving(false);
-    }
-  }, []);
-
-  // Update a single preference
   const updatePreference = useCallback(<K extends keyof AgendaPreferences>(
     key: K,
     value: AgendaPreferences[K]
   ) => {
-    setPreferencesState(prev => {
-      const updated = { ...prev, [key]: value };
-      persistPreferences(updated);
-      return updated;
-    });
-  }, [persistPreferences]);
+    const updated = { ...currentPreferences, [key]: value };
+    setPreferences(updated);
+  }, []);
 
-  // Update multiple preferences at once
   const updatePreferences = useCallback((updates: Partial<AgendaPreferences>) => {
-    setPreferencesState(prev => {
-      const updated = { ...prev, ...updates };
-      persistPreferences(updated);
-      return updated;
-    });
-  }, [persistPreferences]);
+    const updated = { ...currentPreferences, ...updates };
+    setPreferences(updated);
+  }, []);
 
-  // Reset to defaults
   const resetPreferences = useCallback(() => {
-    setPreferencesState(DEFAULT_PREFERENCES);
-    persistPreferences(DEFAULT_PREFERENCES);
-  }, [persistPreferences]);
+    setPreferences(DEFAULT_PREFERENCES);
+  }, []);
 
-  // Apply CSS variables based on zoom level
-  useEffect(() => {
-    const root = document.documentElement;
-    const slotHeight = ZOOM_SLOT_HEIGHTS[preferences.zoomLevel];
-    root.style.setProperty('--grid-slot-height', `${slotHeight}px`);
-    
-    // Adjust header and axis based on zoom
-    const headerHeight = preferences.zoomLevel === 'minimum' ? 36 : 
-                        preferences.zoomLevel === 'maximum' ? 48 : 40;
-    root.style.setProperty('--grid-header-height', `${headerHeight}px`);
-  }, [preferences.zoomLevel]);
-
-  // Computed helpers
   const slotHeight = ZOOM_SLOT_HEIGHTS[preferences.zoomLevel];
-  
+
   const getVisibleDayNames = useCallback(() => {
     const dayNames = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
     return preferences.weekVisibleDays.map(d => dayNames[d]);
@@ -178,23 +145,21 @@ export function useAgendaPreferences() {
   }, [preferences.weekVisibleDays]);
 
   const toggleDayVisibility = useCallback((dayIndex: number) => {
-    const current = preferences.weekVisibleDays;
+    const current = currentPreferences.weekVisibleDays;
     const updated = current.includes(dayIndex)
       ? current.filter(d => d !== dayIndex)
       : [...current, dayIndex].sort((a, b) => a - b);
-    
-    // Ensure at least one day is visible
     if (updated.length > 0) {
-      updatePreference('weekVisibleDays', updated);
+      setPreferences({ ...currentPreferences, weekVisibleDays: updated });
     }
-  }, [preferences.weekVisibleDays, updatePreference]);
+  }, []);
 
   return {
     preferences,
     updatePreference,
     updatePreferences,
     resetPreferences,
-    isSaving,
+    isSaving: false,
     slotHeight,
     getVisibleDayNames,
     isDayVisible,
