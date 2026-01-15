@@ -20,3 +20,8 @@ export * from './usePatientHistory';
 export * from './useDocuments';
 export * from './useObservations';
 export * from './useInvoices';
+export * from './useConsultations';
+export * from './usePrescriptions';
+export * from './useLabResults';
+export * from './useVitalSigns';
+export * from './useVaccinations';
