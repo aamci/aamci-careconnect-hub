@@ -9,8 +9,6 @@ import {
   Trash2,
   ChevronRight,
   Loader2,
-  Lock,
-  CheckCircle2,
   Clock,
   User,
 } from 'lucide-react';

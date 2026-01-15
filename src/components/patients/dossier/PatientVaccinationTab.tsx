@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
-import { format, isPast, isFuture, addMonths } from 'date-fns';
+import { format, isPast, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Syringe,
@@ -9,15 +9,12 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  AlertTriangle,
   FileText,
   Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { usePatientVaccinations, useUpcomingVaccinations } from '@/hooks/data/useVaccinations';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';

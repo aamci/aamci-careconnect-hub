@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
@@ -6,21 +6,16 @@ import { fr } from 'date-fns/locale';
 import {
   Pill,
   Plus,
-  Pause,
-  Play,
   StopCircle,
   RefreshCw,
   FileText,
-  AlertTriangle,
   Clock,
-  User,
   Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { useActivePrescriptions, usePatientPrescriptions } from '@/hooks/data/usePrescriptions';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
