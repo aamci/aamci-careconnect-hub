@@ -17,3 +17,6 @@ export * from './useNotes';
 export * from './useTasks';
 export * from './useAllergies';
 export * from './usePatientHistory';
+export * from './useDocuments';
+export * from './useObservations';
+export * from './useInvoices';
