@@ -25,13 +25,19 @@ import {
   MapPin,
   Phone,
   Mail,
-  UserRound
+  UserRound,
+  Heart,
+  Scissors,
+  Users,
+  Cigarette,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import MemoModal from './MemoModal';
 import { usePatientAntecedents } from '@/hooks/usePatientAntecedents';
+import { usePatientAllergies } from '@/hooks/data/useAllergies';
 
 interface PatientDossierSidebarProps {
   patient: Patient;
@@ -65,15 +71,22 @@ const InfoField: React.FC<{
   icon: React.ElementType; 
   label: string; 
   value?: string | null;
+  count?: number;
   onClick?: () => void;
-}> = ({ icon: Icon, label, value, onClick }) => (
+}> = ({ icon: Icon, label, value, count, onClick }) => (
   <button
     onClick={onClick}
     className="w-full flex items-center gap-2 py-1.5 text-xs hover:bg-muted/30 rounded px-2 transition-colors text-left"
   >
     <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
     <span className="text-muted-foreground">{label} :</span>
-    {value ? (
+    {count !== undefined ? (
+      count > 0 ? (
+        <span className="text-primary font-medium">{count} élément{count > 1 ? 's' : ''}</span>
+      ) : (
+        <span className="text-muted-foreground/70 italic">Aucun</span>
+      )
+    ) : value ? (
       <span className="text-foreground truncate">{value}</span>
     ) : (
       <span className="text-primary font-medium">Ajouter</span>
@@ -87,7 +100,8 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
   const [showSSN, setShowSSN] = useState(false);
   const [memoModalOpen, setMemoModalOpen] = useState(false);
   
-  const { memo, saveMemo, isSaving } = usePatientAntecedents(patient.id);
+  const { memo, saveMemo, isSaving, getAntecedentsByCategory } = usePatientAntecedents(patient.id);
+  const { data: allergies = [] } = usePatientAllergies(patient.id);
   
   const age = differenceInYears(new Date(), patient.dateOfBirth);
   const displayName = patient.usedFirstName || patient.firstName;
@@ -104,6 +118,14 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
   
   const hasMemoContent = memo && memo.content && memo.content.trim().length > 0;
 
+  // Get antecedents counts
+  const medicalCount = getAntecedentsByCategory('medical').length;
+  const cardiovascularCount = getAntecedentsByCategory('cardiovascular').length;
+  const surgicalCount = getAntecedentsByCategory('surgical').length;
+  const familyCount = getAntecedentsByCategory('family').length;
+  const lifestyleCount = getAntecedentsByCategory('lifestyle').length;
+  const allergiesCount = allergies.length;
+
   const handleSaveMemo = async (content: string) => {
     await saveMemo(content);
     setMemoModalOpen(false);
@@ -111,6 +133,10 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
 
   const handleNavigateToInfos = () => {
     navigate('infos-administratives');
+  };
+
+  const handleNavigateToAntecedents = () => {
+    navigate('antecedents');
   };
 
   // Render admin info content inside accordion
@@ -145,6 +171,48 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
         label="Médecin traitant" 
         value={patient.referringDoctor}
         onClick={handleNavigateToInfos}
+      />
+    </div>
+  );
+
+  // Render antecedents content inside accordion
+  const renderAntecedentsContent = () => (
+    <div className="ml-4 py-1.5 space-y-0.5 border-l-2 border-border pl-2">
+      <InfoField 
+        icon={ShieldAlert} 
+        label="Allergies" 
+        count={allergiesCount}
+        onClick={handleNavigateToAntecedents}
+      />
+      <InfoField 
+        icon={Stethoscope} 
+        label="Médicaux" 
+        count={medicalCount}
+        onClick={handleNavigateToAntecedents}
+      />
+      <InfoField 
+        icon={Heart} 
+        label="Cardiovasculaires" 
+        count={cardiovascularCount}
+        onClick={handleNavigateToAntecedents}
+      />
+      <InfoField 
+        icon={Scissors} 
+        label="Chirurgicaux" 
+        count={surgicalCount}
+        onClick={handleNavigateToAntecedents}
+      />
+      <InfoField 
+        icon={Users} 
+        label="Familiaux" 
+        count={familyCount}
+        onClick={handleNavigateToAntecedents}
+      />
+      <InfoField 
+        icon={Cigarette} 
+        label="Mode de vie" 
+        count={lifestyleCount}
+        onClick={handleNavigateToAntecedents}
       />
     </div>
   );
@@ -254,6 +322,37 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   </div>
                   <CollapsibleContent>
                     {renderAdminInfoContent()}
+                  </CollapsibleContent>
+                </Collapsible>
+            );
+            }
+
+            // Special handling for ANTÉCÉDENTS ET MODE DE VIE accordion
+            if (item.id === 'antecedents') {
+              return (
+                <Collapsible key={item.id} defaultOpen={isActive}>
+                  <div className="relative">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        onClick={() => navigate('antecedents')}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                          'hover:bg-muted/50 group',
+                          isActive 
+                            ? 'text-primary bg-primary/5' 
+                            : 'text-foreground'
+                        )}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                      </button>
+                    </CollapsibleTrigger>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  <CollapsibleContent>
+                    {renderAntecedentsContent()}
                   </CollapsibleContent>
                 </Collapsible>
               );
