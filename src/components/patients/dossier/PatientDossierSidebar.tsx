@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format, differenceInYears } from 'date-fns';
 import { 
@@ -21,7 +21,11 @@ import {
   Eye,
   EyeOff,
   Folder,
-  CircleDot
+  CircleDot,
+  MapPin,
+  Phone,
+  Mail,
+  UserRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -56,8 +60,30 @@ const navItems: NavItem[] = [
   { id: 'factures', label: 'FACTURES', icon: Receipt, path: 'factures' },
 ];
 
+// Info field component for compact display
+const InfoField: React.FC<{ 
+  icon: React.ElementType; 
+  label: string; 
+  value?: string | null;
+  onClick?: () => void;
+}> = ({ icon: Icon, label, value, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center gap-2 py-1.5 text-xs hover:bg-muted/30 rounded px-2 transition-colors text-left"
+  >
+    <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+    <span className="text-muted-foreground">{label} :</span>
+    {value ? (
+      <span className="text-foreground truncate">{value}</span>
+    ) : (
+      <span className="text-primary font-medium">Ajouter</span>
+    )}
+  </button>
+);
+
 const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showSSN, setShowSSN] = useState(false);
   const [memoModalOpen, setMemoModalOpen] = useState(false);
   
@@ -82,6 +108,46 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
     await saveMemo(content);
     setMemoModalOpen(false);
   };
+
+  const handleNavigateToInfos = () => {
+    navigate('infos');
+  };
+
+  // Render admin info content inside accordion
+  const renderAdminInfoContent = () => (
+    <div className="ml-4 py-1.5 space-y-0.5 border-l-2 border-border pl-2">
+      <InfoField 
+        icon={MapPin} 
+        label="Lieu de naissance" 
+        value={patient.birthPlace}
+        onClick={handleNavigateToInfos}
+      />
+      <InfoField 
+        icon={Phone} 
+        label="Tél (portable)" 
+        value={patient.phone}
+        onClick={handleNavigateToInfos}
+      />
+      <InfoField 
+        icon={Phone} 
+        label="Tél (fixe)" 
+        value={patient.phoneSecondary}
+        onClick={handleNavigateToInfos}
+      />
+      <InfoField 
+        icon={Mail} 
+        label="E-mail" 
+        value={patient.email}
+        onClick={handleNavigateToInfos}
+      />
+      <InfoField 
+        icon={UserRound} 
+        label="Médecin traitant" 
+        value={patient.referringDoctor}
+        onClick={handleNavigateToInfos}
+      />
+    </div>
+  );
 
   return (
     <div className="w-72 flex-shrink-0 bg-card border-r border-border flex flex-col h-full">
@@ -161,6 +227,36 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
         <div className="space-y-0.5 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname.includes(`/${item.path}`);
+            
+            // Special handling for INFOS ADMINISTRATIVES accordion
+            if (item.id === 'infos') {
+              return (
+                <Collapsible key={item.id} defaultOpen={isActive}>
+                  <div className="relative">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        className={cn(
+                          'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                          'hover:bg-muted/50 group',
+                          isActive 
+                            ? 'text-primary bg-primary/5' 
+                            : 'text-foreground'
+                        )}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                      </button>
+                    </CollapsibleTrigger>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  <CollapsibleContent>
+                    {renderAdminInfoContent()}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
             
             if (item.hasChildren) {
               return (
