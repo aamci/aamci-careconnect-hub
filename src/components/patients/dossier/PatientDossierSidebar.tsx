@@ -235,6 +235,7 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   <div className="relative">
                     <CollapsibleTrigger asChild>
                       <button
+                        onClick={() => navigate('infos-administratives')}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                           'hover:bg-muted/50 group',
