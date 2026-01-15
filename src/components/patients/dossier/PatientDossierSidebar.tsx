@@ -30,7 +30,15 @@ import {
   Scissors,
   Users,
   Cigarette,
-  ShieldAlert
+  ShieldAlert,
+  Scale,
+  Ruler,
+  Activity,
+  Thermometer,
+  Droplets,
+  FileCheck,
+  FileClock,
+  FileX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,6 +46,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import MemoModal from './MemoModal';
 import { usePatientAntecedents } from '@/hooks/usePatientAntecedents';
 import { usePatientAllergies } from '@/hooks/data/useAllergies';
+import { useActivePrescriptions, usePatientPrescriptions } from '@/hooks/data/usePrescriptions';
+import { useLatestVitalSigns, usePatientVitalSigns } from '@/hooks/data/useVitalSigns';
+import { usePatientLabResults } from '@/hooks/data/useLabResults';
 
 interface PatientDossierSidebarProps {
   patient: Patient;
@@ -102,6 +113,11 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
   
   const { memo, saveMemo, isSaving, getAntecedentsByCategory } = usePatientAntecedents(patient.id);
   const { data: allergies = [] } = usePatientAllergies(patient.id);
+  const { data: activePrescriptions = [] } = useActivePrescriptions(patient.id);
+  const { data: allPrescriptions = [] } = usePatientPrescriptions(patient.id);
+  const { data: latestVitals } = useLatestVitalSigns(patient.id);
+  const { data: vitalSignsHistory = [] } = usePatientVitalSigns(patient.id);
+  const { data: labResults = [] } = usePatientLabResults(patient.id);
   
   const age = differenceInYears(new Date(), patient.dateOfBirth);
   const displayName = patient.usedFirstName || patient.firstName;
@@ -126,6 +142,15 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
   const lifestyleCount = getAntecedentsByCategory('lifestyle').length;
   const allergiesCount = allergies.length;
 
+  // Prescriptions counts
+  const activePrescriptionsCount = activePrescriptions.length;
+  const stoppedPrescriptionsCount = allPrescriptions.filter(p => p.status === 'stopped').length;
+  const expiredPrescriptionsCount = allPrescriptions.filter(p => p.status === 'expired').length;
+
+  // Biology/Biometrics data
+  const labResultsCount = labResults.length;
+  const vitalSignsCount = vitalSignsHistory.length;
+
   const handleSaveMemo = async (content: string) => {
     await saveMemo(content);
     setMemoModalOpen(false);
@@ -137,6 +162,14 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
 
   const handleNavigateToAntecedents = () => {
     navigate('antecedents');
+  };
+
+  const handleNavigateToTraitement = () => {
+    navigate('traitement');
+  };
+
+  const handleNavigateToBiologie = () => {
+    navigate('biologie');
   };
 
   // Render admin info content inside accordion
@@ -216,6 +249,81 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
       />
     </div>
   );
+
+  // Render traitement content inside accordion
+  const renderTraitementContent = () => (
+    <div className="ml-4 py-1.5 space-y-0.5 border-l-2 border-border pl-2">
+      <InfoField 
+        icon={FileCheck} 
+        label="En cours" 
+        count={activePrescriptionsCount}
+        onClick={handleNavigateToTraitement}
+      />
+      <InfoField 
+        icon={FileX} 
+        label="Arrêtés" 
+        count={stoppedPrescriptionsCount}
+        onClick={handleNavigateToTraitement}
+      />
+      <InfoField 
+        icon={FileClock} 
+        label="Expirés" 
+        count={expiredPrescriptionsCount}
+        onClick={handleNavigateToTraitement}
+      />
+    </div>
+  );
+
+  // Render biologie content inside accordion
+  const renderBiologieContent = () => {
+    const formatBP = () => {
+      if (latestVitals?.systolic_bp && latestVitals?.diastolic_bp) {
+        return `${latestVitals.systolic_bp}/${latestVitals.diastolic_bp} mmHg`;
+      }
+      return null;
+    };
+
+    return (
+      <div className="ml-4 py-1.5 space-y-0.5 border-l-2 border-border pl-2">
+        <InfoField 
+          icon={Scale} 
+          label="Poids" 
+          value={latestVitals?.weight_kg ? `${latestVitals.weight_kg} kg` : null}
+          onClick={handleNavigateToBiologie}
+        />
+        <InfoField 
+          icon={Ruler} 
+          label="Taille" 
+          value={latestVitals?.height_cm ? `${latestVitals.height_cm} cm` : null}
+          onClick={handleNavigateToBiologie}
+        />
+        <InfoField 
+          icon={Activity} 
+          label="Tension" 
+          value={formatBP()}
+          onClick={handleNavigateToBiologie}
+        />
+        <InfoField 
+          icon={Thermometer} 
+          label="Température" 
+          value={latestVitals?.temperature_c ? `${latestVitals.temperature_c}°C` : null}
+          onClick={handleNavigateToBiologie}
+        />
+        <InfoField 
+          icon={Droplets} 
+          label="Résultats labo" 
+          count={labResultsCount}
+          onClick={handleNavigateToBiologie}
+        />
+        <InfoField 
+          icon={FlaskConical} 
+          label="Historique mesures" 
+          count={vitalSignsCount}
+          onClick={handleNavigateToBiologie}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="w-72 flex-shrink-0 bg-card border-r border-border flex flex-col h-full">
@@ -353,6 +461,71 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   </div>
                   <CollapsibleContent>
                     {renderAntecedentsContent()}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+
+            // Special handling for TRAITEMENT EN COURS accordion
+            if (item.id === 'traitement') {
+              return (
+                <Collapsible key={item.id} defaultOpen={isActive}>
+                  <div className="relative">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        onClick={() => navigate('traitement')}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                          'hover:bg-muted/50 group',
+                          isActive 
+                            ? 'text-primary bg-primary/5' 
+                            : 'text-foreground'
+                        )}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {activePrescriptionsCount > 0 && (
+                          <span className="text-primary text-xs font-medium">{activePrescriptionsCount}</span>
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  <CollapsibleContent>
+                    {renderTraitementContent()}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+
+            // Special handling for BIOLOGIE ET BIOMÉTRIE accordion
+            if (item.id === 'biologie') {
+              return (
+                <Collapsible key={item.id} defaultOpen={isActive}>
+                  <div className="relative">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        onClick={() => navigate('biologie')}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
+                          'hover:bg-muted/50 group',
+                          isActive 
+                            ? 'text-primary bg-primary/5' 
+                            : 'text-foreground'
+                        )}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                      </button>
+                    </CollapsibleTrigger>
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full" />
+                    )}
+                  </div>
+                  <CollapsibleContent>
+                    {renderBiologieContent()}
                   </CollapsibleContent>
                 </Collapsible>
               );
