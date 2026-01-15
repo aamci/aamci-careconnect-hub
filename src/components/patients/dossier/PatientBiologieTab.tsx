@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
@@ -7,11 +7,7 @@ import {
   FlaskConical,
   Activity,
   Plus,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   AlertTriangle,
-  FileText,
   Calendar,
   Eye,
 } from 'lucide-react';
@@ -60,14 +56,6 @@ const PatientBiologieTab: React.FC = () => {
     return [];
   };
 
-  // Calculate BMI trend indicator
-  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
-    switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'down': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Minus className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
 
   return (
     <DossierPageLayout 
