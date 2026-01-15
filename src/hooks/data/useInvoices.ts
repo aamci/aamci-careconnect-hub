@@ -96,35 +96,33 @@ export function useCreateInvoice() {
       invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'items'>; 
       items: Omit<InvoiceItem, 'id' | 'invoice_id'>[] 
     }) => {
-      const insertData = {
-        patient_id: invoice.patient_id,
-        practitioner_id: invoice.practitioner_id,
-        organization_id: invoice.organization_id,
-        appointment_id: invoice.appointment_id,
-        consultation_id: invoice.consultation_id,
-        invoice_number: invoice.invoice_number,
-        status: invoice.status,
-        issue_date: invoice.issue_date,
-        due_date: invoice.due_date,
-        subtotal: invoice.subtotal,
-        discount_amount: invoice.discount_amount,
-        tax_amount: invoice.tax_amount,
-        total_amount: invoice.total_amount,
-        paid_amount: invoice.paid_amount,
-        paid_at: invoice.paid_at,
-        cancelled_at: invoice.cancelled_at,
-        sent_at: invoice.sent_at,
-        notes: invoice.notes,
-        payment_terms: invoice.payment_terms,
-        currency: invoice.currency,
-        billing_address: invoice.billing_address as unknown,
-        created_by: invoice.created_by,
-      };
-      
       // Create invoice first
       const { data: newInvoice, error: invoiceError } = await supabase
         .from('invoices')
-        .insert(insertData)
+        .insert([{
+          patient_id: invoice.patient_id,
+          practitioner_id: invoice.practitioner_id || null,
+          organization_id: invoice.organization_id || null,
+          appointment_id: invoice.appointment_id || null,
+          consultation_id: invoice.consultation_id || null,
+          invoice_number: invoice.invoice_number || null,
+          status: invoice.status,
+          issue_date: invoice.issue_date,
+          due_date: invoice.due_date || null,
+          subtotal: invoice.subtotal,
+          discount_amount: invoice.discount_amount || 0,
+          tax_amount: invoice.tax_amount || 0,
+          total_amount: invoice.total_amount,
+          paid_amount: invoice.paid_amount || 0,
+          paid_at: invoice.paid_at || null,
+          cancelled_at: invoice.cancelled_at || null,
+          sent_at: invoice.sent_at || null,
+          notes: invoice.notes || null,
+          payment_terms: invoice.payment_terms || null,
+          currency: invoice.currency,
+          billing_address: (invoice.billing_address || null) as unknown as Record<string, unknown> | null,
+          created_by: invoice.created_by || null,
+        }])
         .select()
         .single();
 
