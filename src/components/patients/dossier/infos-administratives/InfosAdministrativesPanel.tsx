@@ -419,15 +419,15 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
           {/* Insurance */}
           <FormRow label="Assurance">
             <Select
-              value={formData.insuranceType}
+              value={formData.insuranceType || undefined}
               onValueChange={(val) => updateField('insuranceType', val as InsuranceType)}
             >
               <SelectTrigger className="h-10 bg-muted/30">
-                <SelectValue placeholder="Assurance" />
+                <SelectValue placeholder="Sélectionner une assurance" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 {INSURANCE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value || 'none'} value={opt.value}>
+                  <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
                 ))}

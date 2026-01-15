@@ -54,7 +54,7 @@ const IdentityValidationSection: React.FC<IdentityValidationSectionProps> = ({
             </label>
             
             <Select
-              value={value}
+              value={value || undefined}
               onValueChange={(val) => onValueChange(val as IdentityDocType)}
               disabled={disabled}
             >

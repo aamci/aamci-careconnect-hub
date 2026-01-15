@@ -123,7 +123,6 @@ export interface Country {
 }
 
 export const INSURANCE_OPTIONS: { value: InsuranceType; label: string }[] = [
-  { value: '', label: 'Assurance' },
   { value: 'pas_assurance', label: "Pas d'assurance" },
   { value: 'cmu', label: 'CMU' },
   { value: 'ame', label: 'AME' },
