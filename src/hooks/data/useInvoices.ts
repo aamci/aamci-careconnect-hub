@@ -120,7 +120,7 @@ export function useCreateInvoice() {
           notes: invoice.notes || null,
           payment_terms: invoice.payment_terms || null,
           currency: invoice.currency,
-          billing_address: (invoice.billing_address || null) as unknown as Record<string, unknown> | null,
+          billing_address: invoice.billing_address ? JSON.parse(JSON.stringify(invoice.billing_address)) : null,
           created_by: invoice.created_by || null,
         }])
         .select()
