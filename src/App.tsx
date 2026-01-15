@@ -12,6 +12,7 @@ import PatientDossierPage from "./pages/PatientDossierPage";
 import PatientHomeTab from "./components/patients/dossier/PatientHomeTab";
 import PatientConsultationTab from "./components/patients/dossier/PatientConsultationTab";
 import PatientInfosTab from "./components/patients/dossier/PatientInfosTab";
+import PatientInfosAdminTab from "./components/patients/dossier/PatientInfosAdminTab";
 import PatientHistoriqueTab from "./components/patients/dossier/PatientHistoriqueTab";
 import PatientAntecedentsTab from "./components/patients/dossier/PatientAntecedentsTab";
 import PlaceholderTab from "./components/patients/dossier/PlaceholderTab";
@@ -34,8 +35,8 @@ const App = () => (
               <Route index element={<Navigate to="home" replace />} />
               <Route path="home" element={<PatientHomeTab />} />
               <Route path="consultation" element={<PatientConsultationTab />} />
-              <Route path="infos" element={<PatientInfosTab />} />
-              <Route path="infos-administratives" element={<PatientInfosTab />} />
+              <Route path="infos" element={<PatientInfosAdminTab />} />
+              <Route path="infos-administratives" element={<PatientInfosAdminTab />} />
               <Route path="historique" element={<PatientHistoriqueTab />} />
               <Route path="antecedents" element={<PatientAntecedentsTab />} />
               <Route path="documents" element={<PlaceholderTab title="Documents" />} />
