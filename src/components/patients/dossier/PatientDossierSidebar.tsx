@@ -49,7 +49,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'home', label: 'HOME', icon: Home, path: 'home' },
   { id: 'consultation', label: 'CONSULTATION EN COURS', icon: Stethoscope, path: 'consultation' },
-  { id: 'infos', label: 'INFOS ADMINISTRATIVES', icon: FileUser, path: 'infos', hasChildren: true },
+  { id: 'infos', label: 'INFOS ADMINISTRATIVES', icon: FileUser, path: 'infos-administratives', hasChildren: true },
   { id: 'historique', label: 'HISTORIQUE', icon: History, path: 'historique' },
   { id: 'antecedents', label: 'ANTÉCÉDENTS ET MODE DE VIE', icon: HeartPulse, path: 'antecedents', hasChildren: true },
   { id: 'documents', label: 'DOCUMENTS', icon: FileText, path: 'documents' },
@@ -110,7 +110,7 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
   };
 
   const handleNavigateToInfos = () => {
-    navigate('infos');
+    navigate('infos-administratives');
   };
 
   // Render admin info content inside accordion
