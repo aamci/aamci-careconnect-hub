@@ -16,6 +16,13 @@ import {
   FileSpreadsheet,
   Loader2,
   Plus,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Archive,
+  FileEdit,
+  MoreHorizontal,
+  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,8 +46,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { usePatientDocuments, type PatientDocument as Document } from '@/hooks/data/useDocuments';
+import {
+  usePatientDocuments,
+  useUpdateDocumentStatus,
+  WORKFLOW_STATUS_CONFIG,
+  type PatientDocument as Document,
+  type DocumentWorkflowStatus,
+} from '@/hooks/data/useDocuments';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import { toast } from 'sonner';
@@ -60,12 +85,23 @@ const categoryConfig: Record<string, { label: string; icon: React.ElementType; c
   autre: { label: 'Autre', icon: File, color: 'text-muted-foreground' },
 };
 
+// P0-010: Status icons mapping
+const statusIcons: Record<DocumentWorkflowStatus, React.ElementType> = {
+  draft: FileEdit,
+  pending_validation: Clock,
+  validated: CheckCircle,
+  rejected: XCircle,
+  archived: Archive,
+};
+
 const PatientDocumentsTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
   const { data: documents, isLoading, error } = usePatientDocuments(patient.id);
-  
+  const updateStatusMutation = useUpdateDocumentStatus();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
@@ -73,8 +109,26 @@ const PatientDocumentsTab: React.FC = () => {
   const filteredDocuments = documents?.filter((doc) => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || doc.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const docStatus = doc.workflow_status || 'draft';
+    const matchesStatus = statusFilter === 'all' || docStatus === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
   }) ?? [];
+
+  // Status counts for filter badges
+  const statusCounts = documents?.reduce((acc, doc) => {
+    const status = doc.workflow_status || 'draft';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) ?? {};
+
+  // Handle status change
+  const handleStatusChange = (doc: Document, newStatus: DocumentWorkflowStatus) => {
+    updateStatusMutation.mutate({
+      id: doc.id,
+      patientId: patient.id,
+      status: newStatus,
+    });
+  };
 
   // Group by month/year
   const groupedDocuments = filteredDocuments.reduce((groups, doc) => {
@@ -154,14 +208,34 @@ const PatientDocumentsTab: React.FC = () => {
           />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-44">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Catégorie" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les catégories</SelectItem>
+            <SelectItem value="all">Toutes catégories</SelectItem>
             {Object.entries(categoryConfig).map(([key, { label }]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous statuts</SelectItem>
+            {Object.entries(WORKFLOW_STATUS_CONFIG).map(([key, { label }]) => (
+              <SelectItem key={key} value={key}>
+                <span className="flex items-center gap-2">
+                  {label}
+                  {statusCounts[key] > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                      {statusCounts[key]}
+                    </Badge>
+                  )}
+                </span>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -186,46 +260,112 @@ const PatientDocumentsTab: React.FC = () => {
           <Card>
             <CardContent className="p-0 divide-y divide-border">
               {docs.map((doc) => {
-                const config = getCategoryConfig(doc.category);
-                const Icon = config.icon;
-                
+                const catConfig = getCategoryConfig(doc.category);
+                const CatIcon = catConfig.icon;
+                const docStatus = (doc.workflow_status || 'draft') as DocumentWorkflowStatus;
+                const statusConf = WORKFLOW_STATUS_CONFIG[docStatus];
+                const StatusIcon = statusIcons[docStatus];
+                const nextStatuses = statusConf.nextStatuses;
+
                 return (
                   <div
                     key={doc.id}
                     className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors group"
                   >
-                    <div className={cn('h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0', config.color)}>
-                      <Icon className="h-5 w-5" />
+                    <div className={cn('h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0', catConfig.color)}>
+                      <CatIcon className="h-5 w-5" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="text-sm font-medium text-foreground truncate">{doc.name}</h4>
                         <Badge variant="outline" className="text-xs">
-                          {config.label}
+                          {catConfig.label}
                         </Badge>
+                        {/* P0-010: Status badge */}
+                        <Badge
+                          variant="outline"
+                          className={cn('text-[10px] px-1.5 py-0 h-4 gap-1', statusConf.bgColor, statusConf.color, statusConf.borderColor)}
+                        >
+                          <StatusIcon className="h-2.5 w-2.5" />
+                          {statusConf.label}
+                        </Badge>
+                        {doc.is_confidential && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Lock className="h-3 w-3 text-amber-600" />
+                            </TooltipTrigger>
+                            <TooltipContent>Document confidentiel</TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {format(new Date(doc.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                         {doc.file_size && ` · ${(doc.file_size / 1024).toFixed(0)} Ko`}
+                        {doc.validated_at && docStatus === 'validated' && (
+                          <> · Validé le {format(new Date(doc.validated_at), 'dd/MM/yyyy', { locale: fr })}</>
+                        )}
                       </p>
+                      {doc.rejected_reason && docStatus === 'rejected' && (
+                        <p className="text-xs text-red-600 mt-0.5">Motif: {doc.rejected_reason}</p>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleView(doc)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive hover:text-destructive" 
-                        onClick={() => handleDeleteClick(doc)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center gap-1">
+                      {/* View & Download always visible */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleView(doc)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Aperçu</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Télécharger</TooltipContent>
+                      </Tooltip>
+
+                      {/* P0-010: Status actions dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {nextStatuses.length > 0 && (
+                            <>
+                              {nextStatuses.map((status) => {
+                                const targetConf = WORKFLOW_STATUS_CONFIG[status];
+                                const TargetIcon = statusIcons[status];
+                                return (
+                                  <DropdownMenuItem
+                                    key={status}
+                                    onClick={() => handleStatusChange(doc, status)}
+                                    className="gap-2"
+                                  >
+                                    <TargetIcon className={cn('h-4 w-4', targetConf.color)} />
+                                    Marquer comme {targetConf.label.toLowerCase()}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick(doc)}
+                            className="gap-2 text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );

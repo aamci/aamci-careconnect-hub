@@ -29,3 +29,28 @@ export async function assignRole(userId: string, role: string) {
   if (error) throw error;
   return data;
 }
+
+/**
+ * Log medical history audit entry
+ * Specialized function for tracking changes to patient medical history
+ */
+export async function logMedicalHistoryAudit(
+  action: 'create' | 'update' | 'delete',
+  tableName: string,
+  patientId: string,
+  recordId?: string,
+  oldData?: any,
+  newData?: any
+) {
+  const { data: user } = await supabase.auth.getUser();
+
+  await supabase.from('audit_logs').insert({
+    action: `medical_history_${action}`,
+    table_name: tableName,
+    record_id: recordId,
+    old_data: oldData,
+    new_data: newData,
+    performed_by: user.user?.id,
+    metadata: { patient_id: patientId },
+  } as any);
+}

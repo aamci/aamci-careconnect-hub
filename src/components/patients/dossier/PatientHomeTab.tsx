@@ -39,6 +39,8 @@ import { Badge } from '@/components/ui/badge';
 import { mockAppointments, mockNotes } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import PatientAllergiesBadge from '@/components/patients/PatientAllergiesBadge';
+import CriticalAllergyBanner from '@/components/patients/CriticalAllergyBanner';
+import PatientStatusBadges from '@/components/patients/PatientStatusBadges';
 import {
   CardCompact,
   InfoRowCompact,
@@ -97,6 +99,16 @@ const PatientHomeTab: React.FC = () => {
         className="max-w-7xl mx-auto flex flex-col flex-1 min-h-0"
         style={{ gap: `var(--density-section-gap)` }}
       >
+        {/* P0-003: Critical Allergies Banner - Always visible at top */}
+        <CriticalAllergyBanner patientId={patient.id} />
+
+        {/* P0-004: Patient Status Badges (ALD, Fragile, etc.) */}
+        <PatientStatusBadges
+          patientId={patient.id}
+          dateOfBirth={patient.dateOfBirth}
+          compact={isCompact}
+        />
+
         {/* Clinical Alerts Banner - Compact */}
         {patient.alerts && patient.alerts.length > 0 && (
           <div

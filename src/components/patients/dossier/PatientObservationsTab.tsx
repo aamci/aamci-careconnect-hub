@@ -11,6 +11,10 @@ import {
   Loader2,
   Clock,
   User,
+  Eye,
+  EyeOff,
+  Shield,
+  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,8 +38,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { usePatientObservations, useCreateObservation, useDeleteObservation, type Observation } from '@/hooks/data/useObservations';
+import {
+  usePatientObservations,
+  useCreateObservation,
+  useDeleteObservation,
+  CONFIDENTIALITY_CONFIG,
+  type Observation,
+  type ConfidentialityLevel,
+} from '@/hooks/data/useObservations';
+
+// Icon mapping for confidentiality levels
+const confidentialityIcons: Record<string, React.ElementType> = {
+  eye: Eye,
+  'eye-off': EyeOff,
+  shield: Shield,
+  lock: Lock,
+};
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 
@@ -51,13 +83,15 @@ const PatientObservationsTab: React.FC = () => {
   
   const [newObsModalOpen, setNewObsModalOpen] = useState(false);
   const [content, setContent] = useState('');
+  const [confidentialityLevel, setConfidentialityLevel] = useState<ConfidentialityLevel>('normal');
+  const [isUrgent, setIsUrgent] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [obsToDelete, setObsToDelete] = useState<Observation | null>(null);
 
   const handleCreate = async () => {
     if (!content.trim()) return;
-    
+
     await createMutation.mutateAsync({
       patient_id: patient.id,
       practitioner_id: null,
@@ -65,12 +99,15 @@ const PatientObservationsTab: React.FC = () => {
       appointment_id: null,
       author_name: null,
       author_id: null,
-      is_urgent: false,
+      is_urgent: isUrgent,
       send_to_secretariat: false,
       content: content.trim(),
+      confidentiality_level: confidentialityLevel,
     });
-    
+
     setContent('');
+    setConfidentialityLevel('normal');
+    setIsUrgent(false);
     setNewObsModalOpen(false);
   };
 
@@ -156,6 +193,32 @@ const PatientObservationsTab: React.FC = () => {
                         {obs.is_urgent && (
                           <Badge variant="destructive" className="text-xs">Urgent</Badge>
                         )}
+                        {/* P0-011: Confidentiality badge */}
+                        {obs.confidentiality_level && obs.confidentiality_level !== 'normal' && (
+                          (() => {
+                            const confConfig = CONFIDENTIALITY_CONFIG[obs.confidentiality_level];
+                            const ConfIcon = confidentialityIcons[confConfig.icon];
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'text-[10px] px-1.5 py-0 h-4 gap-1',
+                                      confConfig.bgColor,
+                                      confConfig.color,
+                                      confConfig.borderColor
+                                    )}
+                                  >
+                                    <ConfIcon className="h-2.5 w-2.5" />
+                                    {confConfig.label}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>{confConfig.description}</TooltipContent>
+                              </Tooltip>
+                            );
+                          })()
+                        )}
                       </div>
                       
                       <p className={cn(
@@ -214,13 +277,70 @@ const PatientObservationsTab: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Saisissez votre observation clinique..."
-              className="min-h-[200px] resize-none"
-            />
+          <div className="py-4 space-y-4">
+            <div>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Saisissez votre observation clinique..."
+                className="min-h-[200px] resize-none"
+              />
+            </div>
+
+            {/* P0-011: Confidentiality level selector */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground mb-1.5 block">
+                  Niveau de confidentialité
+                </Label>
+                <Select
+                  value={confidentialityLevel}
+                  onValueChange={(v) => setConfidentialityLevel(v as ConfidentialityLevel)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CONFIDENTIALITY_CONFIG).map(([key, config]) => {
+                      const Icon = confidentialityIcons[config.icon];
+                      return (
+                        <SelectItem key={key} value={key}>
+                          <span className="flex items-center gap-2">
+                            <Icon className={cn('h-4 w-4', config.color)} />
+                            <span>{config.label}</span>
+                            <span className="text-xs text-muted-foreground">
+                              — {config.description}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <Button
+                  type="button"
+                  variant={isUrgent ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsUrgent(!isUrgent)}
+                  className="gap-1.5"
+                >
+                  {isUrgent ? 'Urgent ✓' : 'Marquer urgent'}
+                </Button>
+              </div>
+            </div>
+
+            {confidentialityLevel !== 'normal' && (
+              <div className={cn(
+                'p-3 rounded-lg text-xs',
+                CONFIDENTIALITY_CONFIG[confidentialityLevel].bgColor,
+                CONFIDENTIALITY_CONFIG[confidentialityLevel].color
+              )}>
+                <strong>Note:</strong> {CONFIDENTIALITY_CONFIG[confidentialityLevel].description}
+              </div>
+            )}
           </div>
 
           <DialogFooter>

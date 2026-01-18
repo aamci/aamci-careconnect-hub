@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Info, History, ChevronRight } from 'lucide-react';
-import { Patient } from '@/types';
+import { X, Info, History, ChevronRight, Loader2 } from 'lucide-react';
+import { Patient, Gender } from '@/types';
+import { useUpdatePatient } from '@/hooks/data/usePatients';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,8 @@ import {
 } from './types';
 import BirthPlaceAutocomplete from './BirthPlaceAutocomplete';
 import IdentityValidationSection from './IdentityValidationSection';
+import PatientConsentsSection from './PatientConsentsSection';
+import EmergencyContactsSection from './EmergencyContactsSection';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -50,6 +53,7 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
   patient,
 }) => {
   const navigate = useNavigate();
+  const updatePatientMutation = useUpdatePatient();
   
   // Initialize form with patient data
   const initialData = useMemo((): PatientAdminInfo => ({
@@ -106,10 +110,45 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
       return;
     }
 
-    // TODO: Call API to save
-    toast.success('Fiche patient enregistrée');
-    setOriginalData(formData);
-    setIsDirty(false);
+    // Map form data to Patient update object
+    const genderMap: Record<string, Gender> = {
+      'Homme': 'male',
+      'Femme': 'female',
+      'Indéterminé': 'other',
+    };
+
+    const updates: Partial<Patient> = {
+      firstName: formData.birthFirstname || patient.firstName,
+      lastName: formData.birthName || patient.lastName,
+      usedFirstName: formData.usedFirstname || undefined,
+      usedLastName: formData.usedName || undefined,
+      gender: formData.sex ? genderMap[formData.sex] || patient.gender : patient.gender,
+      phone: formData.phoneMobile || patient.phone,
+      phoneSecondary: formData.phoneLandline || undefined,
+      email: formData.email || undefined,
+      address: formData.address || undefined,
+      city: formData.city || undefined,
+      postalCode: formData.postalCode || undefined,
+      birthPlace: formData.birthCity || undefined,
+      insuranceNumber: formData.socialSecurityNumber || undefined,
+      insuranceProvider: formData.insuranceType || undefined,
+      referringDoctor: formData.gpName
+        ? `${formData.gpName}${formData.gpCity ? ', ' + formData.gpCity : ''}`
+        : undefined,
+      notes: formData.remark || undefined,
+    };
+
+    try {
+      await updatePatientMutation.mutateAsync({
+        id: patient.id,
+        updates,
+      });
+      setOriginalData(formData);
+      setIsDirty(false);
+    } catch (error) {
+      // Error is handled by the mutation's onError
+      console.error('Save error:', error);
+    }
   };
 
   const handleHistoryClick = () => {
@@ -528,6 +567,28 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
             />
           </div>
 
+          {/* P0-007: Patient Consents Section */}
+          <div className="pt-4">
+            <PatientConsentsSection
+              patientId={patient.id}
+              onChange={(consents) => {
+                // TODO: Store consents in state or call API
+                console.log('Consents updated:', consents);
+              }}
+            />
+          </div>
+
+          {/* P0-008: Emergency Contacts Section */}
+          <div className="pt-4">
+            <EmergencyContactsSection
+              patientId={patient.id}
+              onChange={(contacts) => {
+                // TODO: Store emergency contacts in state or call API
+                console.log('Emergency contacts updated:', contacts);
+              }}
+            />
+          </div>
+
         </div>
       </ScrollArea>
 
@@ -544,10 +605,17 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!isDirty}
+            disabled={!isDirty || updatePatientMutation.isPending}
             className="bg-primary text-primary-foreground hover:bg-primary/90 px-6"
           >
-            ENREGISTRER LA FICHE PATIENT
+            {updatePatientMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              'ENREGISTRER LA FICHE PATIENT'
+            )}
           </Button>
         </div>
       </div>
