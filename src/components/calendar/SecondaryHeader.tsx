@@ -1,17 +1,17 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   Menu,
-  List, 
+  List,
   Clock,
-  CalendarDays, 
+  CalendarDays,
   Calendar as CalendarIcon,
-  Settings2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CalendarView } from '@/hooks/useCalendar';
+import PreferencesPopover from './settings/PreferencesPopover';
 
 interface SecondaryHeaderProps {
   dateLabel: string;
@@ -120,31 +120,27 @@ const SecondaryHeader: React.FC<SecondaryHeaderProps> = ({
         ))}
       </div>
 
-      {/* Right Section - Openings Edit & Display Settings */}
+      {/* Right Section - Preferences Popover */}
       <div className="flex items-center gap-2">
-        <Button
-          variant={isOpeningEditMode ? "default" : "outline"}
-          size="sm"
-          className={cn(
-            "h-8 gap-2 text-xs",
-            isOpeningEditMode && "bg-amber-400 hover:bg-amber-500 text-amber-950"
-          )}
-          onClick={onToggleOpeningEditMode}
-        >
-          <CalendarIcon className="w-4 h-4" />
-          <span className="hidden sm:inline">
-            {isOpeningEditMode ? 'Revenir à l\'agenda' : 'Modifier les plages d\'ouverture'}
-          </span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-2 text-muted-foreground hover:text-foreground"
-          onClick={onOpenSettings}
-        >
-          <Settings2 className="w-4 h-4" />
-          <span className="text-xs hidden sm:inline">Affichage de l'agenda</span>
-        </Button>
+        {/* Show "Return to agenda" button only when in edit mode */}
+        {isOpeningEditMode && (
+          <Button
+            variant="default"
+            size="sm"
+            className="h-8 gap-2 text-xs bg-amber-400 hover:bg-amber-500 text-amber-950"
+            onClick={onToggleOpeningEditMode}
+          >
+            <CalendarIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Revenir à l'agenda</span>
+          </Button>
+        )}
+
+        {/* Preferences Popover - contains Disponibilités and Apparence & affichage */}
+        <PreferencesPopover
+          onOpenAvailability={onToggleOpeningEditMode || (() => {})}
+          onOpenAppearance={onOpenSettings || (() => {})}
+          isAvailabilityActive={isOpeningEditMode}
+        />
       </div>
     </div>
   );

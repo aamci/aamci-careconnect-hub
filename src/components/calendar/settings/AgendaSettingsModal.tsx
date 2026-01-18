@@ -19,12 +19,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import {
   useAgendaPreferences,
   type ZoomLevel,
   type StatsMode,
   type HoverGranularity,
   type SchoolHolidayRegion,
+  type TimeFormat,
+  type SlotHeightMode,
+  type SecondaryLineContent,
+  type AgendaTheme,
+  ZOOM_MIN,
+  ZOOM_STANDARD,
+  ZOOM_MAX,
 } from '@/hooks/useAgendaPreferences';
 
 interface AgendaSettingsModalProps {
@@ -67,6 +75,37 @@ const DAY_NAMES = [
   { index: 6, label: 'dim' },
 ];
 
+// New premium options
+const TIME_FORMAT_OPTIONS: { value: TimeFormat; label: string }[] = [
+  { value: '24h', label: '24 heures (14:00)' },
+  { value: '12h', label: '12 heures (2:00 PM)' },
+];
+
+const FIRST_DAY_OPTIONS: { value: 0 | 1; label: string }[] = [
+  { value: 1, label: 'Lundi' },
+  { value: 0, label: 'Dimanche' },
+];
+
+const SLOT_HEIGHT_OPTIONS: { value: SlotHeightMode; label: string }[] = [
+  { value: 'auto', label: 'Automatique (suit le zoom)' },
+  { value: 'small', label: 'Petit (24px)' },
+  { value: 'medium', label: 'Moyen (40px)' },
+  { value: 'large', label: 'Grand (64px)' },
+];
+
+const SECONDARY_LINE_OPTIONS: { value: SecondaryLineContent; label: string }[] = [
+  { value: 'motif', label: 'Motif de consultation' },
+  { value: 'location', label: 'Lieu' },
+  { value: 'tags', label: 'Tags' },
+  { value: 'none', label: 'Aucun' },
+];
+
+const THEME_OPTIONS: { value: AgendaTheme; label: string; description: string }[] = [
+  { value: 'standard', label: 'Standard', description: 'Couleurs équilibrées' },
+  { value: 'high-contrast', label: 'Contraste élevé', description: 'Accessibilité renforcée' },
+  { value: 'pastel', label: 'Pastel', description: 'Couleurs douces' },
+];
+
 const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
   isOpen,
   onClose,
@@ -77,28 +116,20 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
     toggleDayVisibility,
   } = useAgendaPreferences();
 
-  // Convert zoom level to slider value (0, 50, 100 for 3 distinct positions)
-  const zoomToSlider = (zoom: ZoomLevel): number => {
-    switch (zoom) {
-      case 'minimum': return 0;
-      case 'standard': return 50;
-      case 'maximum': return 100;
-      default: return 50;
-    }
-  };
-
-  const sliderToZoom = (value: number): ZoomLevel => {
-    if (value < 25) return 'minimum';
-    if (value > 75) return 'maximum';
-    return 'standard';
-  };
+  // Zoom is now a numeric value from 0-20
+  // 0 = Minimum, 10 = Standard, 20 = Maximum
+  // 10 steps between Minimum and Standard, 10 steps between Standard and Maximum
 
   // Handle zoom change with immediate effect
   const handleZoomChange = ([value]: number[]) => {
-    const newZoom = sliderToZoom(value);
-    console.log('[AgendaSettings] Zoom changed to:', newZoom);
-    updatePreference('zoomLevel', newZoom);
+    console.log('[AgendaSettings] Zoom changed to:', value);
+    updatePreference('zoomLevel', value);
   };
+
+  // Determine which label should be highlighted
+  const isMinimumActive = preferences.zoomLevel <= 3;
+  const isStandardActive = preferences.zoomLevel >= 7 && preferences.zoomLevel <= 13;
+  const isMaximumActive = preferences.zoomLevel >= 17;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -109,10 +140,10 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
       >
         <DialogHeader className="px-6 py-4 border-b border-border flex-shrink-0 bg-background">
           <DialogTitle className="text-xl font-semibold text-center">
-            Affichage de l'agenda
+            Apparence & affichage
           </DialogTitle>
           <p id="agenda-settings-description" className="sr-only">
-            Paramètres d'affichage de l'agenda pour personnaliser la vue
+            Paramètres d'apparence et d'affichage de l'agenda
           </p>
         </DialogHeader>
 
@@ -134,28 +165,136 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Zoom</Label>
               <Slider
-                value={[zoomToSlider(preferences.zoomLevel)]}
+                value={[preferences.zoomLevel]}
                 onValueChange={handleZoomChange}
-                min={0}
-                max={100}
-                step={50}
+                min={ZOOM_MIN}
+                max={ZOOM_MAX}
+                step={1}
                 className="w-full cursor-pointer"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span className={cn(preferences.zoomLevel === 'minimum' && 'text-primary font-medium')}>
+                <span className={cn(isMinimumActive && 'text-primary font-medium')}>
                   Minimum
                 </span>
-                <span className={cn(preferences.zoomLevel === 'standard' && 'text-primary font-medium')}>
+                <span className={cn(isStandardActive && 'text-primary font-medium')}>
                   Standard
                 </span>
-                <span className={cn(preferences.zoomLevel === 'maximum' && 'text-primary font-medium')}>
+                <span className={cn(isMaximumActive && 'text-primary font-medium')}>
                   Maximum
                 </span>
               </div>
             </div>
           </SettingsSection>
 
-          {/* Section 2: Plage horaire affichée */}
+          {/* Section 2: Format & Affichage */}
+          <SettingsSection title="Format & affichage">
+            <div className="space-y-4">
+              {/* Time Format */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Format d'heure</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Choisissez le format d'affichage des heures
+                  </p>
+                </div>
+                <Select
+                  value={preferences.timeFormat}
+                  onValueChange={(value) => updatePreference('timeFormat', value as TimeFormat)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_FORMAT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* First Day of Week */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Premier jour de la semaine</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Définissez le premier jour affiché
+                  </p>
+                </div>
+                <Select
+                  value={String(preferences.firstDayOfWeek)}
+                  onValueChange={(value) => updatePreference('firstDayOfWeek', Number(value) as 0 | 1)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FIRST_DAY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={String(opt.value)}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Show Weekends */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Afficher les week-ends</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Affiche samedi et dimanche dans la vue semaine
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.showWeekends}
+                  onCheckedChange={(checked) => updatePreference('showWeekends', checked)}
+                />
+              </div>
+
+              {/* Show Week Numbers */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Numéro de semaine</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Affiche le numéro de semaine (ex: S03)
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.showWeekNumbers}
+                  onCheckedChange={(checked) => updatePreference('showWeekNumbers', checked)}
+                />
+              </div>
+
+              {/* Slot Height Mode */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Hauteur des créneaux</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Mode automatique ou hauteur fixe
+                  </p>
+                </div>
+                <Select
+                  value={preferences.slotHeightMode}
+                  onValueChange={(value) => updatePreference('slotHeightMode', value as SlotHeightMode)}
+                >
+                  <SelectTrigger className="w-52">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SLOT_HEIGHT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </SettingsSection>
+
+          {/* Section 3: Plage horaire affichée */}
           <SettingsSection title="Plage horaire affichée">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -204,9 +343,23 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
             <p className="text-sm text-primary mt-2">
               Les rendez-vous pris en dehors de cette plage ne seront pas affichés
             </p>
+
+            {/* Hide non-working hours */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <div>
+                <Label className="text-sm font-medium">Masquer les heures non ouvrées</Label>
+                <p className="text-xs text-muted-foreground">
+                  Grise ou masque les créneaux hors plage de travail
+                </p>
+              </div>
+              <Switch
+                checked={preferences.hideNonWorkingHours}
+                onCheckedChange={(checked) => updatePreference('hideNonWorkingHours', checked)}
+              />
+            </div>
           </SettingsSection>
 
-          {/* Section 3: Précision de la souris */}
+          {/* Section 4: Précision de la souris */}
           <SettingsSection title="Précision de la souris">
             <p className="text-sm text-muted-foreground mb-4">
               Personnalisez la taille des créneaux horaires surlignés quand vous passez la souris sur l'agenda.
@@ -340,7 +493,132 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
             </div>
           </SettingsSection>
 
-          {/* Section 6: Statistiques */}
+          {/* Section 6: Informations affichées */}
+          <SettingsSection title="Informations affichées">
+            <p className="text-sm text-muted-foreground mb-4">
+              Personnalisez les informations visibles sur les rendez-vous.
+            </p>
+            <div className="space-y-4">
+              {/* Status Icons */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Icônes de statut</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Affiche les badges de statut (confirmé, annulé, etc.)
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.showStatusIcons}
+                  onCheckedChange={(checked) => updatePreference('showStatusIcons', checked)}
+                />
+              </div>
+
+              {/* Daily Load Indicator */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Indicateurs de charge</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Affiche le nombre de RDV par jour (ex: 12/20)
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.showDailyLoadIndicator}
+                  onCheckedChange={(checked) => updatePreference('showDailyLoadIndicator', checked)}
+                />
+              </div>
+
+              {/* Secondary Line Content */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Ligne secondaire</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Information affichée sous le nom du patient
+                  </p>
+                </div>
+                <Select
+                  value={preferences.secondaryLineContent}
+                  onValueChange={(value) => updatePreference('secondaryLineContent', value as SecondaryLineContent)}
+                >
+                  <SelectTrigger className="w-52">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SECONDARY_LINE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </SettingsSection>
+
+          {/* Section 7: Confort visuel */}
+          <SettingsSection title="Confort visuel">
+            <p className="text-sm text-muted-foreground mb-4">
+              Personnalisez le thème et les effets visuels de l'agenda.
+            </p>
+            <div className="space-y-4">
+              {/* Agenda Theme */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Thème de l'agenda</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Choisissez le style de couleurs
+                  </p>
+                </div>
+                <Select
+                  value={preferences.agendaTheme}
+                  onValueChange={(value) => updatePreference('agendaTheme', value as AgendaTheme)}
+                >
+                  <SelectTrigger className="w-52">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {THEME_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex flex-col">
+                          <span>{opt.label}</span>
+                          <span className="text-xs text-muted-foreground">{opt.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Concentration Mode */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Mode concentration</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Masque les éléments non essentiels
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.concentrationMode}
+                  onCheckedChange={(checked) => updatePreference('concentrationMode', checked)}
+                />
+              </div>
+
+              {/* Enable Animations */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Animations</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Active les transitions et animations fluides
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences.enableAnimations}
+                  onCheckedChange={(checked) => updatePreference('enableAnimations', checked)}
+                />
+              </div>
+            </div>
+          </SettingsSection>
+
+          {/* Section 8: Statistiques */}
           <SettingsSection title="Statistiques">
             <p className="text-sm text-muted-foreground mb-4">
               Affichez le nombre de rendez-vous par créneau disponible en haut de l'agenda.
