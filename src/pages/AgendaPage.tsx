@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, isToday, isBefore, startOfDay, getDay } from 'date-fns';
 import MainLayout from '@/components/layout/MainLayout';
 import SecondaryHeader from '@/components/calendar/SecondaryHeader';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
@@ -31,9 +31,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const AgendaPage: React.FC = () => {
   const { toast } = useToast();
-  const calendar = useCalendar();
-  const hoverPreview = useHoverPreview();
   const { preferences } = useAgendaPreferences();
+  const calendar = useCalendar({ weekStartsOn: preferences.firstDayOfWeek });
+  const hoverPreview = useHoverPreview();
   
   // Fetch data from Supabase with fallback
   const { data: motifs = [] } = useMotifs();
@@ -233,6 +233,41 @@ const AgendaPage: React.FC = () => {
     });
   }, [appointments, selectedMotifs, selectedStatuses, selectedPractitioners]);
 
+  // Filter days based on preferences (weekVisibleDays, showWeekends, showOnlyUpcomingDays)
+  const visibleDays = React.useMemo(() => {
+    const allDays = calendar.getWeekDays();
+    const today = startOfDay(new Date());
+
+    return allDays.filter((date) => {
+      // Convert date-fns getDay (0=Sunday) to preference index (0=Monday)
+      // getDay: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+      // weekVisibleDays: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+      const jsDay = getDay(date); // 0=Sunday, 1=Monday, etc.
+      const prefDayIndex = (jsDay + 6) % 7; // Convert to 0=Monday, 6=Sunday
+
+      // Check weekVisibleDays preference
+      if (!preferences.weekVisibleDays.includes(prefDayIndex)) {
+        return false;
+      }
+
+      // Check showWeekends preference (Saturday=5, Sunday=6 in preference index)
+      if (!preferences.showWeekends && (prefDayIndex === 5 || prefDayIndex === 6)) {
+        return false;
+      }
+
+      // Check showOnlyUpcomingDays preference
+      if (preferences.showOnlyUpcomingDays) {
+        const dayStart = startOfDay(date);
+        // Include today and future days only
+        if (isBefore(dayStart, today) && !isToday(date)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [calendar, preferences.weekVisibleDays, preferences.showWeekends, preferences.showOnlyUpcomingDays]);
+
   // Check if showing opening preview (collapse filters)
   const isShowingOpeningPreview = isOpeningEditMode && hoveredOpening !== null;
   const isShowingAnyPreview = hoverPreview.isPreviewVisible || isShowingOpeningPreview;
@@ -319,7 +354,7 @@ const AgendaPage: React.FC = () => {
         <main className="flex-1 flex flex-col p-3 min-w-0 overflow-hidden">
           <AgendaGrid
             view={calendar.view}
-            days={calendar.getWeekDays()}
+            days={visibleDays}
             currentDate={calendar.currentDate}
             selectedDate={calendar.selectedDate}
             appointments={filteredAppointments}
