@@ -4,6 +4,7 @@ import { Patient } from '@/types';
 import { Stethoscope, Plus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import DossierPageLayout from './shared/DossierPageLayout';
 
 interface OutletContext {
   patient: Patient;
@@ -13,15 +14,17 @@ const PatientConsultationTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-foreground">Consultation en cours</h2>
+    <DossierPageLayout
+      patient={patient}
+      title="Consultation en cours"
+      breadcrumbLabel="Consultation"
+      headerActions={
         <Button className="gap-1.5">
           <Plus className="h-4 w-4" />
           Nouvelle consultation
         </Button>
-      </div>
-
+      }
+    >
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16">
           <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
@@ -46,7 +49,7 @@ const PatientConsultationTab: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </DossierPageLayout>
   );
 };
 

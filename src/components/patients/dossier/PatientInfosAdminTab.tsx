@@ -19,12 +19,12 @@ const PatientInfosAdminTab: React.FC = () => {
   return (
     <div className="h-full flex">
       {/* Central Form Panel */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <InfosAdministrativesPanel patient={patient} onClose={handleClose} />
       </div>
-      
-      {/* Right Actions Panel */}
-      <div className="w-56 flex-shrink-0">
+
+      {/* Right Actions Panel - Responsive: hidden on small screens */}
+      <div className="hidden lg:block w-64 flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <ActionsPanel patient={patient} />
       </div>
     </div>

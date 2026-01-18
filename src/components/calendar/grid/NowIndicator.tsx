@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 interface NowIndicatorProps {
   startHour: number;
   slotHeight: number;
+  topOffset?: number;
 }
 
-const NowIndicator: React.FC<NowIndicatorProps> = ({ startHour, slotHeight }) => {
+const NowIndicator: React.FC<NowIndicatorProps> = ({ startHour, slotHeight, topOffset = 0 }) => {
   const [position, setPosition] = useState(0);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ const NowIndicator: React.FC<NowIndicatorProps> = ({ startHour, slotHeight }) =>
   return (
     <div
       className="absolute left-0 right-0 flex items-center z-30 pointer-events-none"
-      style={{ top: `${position}px` }}
+      style={{ top: `${position + topOffset}px` }}
     >
       <div className="w-2.5 h-2.5 rounded-full bg-destructive -ml-1 shadow-sm" />
       <div

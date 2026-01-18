@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { format, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Appointment } from '@/types';
@@ -10,7 +10,7 @@ import UnavailableSlot from './UnavailableSlot';
 import EventCard from './EventCard';
 import OpeningSlot from '../openings/OpeningSlot';
 import { useOverlapLayout, getEventPosition } from '@/hooks/useOverlapLayout';
-import { useGridDensity, type ZoomLevel } from '@/hooks/useGridDensity';
+import { useAdaptiveGridDensity, type ZoomLevel } from '@/hooks/useGridDensity';
 
 interface OptimizedWeekGridProps {
   days: Date[];
@@ -53,25 +53,32 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   unavailableSlots = [],
   zoomLevel = 'standard',
 }) => {
-  const { config, isCompact } = useGridDensity(zoomLevel);
-  
-  // Use props directly - do NOT filter days here to avoid blocking slots
-  // The preferences should only affect visual styling, not hide content
+  // Ref for the scrollable container to measure available height
+  const gridBodyRef = useRef<HTMLDivElement>(null);
+
+  // Use props directly
   const startHour = propStartHour;
   const endHour = propEndHour;
-  
+
+  // Use adaptive density hook - calculates slot height dynamically for zoom=minimum
+  const { config, isCompact } = useAdaptiveGridDensity(
+    zoomLevel,
+    gridBodyRef,
+    startHour,
+    endHour
+  );
+
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
 
   // Do NOT filter days - show all days passed in props
-  // This ensures clicking on slots works properly
   const visibleDays = days;
 
-  // Group appointments by day - show ALL appointments without filtering
+  // Group appointments by day
   const appointmentsByDay = useMemo(() => {
     const grouped: Record<string, Appointment[]> = {};
-    visibleDays.forEach(day => {
+    visibleDays.forEach((day) => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = appointments.filter(apt => {
+      grouped[key] = appointments.filter((apt) => {
         return format(apt.startTime, 'yyyy-MM-dd') === key;
       });
     });
@@ -81,10 +88,10 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   // Group openings by day
   const openingsByDay = useMemo(() => {
     const grouped: Record<string, PractitionerOpening[]> = {};
-    visibleDays.forEach(day => {
+    visibleDays.forEach((day) => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = openings.filter(op =>
-        format(op.openingDate, 'yyyy-MM-dd') === key && !op.isCancelled
+      grouped[key] = openings.filter(
+        (op) => format(op.openingDate, 'yyyy-MM-dd') === key && !op.isCancelled
       );
     });
     return grouped;
@@ -93,7 +100,7 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   // Calculate counts for header
   const appointmentCounts = useMemo(() => {
     const counts: Record<string, { current: number; total: number }> = {};
-    visibleDays.forEach(day => {
+    visibleDays.forEach((day) => {
       const key = format(day, 'yyyy-MM-dd');
       counts[key] = {
         current: appointmentsByDay[key]?.length || 0,
@@ -104,15 +111,18 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
   }, [visibleDays, appointmentsByDay]);
 
   return (
-    <div className={cn(
-      "flex-1 flex flex-col overflow-hidden bg-card rounded-lg border",
-      isOpeningEditMode ? "border-amber-400 border-2" : "border-border"
-    )}>
+    <div
+      className={cn(
+        'flex-1 flex flex-col overflow-hidden bg-card rounded-lg border',
+        isOpeningEditMode ? 'border-amber-400 border-2' : 'border-border'
+      )}
+    >
       {/* Edit mode indicator */}
       {isOpeningEditMode && (
         <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs px-4 py-1.5 font-medium flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          Mode édition des plages d'ouverture — Cliquez sur une plage pour la modifier ou glissez pour en créer une nouvelle
+          Mode édition des plages d'ouverture — Cliquez sur une plage pour la modifier ou
+          glissez pour en créer une nouvelle
         </div>
       )}
 
@@ -124,15 +134,14 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
         showTimeAxisSpacer
       />
 
-      {/* Scrollable Grid Body */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* Grid Body */}
+      <div
+        ref={gridBodyRef}
+        className="flex-1 overflow-y-auto custom-scrollbar"
+      >
         <div className="flex">
           {/* Time Axis */}
-          <TimeAxis
-            startHour={startHour}
-            endHour={endHour}
-            slotHeight={config.slotHeight}
-          />
+          <TimeAxis startHour={startHour} endHour={endHour} slotHeight={config.slotHeight} />
 
           {/* Day Columns */}
           {visibleDays.map((day, dayIndex) => {
@@ -154,7 +163,7 @@ const OptimizedWeekGrid: React.FC<OptimizedWeekGridProps> = ({
                 slotHeight={config.slotHeight}
                 isToday={isTodayDate}
                 isCompact={isCompact}
-                unavailableSlots={unavailableSlots.filter(s => s.dayIndex === dayIndex)}
+                unavailableSlots={unavailableSlots.filter((s) => s.dayIndex === dayIndex)}
                 onSlotClick={onSlotClick}
                 onAppointmentClick={onAppointmentClick}
                 onAppointmentHover={onAppointmentHover}
@@ -197,247 +206,272 @@ interface DayColumnProps {
   onOpeningDragCreate?: (date: Date, startTime: string, endTime: string) => void;
 }
 
-const DayColumn: React.FC<DayColumnProps> = React.memo(({
-  day,
-  dayIndex,
-  appointments,
-  openings,
-  isOpeningEditMode,
-  hours,
-  startHour,
-  slotHeight,
-  isToday: isTodayDate,
-  isCompact,
-  unavailableSlots,
-  onSlotClick,
-  onAppointmentClick,
-  onAppointmentHover,
-  onAppointmentLeave,
-  onOpeningHover,
-  onOpeningLeave,
-  onOpeningEdit,
-  onOpeningCopy,
-  onOpeningDragCreate,
-}) => {
-  // Use overlap layout hook
-  const layoutedEvents = useOverlapLayout(appointments);
+const DayColumn: React.FC<DayColumnProps> = React.memo(
+  ({
+    day,
+    dayIndex,
+    appointments,
+    openings,
+    isOpeningEditMode,
+    hours,
+    startHour,
+    slotHeight,
+    isToday: isTodayDate,
+    isCompact,
+    unavailableSlots,
+    onSlotClick,
+    onAppointmentClick,
+    onAppointmentHover,
+    onAppointmentLeave,
+    onOpeningHover,
+    onOpeningLeave,
+    onOpeningEdit,
+    onOpeningCopy,
+    onOpeningDragCreate,
+  }) => {
+    // Use overlap layout hook
+    const layoutedEvents = useOverlapLayout(appointments);
 
-  // Drag state for creating openings
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ hour: number; minutes: number } | null>(null);
-  const [dragEnd, setDragEnd] = useState<{ hour: number; minutes: number } | null>(null);
+    // Padding offset for first hour visibility (pt-2 = 8px)
+    const paddingOffset = 8;
 
-  // Calculate position from mouse event
-  const getTimeFromMouseY = useCallback((clientY: number, containerRect: DOMRect) => {
-    const relativeY = clientY - containerRect.top;
-    const totalMinutes = (relativeY / slotHeight) * 60;
-    const hour = Math.floor(totalMinutes / 60) + startHour;
-    const minutes = Math.round((totalMinutes % 60) / 15) * 15; // Round to 15 min intervals
-    return { hour: Math.max(startHour, Math.min(hour, 20)), minutes: minutes % 60 };
-  }, [slotHeight, startHour]);
+    // Drag state for creating openings
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState<{ hour: number; minutes: number } | null>(null);
+    const [dragEnd, setDragEnd] = useState<{ hour: number; minutes: number } | null>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isOpeningEditMode) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const time = getTimeFromMouseY(e.clientY, rect);
-    setIsDragging(true);
-    setDragStart(time);
-    setDragEnd(time);
-  }, [isOpeningEditMode, getTimeFromMouseY]);
+    // Calculate position from mouse event
+    const getTimeFromMouseY = useCallback(
+      (clientY: number, containerRect: DOMRect) => {
+        const relativeY = clientY - containerRect.top - paddingOffset;
+        const totalMinutes = (relativeY / slotHeight) * 60;
+        const hour = Math.floor(totalMinutes / 60) + startHour;
+        const minutes = Math.round((totalMinutes % 60) / 15) * 15; // Round to 15 min intervals
+        return { hour: Math.max(startHour, Math.min(hour, 20)), minutes: minutes % 60 };
+      },
+      [slotHeight, startHour]
+    );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !isOpeningEditMode) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const time = getTimeFromMouseY(e.clientY, rect);
-    setDragEnd(time);
-  }, [isDragging, isOpeningEditMode, getTimeFromMouseY]);
+    const handleMouseDown = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isOpeningEditMode) return;
 
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging || !dragStart || !dragEnd) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const time = getTimeFromMouseY(e.clientY, rect);
+        setIsDragging(true);
+        setDragStart(time);
+        setDragEnd(time);
+      },
+      [isOpeningEditMode, getTimeFromMouseY]
+    );
+
+    const handleMouseMove = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isDragging || !isOpeningEditMode) return;
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const time = getTimeFromMouseY(e.clientY, rect);
+        setDragEnd(time);
+      },
+      [isDragging, isOpeningEditMode, getTimeFromMouseY]
+    );
+
+    const handleMouseUp = useCallback(() => {
+      if (!isDragging || !dragStart || !dragEnd) {
+        setIsDragging(false);
+        setDragStart(null);
+        setDragEnd(null);
+        return;
+      }
+
+      // Calculate start and end times
+      const start = dragStart.hour * 60 + dragStart.minutes;
+      const end = dragEnd.hour * 60 + dragEnd.minutes;
+
+      const actualStart = Math.min(start, end);
+      const actualEnd = Math.max(start, end);
+
+      // Minimum 30 minutes
+      if (actualEnd - actualStart >= 30) {
+        const startHr = Math.floor(actualStart / 60);
+        const startMin = actualStart % 60;
+        const endHr = Math.floor(actualEnd / 60);
+        const endMin = actualEnd % 60;
+
+        const startTime = `${startHr.toString().padStart(2, '0')}:${startMin
+          .toString()
+          .padStart(2, '0')}`;
+        const endTime = `${endHr.toString().padStart(2, '0')}:${endMin
+          .toString()
+          .padStart(2, '0')}`;
+
+        onOpeningDragCreate?.(day, startTime, endTime);
+      }
+
       setIsDragging(false);
       setDragStart(null);
       setDragEnd(null);
-      return;
-    }
+    }, [isDragging, dragStart, dragEnd, day, onOpeningDragCreate]);
 
-    // Calculate start and end times
-    const start = dragStart.hour * 60 + dragStart.minutes;
-    const end = dragEnd.hour * 60 + dragEnd.minutes;
-    
-    const actualStart = Math.min(start, end);
-    const actualEnd = Math.max(start, end);
-    
-    // Minimum 30 minutes
-    if (actualEnd - actualStart >= 30) {
-      const startHr = Math.floor(actualStart / 60);
-      const startMin = actualStart % 60;
-      const endHr = Math.floor(actualEnd / 60);
-      const endMin = actualEnd % 60;
-      
-      const startTime = `${startHr.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`;
-      const endTime = `${endHr.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
-      
-      onOpeningDragCreate?.(day, startTime, endTime);
-    }
+    // Calculate drag selection position (with padding offset)
+    const dragSelectionStyle = useMemo(() => {
+      if (!isDragging || !dragStart || !dragEnd) return null;
 
-    setIsDragging(false);
-    setDragStart(null);
-    setDragEnd(null);
-  }, [isDragging, dragStart, dragEnd, day, onOpeningDragCreate]);
+      const start =
+        (dragStart.hour - startHour) * slotHeight + (dragStart.minutes / 60) * slotHeight;
+      const end = (dragEnd.hour - startHour) * slotHeight + (dragEnd.minutes / 60) * slotHeight;
 
-  // Calculate drag selection position
-  const dragSelectionStyle = useMemo(() => {
-    if (!isDragging || !dragStart || !dragEnd) return null;
-    
-    const start = (dragStart.hour - startHour) * slotHeight + (dragStart.minutes / 60) * slotHeight;
-    const end = (dragEnd.hour - startHour) * slotHeight + (dragEnd.minutes / 60) * slotHeight;
-    
-    const top = Math.min(start, end);
-    const height = Math.abs(end - start);
-    
-    return { top, height: Math.max(height, slotHeight / 2) };
-  }, [isDragging, dragStart, dragEnd, startHour, slotHeight]);
+      const top = Math.min(start, end) + paddingOffset;
+      const height = Math.abs(end - start);
 
-  // Calculate opening position
-  const getOpeningPosition = (opening: PractitionerOpening) => {
-    const [startH, startM] = opening.startTime.split(':').map(Number);
-    const [endH, endM] = opening.endTime.split(':').map(Number);
-    
-    const startMinutes = (startH - startHour) * 60 + startM;
-    const endMinutes = (endH - startHour) * 60 + endM;
-    
-    const top = (startMinutes / 60) * slotHeight;
-    const height = ((endMinutes - startMinutes) / 60) * slotHeight;
-    
-    return { top, height: Math.max(height, 20) };
-  };
+      return { top, height: Math.max(height, slotHeight / 2) };
+    }, [isDragging, dragStart, dragEnd, startHour, slotHeight, paddingOffset]);
 
-  return (
-    <div
-      className={cn(
-        'flex-1 min-w-[100px] relative border-r border-border last:border-r-0',
-        isTodayDate && 'bg-accent/[0.02]',
-        isOpeningEditMode && 'cursor-crosshair'
-      )}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => {
-        if (isDragging) {
-          handleMouseUp();
-        }
-      }}
-    >
-      {/* Hour slots (clickable) */}
-      {hours.map((hour) => (
-        <div
-          key={hour}
-          className={cn(
-            "border-b border-border/40 transition-colors",
-            isOpeningEditMode 
-              ? "hover:bg-amber-50 dark:hover:bg-amber-950/20" 
-              : "cursor-pointer hover:bg-muted/30"
-          )}
-          style={{ height: `${slotHeight}px` }}
-          onClick={(e) => {
-            if (!isDragging) {
-              e.stopPropagation();
-              onSlotClick?.(day, hour);
-            }
-          }}
-        />
-      ))}
+    // Calculate opening position (with padding offset)
+    const getOpeningPosition = (opening: PractitionerOpening) => {
+      const [startH, startM] = opening.startTime.split(':').map(Number);
+      const [endH, endM] = opening.endTime.split(':').map(Number);
 
-      {/* Opening slots - show in edit mode */}
-      {isOpeningEditMode && openings.map((opening) => {
-        const { top, height } = getOpeningPosition(opening);
-        return (
-          <OpeningSlot
-            key={opening.id}
-            opening={opening}
-            style={{ top: `${top}px`, height: `${height}px` }}
-            isEditMode={isOpeningEditMode}
-            onEdit={onOpeningEdit}
-            onCopy={onOpeningCopy}
-            onMouseEnter={onOpeningHover}
-            onMouseLeave={onOpeningLeave}
-          />
-        );
-      })}
+      const startMinutes = (startH - startHour) * 60 + startM;
+      const endMinutes = (endH - startHour) * 60 + endM;
 
-      {/* Drag selection preview */}
-      {isDragging && dragSelectionStyle && (
-        <div
-          className="absolute left-1 right-1 bg-amber-200/60 dark:bg-amber-700/40 border-2 border-dashed border-amber-500 rounded-md pointer-events-none z-10"
-          style={{
-            top: `${dragSelectionStyle.top}px`,
-            height: `${dragSelectionStyle.height}px`,
-          }}
-        >
-          <div className="px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-200">
-            {dragStart && dragEnd && (() => {
-              const start = Math.min(
-                dragStart.hour * 60 + dragStart.minutes,
-                dragEnd.hour * 60 + dragEnd.minutes
-              );
-              const end = Math.max(
-                dragStart.hour * 60 + dragStart.minutes,
-                dragEnd.hour * 60 + dragEnd.minutes
-              );
-              const startH = Math.floor(start / 60);
-              const startM = start % 60;
-              const endH = Math.floor(end / 60);
-              const endM = end % 60;
-              return `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')} - ${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
-            })()}
-          </div>
-        </div>
-      )}
+      const top = (startMinutes / 60) * slotHeight + paddingOffset;
+      const height = ((endMinutes - startMinutes) / 60) * slotHeight;
 
-      {/* Unavailable slots overlay */}
-      {unavailableSlots.map((slot, idx) => (
-        <UnavailableSlot
-          key={idx}
-          startHour={slot.startHour}
-          endHour={slot.endHour}
-          slotHeight={slotHeight}
-          gridStartHour={startHour}
-        />
-      ))}
+      return { top, height: Math.max(height, 20) };
+    };
 
-      {/* Now indicator */}
-      {isTodayDate && (
-        <NowIndicator startHour={startHour} slotHeight={slotHeight} />
-      )}
-
-      {/* Events - show only in non-edit mode or show faded in edit mode */}
-      {layoutedEvents.map(({ appointment, columnIndex, totalColumns }) => {
-        const { top, height } = getEventPosition(appointment, startHour, slotHeight);
-
-        return (
-          <EventCard
-            key={appointment.id}
-            appointment={appointment}
-            style={{ 
-              top: `${top}px`, 
-              height: `${height}px`,
-              opacity: isOpeningEditMode ? 0.4 : 1,
-              pointerEvents: isOpeningEditMode ? 'none' : 'auto',
+    return (
+      <div
+        className={cn(
+          'flex-1 min-w-[100px] relative border-r border-border last:border-r-0 pt-2',
+          isTodayDate && 'bg-accent/[0.02]',
+          isOpeningEditMode && 'cursor-crosshair'
+        )}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          if (isDragging) {
+            handleMouseUp();
+          }
+        }}
+      >
+        {/* Hour slots (clickable) */}
+        {hours.map((hour) => (
+          <div
+            key={hour}
+            className={cn(
+              'border-b border-border/40 transition-colors',
+              isOpeningEditMode
+                ? 'hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                : 'cursor-pointer hover:bg-muted/30'
+            )}
+            style={{ height: `${slotHeight}px` }}
+            onClick={(e) => {
+              if (!isDragging) {
+                e.stopPropagation();
+                onSlotClick?.(day, hour);
+              }
             }}
-            onClick={() => onAppointmentClick(appointment)}
-            onMouseEnter={() => onAppointmentHover?.(appointment)}
-            onMouseLeave={onAppointmentLeave}
-            compact={isCompact}
-            columnIndex={columnIndex}
-            totalColumns={totalColumns}
           />
-        );
-      })}
-    </div>
-  );
-});
+        ))}
+
+        {/* Opening slots - show in edit mode */}
+        {isOpeningEditMode &&
+          openings.map((opening) => {
+            const { top, height } = getOpeningPosition(opening);
+            return (
+              <OpeningSlot
+                key={opening.id}
+                opening={opening}
+                style={{ top: `${top}px`, height: `${height}px` }}
+                isEditMode={isOpeningEditMode}
+                onEdit={onOpeningEdit}
+                onCopy={onOpeningCopy}
+                onMouseEnter={onOpeningHover}
+                onMouseLeave={onOpeningLeave}
+              />
+            );
+          })}
+
+        {/* Drag selection preview */}
+        {isDragging && dragSelectionStyle && (
+          <div
+            className="absolute left-1 right-1 bg-amber-200/60 dark:bg-amber-700/40 border-2 border-dashed border-amber-500 rounded-md pointer-events-none z-10"
+            style={{
+              top: `${dragSelectionStyle.top}px`,
+              height: `${dragSelectionStyle.height}px`,
+            }}
+          >
+            <div className="px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+              {dragStart &&
+                dragEnd &&
+                (() => {
+                  const start = Math.min(
+                    dragStart.hour * 60 + dragStart.minutes,
+                    dragEnd.hour * 60 + dragEnd.minutes
+                  );
+                  const end = Math.max(
+                    dragStart.hour * 60 + dragStart.minutes,
+                    dragEnd.hour * 60 + dragEnd.minutes
+                  );
+                  const startH = Math.floor(start / 60);
+                  const startM = start % 60;
+                  const endH = Math.floor(end / 60);
+                  const endM = end % 60;
+                  return `${startH.toString().padStart(2, '0')}:${startM
+                    .toString()
+                    .padStart(2, '0')} - ${endH.toString().padStart(2, '0')}:${endM
+                    .toString()
+                    .padStart(2, '0')}`;
+                })()}
+            </div>
+          </div>
+        )}
+
+        {/* Unavailable slots overlay */}
+        {unavailableSlots.map((slot, idx) => (
+          <UnavailableSlot
+            key={idx}
+            startHour={slot.startHour}
+            endHour={slot.endHour}
+            slotHeight={slotHeight}
+            gridStartHour={startHour}
+            topOffset={paddingOffset}
+          />
+        ))}
+
+        {/* Now indicator */}
+        {isTodayDate && <NowIndicator startHour={startHour} slotHeight={slotHeight} topOffset={paddingOffset} />}
+
+        {/* Events - show only in non-edit mode or show faded in edit mode */}
+        {layoutedEvents.map(({ appointment, columnIndex, totalColumns }) => {
+          const { top, height } = getEventPosition(appointment, startHour, slotHeight);
+
+          return (
+            <EventCard
+              key={appointment.id}
+              appointment={appointment}
+              style={{
+                top: `${top + paddingOffset}px`,
+                height: `${height}px`,
+                opacity: isOpeningEditMode ? 0.4 : 1,
+                pointerEvents: isOpeningEditMode ? 'none' : 'auto',
+              }}
+              onClick={() => onAppointmentClick(appointment)}
+              onMouseEnter={() => onAppointmentHover?.(appointment)}
+              onMouseLeave={onAppointmentLeave}
+              compact={isCompact}
+              columnIndex={columnIndex}
+              totalColumns={totalColumns}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+);
 
 DayColumn.displayName = 'DayColumn';
 

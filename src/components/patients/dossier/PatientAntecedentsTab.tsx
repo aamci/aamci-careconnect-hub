@@ -3,12 +3,11 @@ import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { 
-  Plus, 
+import {
+  Plus,
   Heart,
   Stethoscope,
   Scissors,
-  AlertTriangle,
   Users,
   Cigarette,
   ChevronRight,
@@ -21,15 +20,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { usePatientAntecedents, type Antecedent } from '@/hooks/usePatientAntecedents';
-import AntecedentFormModal, { 
-  type AntecedentCategory, 
-  type AntecedentFormData 
+import AntecedentFormModal, {
+  type AntecedentCategory,
+  type AntecedentFormData
 } from './AntecedentFormModal';
 import MemoModal from './MemoModal';
 import PatientAllergyManager from '@/components/patients/PatientAllergyManager';
+import DossierPageLayout from './shared/DossierPageLayout';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -122,25 +121,13 @@ const PatientAntecedentsTab: React.FC = () => {
     setExpandedSection(prev => prev === category ? null : category);
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-foreground">Antécédents et mode de vie</h2>
-      </div>
+    <DossierPageLayout
+      patient={patient}
+      title="Antécédents et mode de vie"
+      breadcrumbLabel="Antécédents"
+      isLoading={isLoading}
+    >
 
       {/* Allergies Section - Dedicated Manager with real Supabase data */}
       <div className="mb-6">
@@ -300,7 +287,7 @@ const PatientAntecedentsTab: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet antécédent ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L'antécédent "{antecedentToDelete?.title}" 
+              Cette action est irréversible. L'antécédent "{antecedentToDelete?.title}"
               sera définitivement supprimé du dossier patient.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -322,7 +309,7 @@ const PatientAntecedentsTab: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DossierPageLayout>
   );
 };
 

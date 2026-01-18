@@ -1,0 +1,340 @@
+/**
+ * CareConnect Hub - Design System Density Tokens
+ * 3 modes: Compact (petit écran/densité max) | Standard (équilibré) | Confort (grand écran/lisibilité)
+ *
+ * Usage:
+ *   - data-density="compact" sur <html> ou container
+ *   - Classes utilitaires: .density-compact, .density-standard, .density-confort
+ */
+
+:root {
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DENSITY: STANDARD (défaut) - Écrans 1920x1080
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* Spacing Scale */
+  --density-space-xs: 4px;
+  --density-space-sm: 8px;
+  --density-space-md: 12px;
+  --density-space-lg: 16px;
+  --density-space-xl: 24px;
+  --density-space-2xl: 32px;
+
+  /* Typography */
+  --density-text-xs: 11px;
+  --density-text-sm: 12px;
+  --density-text-base: 14px;
+  --density-text-lg: 16px;
+  --density-text-xl: 18px;
+  --density-text-2xl: 20px;
+  --density-line-height: 1.5;
+  --density-line-height-tight: 1.25;
+
+  /* Components */
+  --density-card-padding: 16px;
+  --density-card-gap: 12px;
+  --density-card-radius: 10px;
+
+  --density-btn-height: 36px;
+  --density-btn-padding-x: 16px;
+  --density-btn-font-size: 14px;
+
+  --density-input-height: 40px;
+  --density-input-padding-x: 12px;
+
+  --density-badge-height: 24px;
+  --density-badge-padding-x: 10px;
+  --density-badge-font-size: 12px;
+
+  --density-avatar-sm: 28px;
+  --density-avatar-md: 36px;
+  --density-avatar-lg: 48px;
+
+  --density-icon-sm: 14px;
+  --density-icon-md: 18px;
+  --density-icon-lg: 22px;
+
+  /* Grid Calendar */
+  --density-slot-height: 48px;
+  --density-header-height: 44px;
+  --density-axis-width: 52px;
+  --density-event-padding: 6px;
+  --density-event-font-size: 12px;
+
+  /* Patient Dossier - Column 2 Cards */
+  --density-info-card-min-height: 100px;
+  --density-info-card-header-height: 36px;
+  --density-list-item-height: 40px;
+  --density-section-gap: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DENSITY: COMPACT - Écrans 1366x768 / Mode dense
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-density="compact"],
+.density-compact {
+  /* Spacing Scale - Réduit de ~25% */
+  --density-space-xs: 2px;
+  --density-space-sm: 4px;
+  --density-space-md: 8px;
+  --density-space-lg: 12px;
+  --density-space-xl: 16px;
+  --density-space-2xl: 24px;
+
+  /* Typography - Tailles réduites */
+  --density-text-xs: 10px;
+  --density-text-sm: 11px;
+  --density-text-base: 12px;
+  --density-text-lg: 14px;
+  --density-text-xl: 15px;
+  --density-text-2xl: 16px;
+  --density-line-height: 1.4;
+  --density-line-height-tight: 1.2;
+
+  /* Components - Plus compacts */
+  --density-card-padding: 10px;
+  --density-card-gap: 8px;
+  --density-card-radius: 8px;
+
+  --density-btn-height: 28px;
+  --density-btn-padding-x: 10px;
+  --density-btn-font-size: 11px;
+
+  --density-input-height: 32px;
+  --density-input-padding-x: 8px;
+
+  --density-badge-height: 20px;
+  --density-badge-padding-x: 6px;
+  --density-badge-font-size: 10px;
+
+  --density-avatar-sm: 22px;
+  --density-avatar-md: 28px;
+  --density-avatar-lg: 36px;
+
+  --density-icon-sm: 12px;
+  --density-icon-md: 14px;
+  --density-icon-lg: 18px;
+
+  /* Grid Calendar - Slots plus serrés */
+  --density-slot-height: 36px;
+  --density-header-height: 36px;
+  --density-axis-width: 44px;
+  --density-event-padding: 4px;
+  --density-event-font-size: 10px;
+
+  /* Patient Dossier */
+  --density-info-card-min-height: 72px;
+  --density-info-card-header-height: 28px;
+  --density-list-item-height: 32px;
+  --density-section-gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DENSITY: CONFORT - Grands écrans / Accessibilité
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-density="confort"],
+.density-confort {
+  /* Spacing Scale - Augmenté de ~25% */
+  --density-space-xs: 6px;
+  --density-space-sm: 10px;
+  --density-space-md: 16px;
+  --density-space-lg: 20px;
+  --density-space-xl: 32px;
+  --density-space-2xl: 40px;
+
+  /* Typography - Plus lisible */
+  --density-text-xs: 12px;
+  --density-text-sm: 13px;
+  --density-text-base: 15px;
+  --density-text-lg: 17px;
+  --density-text-xl: 20px;
+  --density-text-2xl: 24px;
+  --density-line-height: 1.6;
+  --density-line-height-tight: 1.35;
+
+  /* Components - Plus spacieux */
+  --density-card-padding: 20px;
+  --density-card-gap: 16px;
+  --density-card-radius: 12px;
+
+  --density-btn-height: 44px;
+  --density-btn-padding-x: 20px;
+  --density-btn-font-size: 15px;
+
+  --density-input-height: 48px;
+  --density-input-padding-x: 16px;
+
+  --density-badge-height: 28px;
+  --density-badge-padding-x: 12px;
+  --density-badge-font-size: 13px;
+
+  --density-avatar-sm: 32px;
+  --density-avatar-md: 44px;
+  --density-avatar-lg: 56px;
+
+  --density-icon-sm: 16px;
+  --density-icon-md: 20px;
+  --density-icon-lg: 26px;
+
+  /* Grid Calendar */
+  --density-slot-height: 60px;
+  --density-header-height: 52px;
+  --density-axis-width: 60px;
+  --density-event-padding: 8px;
+  --density-event-font-size: 13px;
+
+  /* Patient Dossier */
+  --density-info-card-min-height: 120px;
+  --density-info-card-header-height: 44px;
+  --density-list-item-height: 48px;
+  --density-section-gap: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES - Tailwind-style utilities using density tokens
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Spacing utilities */
+.p-density-xs { padding: var(--density-space-xs); }
+.p-density-sm { padding: var(--density-space-sm); }
+.p-density-md { padding: var(--density-space-md); }
+.p-density-lg { padding: var(--density-space-lg); }
+.p-density-xl { padding: var(--density-space-xl); }
+
+.gap-density-xs { gap: var(--density-space-xs); }
+.gap-density-sm { gap: var(--density-space-sm); }
+.gap-density-md { gap: var(--density-space-md); }
+.gap-density-lg { gap: var(--density-space-lg); }
+.gap-density-xl { gap: var(--density-space-xl); }
+
+/* Typography utilities */
+.text-density-xs { font-size: var(--density-text-xs); line-height: var(--density-line-height); }
+.text-density-sm { font-size: var(--density-text-sm); line-height: var(--density-line-height); }
+.text-density-base { font-size: var(--density-text-base); line-height: var(--density-line-height); }
+.text-density-lg { font-size: var(--density-text-lg); line-height: var(--density-line-height); }
+.text-density-xl { font-size: var(--density-text-xl); line-height: var(--density-line-height-tight); }
+.text-density-2xl { font-size: var(--density-text-2xl); line-height: var(--density-line-height-tight); }
+
+/* Component utilities */
+.h-density-btn { height: var(--density-btn-height); }
+.h-density-input { height: var(--density-input-height); }
+.h-density-badge { height: var(--density-badge-height); }
+.h-density-slot { height: var(--density-slot-height); }
+.h-density-header { height: var(--density-header-height); }
+
+/* Avatar utilities */
+.w-avatar-sm, .h-avatar-sm { width: var(--density-avatar-sm); height: var(--density-avatar-sm); }
+.w-avatar-md, .h-avatar-md { width: var(--density-avatar-md); height: var(--density-avatar-md); }
+.w-avatar-lg, .h-avatar-lg { width: var(--density-avatar-lg); height: var(--density-avatar-lg); }
+
+/* Icon utilities */
+.icon-sm { width: var(--density-icon-sm); height: var(--density-icon-sm); }
+.icon-md { width: var(--density-icon-md); height: var(--density-icon-md); }
+.icon-lg { width: var(--density-icon-lg); height: var(--density-icon-lg); }
+
+/* Card utilities */
+.card-density {
+  padding: var(--density-card-padding);
+  border-radius: var(--density-card-radius);
+}
+
+.card-density-header {
+  height: var(--density-info-card-header-height);
+  padding: 0 var(--density-card-padding);
+}
+
+/* List item utilities */
+.list-item-density {
+  min-height: var(--density-list-item-height);
+  padding: var(--density-space-sm) var(--density-space-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE AUTO-DENSITY
+   Automatically switches density based on viewport
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1440px) {
+  :root:not([data-density]) {
+    /* Auto-switch to compact on smaller screens unless explicitly set */
+    --density-space-xs: 3px;
+    --density-space-sm: 6px;
+    --density-space-md: 10px;
+    --density-space-lg: 14px;
+    --density-space-xl: 20px;
+    --density-space-2xl: 28px;
+
+    --density-text-xs: 10px;
+    --density-text-sm: 11px;
+    --density-text-base: 13px;
+    --density-text-lg: 15px;
+    --density-text-xl: 16px;
+    --density-text-2xl: 18px;
+
+    --density-card-padding: 12px;
+    --density-card-gap: 10px;
+
+    --density-btn-height: 32px;
+    --density-input-height: 36px;
+    --density-badge-height: 22px;
+
+    --density-slot-height: 42px;
+    --density-header-height: 40px;
+
+    --density-info-card-min-height: 84px;
+    --density-info-card-header-height: 32px;
+    --density-list-item-height: 36px;
+    --density-section-gap: 10px;
+  }
+}
+
+@media (max-width: 1366px) {
+  :root:not([data-density]) {
+    /* Full compact on 1366px screens */
+    --density-space-xs: 2px;
+    --density-space-sm: 4px;
+    --density-space-md: 8px;
+    --density-space-lg: 12px;
+    --density-space-xl: 16px;
+    --density-space-2xl: 24px;
+
+    --density-text-xs: 10px;
+    --density-text-sm: 11px;
+    --density-text-base: 12px;
+    --density-text-lg: 14px;
+    --density-text-xl: 15px;
+    --density-text-2xl: 16px;
+
+    --density-card-padding: 10px;
+    --density-card-gap: 8px;
+
+    --density-btn-height: 28px;
+    --density-input-height: 32px;
+    --density-badge-height: 20px;
+
+    --density-slot-height: 36px;
+    --density-header-height: 36px;
+
+    --density-info-card-min-height: 72px;
+    --density-info-card-header-height: 28px;
+    --density-list-item-height: 32px;
+    --density-section-gap: 8px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRANSITIONS - Smooth density switching
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.density-transition,
+.density-transition * {
+  transition:
+    padding 0.2s ease-out,
+    margin 0.2s ease-out,
+    gap 0.2s ease-out,
+    font-size 0.15s ease-out,
+    height 0.2s ease-out,
+    width 0.2s ease-out;
+}

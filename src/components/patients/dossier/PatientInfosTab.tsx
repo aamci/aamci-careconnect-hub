@@ -3,22 +3,18 @@ import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  User,
+  Phone,
+  MapPin,
   Shield,
-  Building,
-  Calendar,
   FileText,
   Edit,
-  CreditCard,
   Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import DossierPageLayout from './shared/DossierPageLayout';
 
 interface OutletContext {
   patient: Patient;
@@ -41,15 +37,17 @@ const PatientInfosTab: React.FC = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-foreground">Informations administratives</h2>
+    <DossierPageLayout
+      patient={patient}
+      title="Coordonnées"
+      breadcrumbLabel="Coordonnées"
+      headerActions={
         <Button variant="outline" size="sm" className="gap-1.5">
           <Edit className="h-4 w-4" />
           Modifier
         </Button>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Identité */}
         <Card>
@@ -172,7 +170,7 @@ const PatientInfosTab: React.FC = () => {
           </CardContent>
         </Card>
       )}
-    </div>
+    </DossierPageLayout>
   );
 };
 

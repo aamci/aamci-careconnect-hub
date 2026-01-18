@@ -6,6 +6,7 @@ interface UnavailableSlotProps {
   endHour: number;
   slotHeight: number;
   gridStartHour: number;
+  topOffset?: number;
   className?: string;
 }
 
@@ -14,9 +15,10 @@ const UnavailableSlot: React.FC<UnavailableSlotProps> = ({
   endHour,
   slotHeight,
   gridStartHour,
+  topOffset = 0,
   className,
 }) => {
-  const top = (startHour - gridStartHour) * slotHeight;
+  const top = (startHour - gridStartHour) * slotHeight + topOffset;
   const height = (endHour - startHour) * slotHeight;
 
   if (height <= 0) return null;
