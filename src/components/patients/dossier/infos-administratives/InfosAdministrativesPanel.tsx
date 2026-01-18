@@ -33,12 +33,21 @@ import { fr } from 'date-fns/locale';
 
 interface InfosAdministrativesPanelProps {
   patient: Patient;
-  onClose: () => void;
+  /** @deprecated - Use DossierPageLayout header instead */
+  onClose?: () => void;
 }
 
+/**
+ * InfosAdministrativesPanel - Patient administrative info form
+ *
+ * L5 Anti-overlap rules:
+ * - FormRow uses CSS Grid with minmax(140px, 180px) for labels
+ * - All text fields use truncate
+ * - Inputs use min-w-0 to prevent overflow
+ * - Uses DossierPageLayout for header/actions (header removed from this component)
+ */
 const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
   patient,
-  onClose,
 }) => {
   const navigate = useNavigate();
   
@@ -108,19 +117,20 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
     toast.info('Historique des modifications à venir');
   };
 
-  const FormRow: React.FC<{ 
-    label: string; 
+  // L5 Anti-overlap FormRow with responsive grid
+  const FormRow: React.FC<{
+    label: string;
     children: React.ReactNode;
     tooltip?: string;
     className?: string;
   }> = ({ label, children, tooltip, className = '' }) => (
-    <div className={`grid grid-cols-[180px_1fr] gap-4 items-start ${className}`}>
-      <Label className="text-sm font-medium text-foreground pt-2.5 text-right flex items-center justify-end gap-1">
+    <div className={`grid grid-cols-1 sm:grid-cols-[minmax(120px,160px)_minmax(0,1fr)] gap-2 sm:gap-4 items-start ${className}`}>
+      <Label className="text-sm font-medium text-foreground sm:pt-2.5 sm:text-right flex items-center sm:justify-end gap-1 truncate">
         {label}
         {tooltip && (
           <Tooltip>
             <TooltipTrigger>
-              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs text-xs">
               {tooltip}
@@ -128,33 +138,15 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
           </Tooltip>
         )}
       </Label>
-      <div className="flex-1">{children}</div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-primary font-medium">Dossier patient</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="text-foreground font-semibold">Coordonnées</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 text-sm text-primary hover:underline"
-          >
-            Fermer ce dossier patient
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Form Content */}
+      {/* Form Content - Anti-overlap with min-w-0 and responsive padding */}
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-5 max-w-3xl mx-auto">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 max-w-3xl mx-auto">
           
           {/* INS Section */}
           <FormRow label="Matricule INS">

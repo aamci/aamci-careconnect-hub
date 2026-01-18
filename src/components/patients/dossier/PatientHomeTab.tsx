@@ -86,13 +86,15 @@ const PatientHomeTab: React.FC = () => {
 
   return (
     <div
-      className="h-full overflow-y-auto custom-scrollbar"
+      className="h-full flex flex-col custom-scrollbar"
       style={{
         padding: `var(--density-space-md)`,
+        // Anti-overlap: max height constraint for 1-screen target
+        maxHeight: '100%',
       }}
     >
       <div
-        className="max-w-7xl mx-auto flex flex-col"
+        className="max-w-7xl mx-auto flex flex-col flex-1 min-h-0"
         style={{ gap: `var(--density-section-gap)` }}
       >
         {/* Clinical Alerts Banner - Compact */}
@@ -197,10 +199,18 @@ const PatientHomeTab: React.FC = () => {
           />
         </div>
 
-        {/* Main Content Grid - Responsive: 1 col mobile, 2 col tablet, 3 col desktop */}
+        {/* Main Content Grid - L4 Anti-overlap optimized
+            - Uses CSS Grid with minmax() for column protection
+            - Auto-fit with min constraint prevents squishing
+            - flex-1 with min-h-0 enables scroll containment
+        */}
         <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          style={{ gap: `var(--density-section-gap)` }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar content-start"
+          style={{
+            gap: `var(--density-section-gap)`,
+            // Anti-overlap: minmax on implicit grid rows
+            gridAutoRows: 'min-content',
+          }}
         >
           {/* Upcoming Appointments */}
           <CardCompact
