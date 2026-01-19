@@ -1,3 +1,8 @@
+/**
+ * PatientHistoriqueTab - Historique complet du patient
+ * Affiche les rendez-vous passés et à venir avec statistiques de présence
+ */
+
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient, Appointment } from '@/types';
@@ -6,8 +11,8 @@ import { toast } from 'sonner';
 import { usePatientHistory } from '@/hooks/data/usePatientHistory';
 import {
   PresenceSummaryCard,
-  HistoryEmptyState,
   HistorySection,
+  HistoryEmptyState,
   AuditLink,
 } from './historique';
 import DossierPageLayout from './shared/DossierPageLayout';
@@ -19,10 +24,16 @@ interface OutletContext {
 const PatientHistoriqueTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
 
-  const { data: historyData, isLoading, error, refetch } = usePatientHistory(patient.id);
+  // Récupérer l'historique du patient
+  const {
+    data: historyData,
+    isLoading,
+    error,
+    refetch,
+  } = usePatientHistory(patient.id);
 
+  // Handlers
   const handleOpenAppointment = (appointment: Appointment) => {
-    // Navigate to appointment detail or open modal
     toast.info(`Ouverture du rendez-vous ${appointment.id}`);
   };
 
@@ -30,7 +41,7 @@ const PatientHistoriqueTab: React.FC = () => {
     toast.info('Historique des modifications à venir');
   };
 
-  // Calculate total counts
+  // Calculs
   const upcomingCount = historyData?.upcoming.length || 0;
   const pastCount = historyData?.past.reduce((acc, group) => acc + group.items.length, 0) || 0;
   const hasAnyAppointments = upcomingCount > 0 || pastCount > 0;
@@ -41,9 +52,9 @@ const PatientHistoriqueTab: React.FC = () => {
       title="Historique"
       breadcrumbLabel="Historique"
       isLoading={isLoading}
-      showFilter
+      showFilter={false}
     >
-      {/* Error state */}
+      {/* État d'erreur */}
       {error && !isLoading && (
         <div className="text-center py-8">
           <p className="text-destructive mb-4">Erreur lors du chargement de l'historique</p>
@@ -53,17 +64,19 @@ const PatientHistoriqueTab: React.FC = () => {
         </div>
       )}
 
-      {/* Content */}
-      {!isLoading && !error && historyData && (
+      {/* Contenu */}
+      {!isLoading && !error && (
         <>
-          {/* Presence Summary Card */}
-          <PresenceSummaryCard summary={historyData.summary} />
+          {/* Carte résumé présence */}
+          {historyData && (
+            <PresenceSummaryCard summary={historyData.summary} />
+          )}
 
-          {/* Empty state */}
+          {/* État vide */}
           {!hasAnyAppointments && <HistoryEmptyState />}
 
-          {/* Upcoming Section */}
-          {upcomingCount > 0 && (
+          {/* Section À venir */}
+          {upcomingCount > 0 && historyData && (
             <HistorySection
               title="À venir"
               count={upcomingCount}
@@ -72,8 +85,8 @@ const PatientHistoriqueTab: React.FC = () => {
             />
           )}
 
-          {/* Past Section (grouped by year) */}
-          {pastCount > 0 && (
+          {/* Section Passés (groupés par année) */}
+          {pastCount > 0 && historyData && (
             <HistorySection
               title="Passés"
               count={pastCount}
@@ -82,10 +95,8 @@ const PatientHistoriqueTab: React.FC = () => {
             />
           )}
 
-          {/* Audit Link (only if there are appointments) */}
-          {hasAnyAppointments && (
-            <AuditLink onViewAudit={handleViewAudit} />
-          )}
+          {/* Lien audit (seulement s'il y a des rendez-vous) */}
+          {hasAnyAppointments && <AuditLink onViewAudit={handleViewAudit} />}
         </>
       )}
     </DossierPageLayout>

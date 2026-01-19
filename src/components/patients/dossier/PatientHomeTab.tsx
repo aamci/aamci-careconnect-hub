@@ -36,8 +36,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockAppointments, mockNotes } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { usePatientHistory } from '@/hooks/data/usePatientHistory';
+import { useNotesByPatient } from '@/hooks/data/useNotes';
 import PatientAllergiesBadge from '@/components/patients/PatientAllergiesBadge';
 import CriticalAllergyBanner from '@/components/patients/CriticalAllergyBanner';
 import PatientStatusBadges from '@/components/patients/PatientStatusBadges';
@@ -58,6 +59,10 @@ const PatientHomeTab: React.FC = () => {
   const navigate = useNavigate();
   const { config, isCompact } = useDensity();
 
+  // Fetch real data from Supabase
+  const { data: historyData, isLoading: loadingHistory } = usePatientHistory(patient.id);
+  const { data: notesData, isLoading: loadingNotes } = useNotesByPatient(patient.id);
+
   // Module collapse states
   const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({
     appointments: false,
@@ -73,18 +78,12 @@ const PatientHomeTab: React.FC = () => {
     setCollapsedModules((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Data preparation
-  const patientAppointments = mockAppointments
-    .filter((apt) => apt.patientId === patient.id)
-    .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-
-  const upcomingAppointments = patientAppointments
-    .filter((apt) => apt.startTime > new Date())
-    .slice(0, isCompact ? 3 : 4);
-
-  const recentNotes = mockNotes
-    .filter((note) => note.patientId === patient.id)
-    .slice(0, isCompact ? 2 : 3);
+  // Data preparation from real Supabase data
+  const upcomingAppointments = historyData?.upcoming?.slice(0, isCompact ? 3 : 4) ?? [];
+  const pastAppointments = historyData?.past?.flatMap(g => g.items) ?? [];
+  const totalAppointments = upcomingAppointments.length + pastAppointments.length;
+  const recentNotes = notesData?.slice(0, isCompact ? 2 : 3) ?? [];
+  const totalNotes = notesData?.length ?? 0;
 
   return (
     <div
@@ -173,13 +172,14 @@ const PatientHomeTab: React.FC = () => {
         >
           <KPICard
             icon={Calendar}
-            value={patientAppointments.length}
+            value={totalAppointments}
             label="RDV Total"
             gradient="from-primary/5 to-primary/10"
             borderColor="border-primary/20"
             iconColor="text-primary"
             iconBg="bg-primary/20"
             onClick={() => navigate('../historique')}
+            isLoading={loadingHistory}
           />
           <KPICard
             icon={Clock}
@@ -190,15 +190,17 @@ const PatientHomeTab: React.FC = () => {
             iconColor="text-accent"
             iconBg="bg-accent/20"
             onClick={() => navigate('../historique')}
+            isLoading={loadingHistory}
           />
           <KPICard
             icon={FileText}
-            value={recentNotes.length}
+            value={totalNotes}
             label="Notes"
             gradient="from-success/5 to-success/10"
             borderColor="border-success/20"
             iconColor="text-success"
             iconBg="bg-success/20"
+            isLoading={loadingNotes}
           />
           <KPICard
             icon={Activity}
@@ -560,6 +562,7 @@ interface KPICardProps {
   iconColor: string;
   iconBg: string;
   onClick?: () => void;
+  isLoading?: boolean;
 }
 
 const KPICard: React.FC<KPICardProps> = ({
@@ -571,6 +574,7 @@ const KPICard: React.FC<KPICardProps> = ({
   iconColor,
   iconBg,
   onClick,
+  isLoading,
 }) => (
   <div
     className={cn(
@@ -608,7 +612,7 @@ const KPICard: React.FC<KPICardProps> = ({
           className="font-bold text-foreground"
           style={{ fontSize: `var(--density-text-xl)`, lineHeight: 1.1 }}
         >
-          {value}
+          {isLoading ? '...' : value}
         </p>
         <p
           className="text-muted-foreground truncate"

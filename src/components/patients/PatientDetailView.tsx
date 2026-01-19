@@ -30,7 +30,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { mockAppointments, mockNotes } from '@/data/mockData';
+import { usePatientHistory } from '@/hooks/data/usePatientHistory';
+import { useNotesByPatient } from '@/hooks/data/useNotes';
+import { Loader2 } from 'lucide-react';
 
 interface PatientDetailViewProps {
   patient: Patient;
@@ -49,23 +51,24 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('info');
   const navigate = useNavigate();
-  
+
+  // Fetch real data from Supabase
+  const { data: historyData, isLoading: loadingHistory } = usePatientHistory(patient.id);
+  const { data: notesData, isLoading: loadingNotes } = useNotesByPatient(patient.id);
+
   const age = differenceInYears(new Date(), patient.dateOfBirth);
   const displayName = patient.usedFirstName || patient.firstName;
   const displayLastName = patient.usedLastName || patient.lastName;
-  
+
   const hasVipAlert = patient.alerts?.some(a => a.type === 'vip');
-  
-  // Get patient appointments
-  const patientAppointments = mockAppointments
-    .filter(apt => apt.patientId === patient.id)
-    .sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-  
-  const upcomingAppointments = patientAppointments.filter(apt => apt.startTime > new Date());
-  const pastAppointments = patientAppointments.filter(apt => apt.startTime <= new Date());
-  
-  // Get patient notes
-  const patientNotes = mockNotes.filter(note => note.patientId === patient.id);
+
+  // Get patient appointments from real data
+  const upcomingAppointments = historyData?.upcoming ?? [];
+  const pastAppointments = historyData?.past?.flatMap(g => g.items) ?? [];
+  const patientAppointments = [...upcomingAppointments, ...pastAppointments];
+
+  // Get patient notes from real data
+  const patientNotes = notesData ?? [];
 
   const handleOpenFullDossier = () => {
     navigate(`/patients/${patient.id}/home`);
@@ -172,11 +175,11 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </TabsTrigger>
               <TabsTrigger value="appointments" className="gap-1.5 font-medium">
                 <Calendar className="w-4 h-4" />
-                RDV ({patientAppointments.length})
+                RDV ({loadingHistory ? '...' : patientAppointments.length})
               </TabsTrigger>
               <TabsTrigger value="notes" className="gap-1.5 font-medium">
                 <FileText className="w-4 h-4" />
-                Notes ({patientNotes.length})
+                Notes ({loadingNotes ? '...' : patientNotes.length})
               </TabsTrigger>
             </TabsList>
 
@@ -285,46 +288,58 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
             {/* Appointments Tab */}
             <TabsContent value="appointments" className="p-5 space-y-6 flex-1">
-              {/* Upcoming */}
-              <section>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
-                  À venir ({upcomingAppointments.length})
-                </h3>
-                {upcomingAppointments.length > 0 ? (
-                  <div className="space-y-2">
-                    {upcomingAppointments.map((apt) => (
-                      <AppointmentItem key={apt.id} appointment={apt} isUpcoming />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
-                    Aucun rendez-vous à venir
-                  </p>
-                )}
-              </section>
+              {loadingHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  {/* Upcoming */}
+                  <section>
+                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
+                      À venir ({upcomingAppointments.length})
+                    </h3>
+                    {upcomingAppointments.length > 0 ? (
+                      <div className="space-y-2">
+                        {upcomingAppointments.map((apt) => (
+                          <AppointmentItem key={apt.id} appointment={apt} isUpcoming />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
+                        Aucun rendez-vous à venir
+                      </p>
+                    )}
+                  </section>
 
-              {/* Past */}
-              <section>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
-                  Historique ({pastAppointments.length})
-                </h3>
-                {pastAppointments.length > 0 ? (
-                  <div className="space-y-2">
-                    {pastAppointments.slice(0, 10).map((apt) => (
-                      <AppointmentItem key={apt.id} appointment={apt} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
-                    Aucun historique
-                  </p>
-                )}
-              </section>
+                  {/* Past */}
+                  <section>
+                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
+                      Historique ({pastAppointments.length})
+                    </h3>
+                    {pastAppointments.length > 0 ? (
+                      <div className="space-y-2">
+                        {pastAppointments.slice(0, 10).map((apt) => (
+                          <AppointmentItem key={apt.id} appointment={apt} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground py-6 text-center bg-muted/30 rounded-lg">
+                        Aucun historique
+                      </p>
+                    )}
+                  </section>
+                </>
+              )}
             </TabsContent>
 
             {/* Notes Tab */}
             <TabsContent value="notes" className="p-5 space-y-4 flex-1">
-              {patientNotes.length > 0 ? (
+              {loadingNotes ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : patientNotes.length > 0 ? (
                 patientNotes.map((note) => (
                   <NoteItem key={note.id} note={note} />
                 ))

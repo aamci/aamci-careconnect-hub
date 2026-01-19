@@ -1,5 +1,83 @@
-# Logs
-logs
+# ============================================
+# CARECONNECT-HUB - GITIGNORE
+# Application e-santé / Medical Practice Management
+# ============================================
+
+# ============================================
+# SÉCURITÉ - FICHIERS SENSIBLES (CRITIQUE!)
+# ============================================
+
+# Variables d'environnement - NE JAMAIS COMMITER
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Clés et certificats
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+
+# Fichiers secrets et credentials
+**/secret/
+**/secrets/
+**/*secret*
+**/*credential*
+**/*token*.json
+!**/token-example.json
+*.keystore
+service-account*.json
+firebase-adminsdk*.json
+secret/
+# API Keys et tokens
+api-key*
+apikey*
+*_api_key*
+*_apikey*
+*.secret
+CLAUDE.md
+
+# ============================================
+# DÉPENDANCES
+# ============================================
+node_modules/
+bower_components/
+jspm_packages/
+.pnp
+.pnp.js
+
+# ============================================
+# BUILD & COMPILATION
+# ============================================
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.nuxt/
+.output/
+*.local
+
+# TypeScript
+*.tsbuildinfo
+.tscache/
+
+# Vite
+.vite/
+vite.config.ts.timestamp*
+
+# ============================================
+# LOGS
+# ============================================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +85,152 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ============================================
+# TESTS & COVERAGE
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+htmlcov/
+test-results/
+playwright-report/
+test-results.xml
 
-# Editor directories and files
+# ============================================
+# CACHE & FICHIERS TEMPORAIRES
+# ============================================
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.swp
+*.swo
+*~
+.tmp/
+tmp/
+temp/
+
+# ============================================
+# IDE & ÉDITEURS
+# ============================================
+
+# VSCode
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ============================================
+# SYSTÈME D'EXPLOITATION
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+nul
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============================================
+# SUPABASE
+# ============================================
+supabase/.branches/
+supabase/.temp/
+.supabase/
+
+# ============================================
+# DOCKER
+# ============================================
+.docker/
+docker-compose.override.yml
+
+# ============================================
+# DONNÉES LOCALES & DEBUG
+# ============================================
+
+# Base de données locales
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Fichiers de debug
+debug.log
+error.log
+
+# Données de patients (RGPD/HIPAA)
+**/patient-data/
+**/medical-records/
+**/exports/
+*.csv
+!example.csv
+
+# ============================================
+# DOCUMENTATION GÉNÉRÉE
+# ============================================
+docs/api/
+.docusaurus/
+typedoc/
+
+# ============================================
+# AUTRES
+# ============================================
+
+# Packages
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Scripts de seed avec données sensibles
+scripts/*-prod-*.js
+scripts/*-production-*.js
+
+# Rapports
+reports/
