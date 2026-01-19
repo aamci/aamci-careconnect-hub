@@ -8,7 +8,7 @@
 # ============================================
 
 # Variables d'environnement - NE JAMAIS COMMITER
-.env
+# .env
 .env.*
 !.env.example
 .env.local
