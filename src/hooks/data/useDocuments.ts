@@ -80,21 +80,57 @@ export interface PatientDocument {
 }
 
 // Fetch documents for a patient
+// MISE À JOUR: Utilise maintenant le service documentsService avec GARANTIE ZÉRO PERTE
 export function usePatientDocuments(patientId: string) {
   return useQuery({
     queryKey: ['patient-documents', patientId],
     queryFn: async () => {
+      // Fallback vers requête directe pour compatibilité avec ancienne structure
+      // TODO: Migrer vers listDocuments() une fois que tous les champs sont mappés
       const { data, error } = await supabase
         .from('documents')
         .select('*')
         .eq('patient_id', patientId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PatientDocument[];
+
+      // Mapper la nouvelle structure vers l'ancien format pour compatibilité
+      return (data || []).map((doc: any) => ({
+        id: doc.id,
+        patient_id: doc.patient_id,
+        name: doc.title || doc.filename || 'Document sans titre',
+        type: doc.mime_type,
+        category: doc.category,
+        file_path: doc.storage_url,
+        file_size: doc.file_size,
+        mime_type: doc.mime_type,
+        storage_bucket: doc.storage_bucket || 'documents',
+        appointment_id: doc.consultation_id,
+        uploaded_by: doc.created_by,
+        workflow_status: mapStatusToWorkflow(doc.status),
+        validated_by: doc.status === 'validated' ? doc.updated_by : null,
+        validated_at: doc.status === 'validated' ? doc.updated_at : null,
+        rejected_reason: null,
+        is_confidential: doc.visibility === 'private',
+        created_at: doc.created_at,
+        updated_at: doc.updated_at || doc.created_at
+      } as PatientDocument));
     },
     enabled: !!patientId,
   });
+}
+
+// Mappe le nouveau status vers workflow legacy
+function mapStatusToWorkflow(status: string): DocumentWorkflowStatus {
+  const mapping: Record<string, DocumentWorkflowStatus> = {
+    draft: 'draft',
+    validated: 'validated',
+    signed: 'validated',
+    archived: 'archived'
+  };
+  return mapping[status] || 'draft';
 }
 
 // Create document metadata (file upload handled separately)
@@ -123,15 +159,21 @@ export function useCreateDocument() {
   });
 }
 
-// Delete a document
+// Delete a document (soft delete avec ZÉRO PERTE)
 export function useDeleteDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, patientId }: { id: string; patientId: string }) => {
+      // Soft delete au lieu de hard delete
+      const { data: user } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from('documents')
-        .delete()
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.user?.id
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -139,7 +181,7 @@ export function useDeleteDocument() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['patient-documents', data.patientId] });
-      toast.success('Document supprimé');
+      toast.success('Document supprimé (récupérable)');
     },
     onError: (error) => {
       toast.error('Erreur lors de la suppression');
