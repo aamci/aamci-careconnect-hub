@@ -188,7 +188,7 @@ export function validateFileSize(file: File): { valid: boolean; error?: string }
 
 export function validateFileType(file: File): { valid: boolean; error?: string } {
   const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-  if (!ALLOWED_FILE_EXTENSIONS.includes(extension as any)) {
+  if (!(ALLOWED_FILE_EXTENSIONS as readonly string[]).includes(extension)) {
     return {
       valid: false,
       error: `Format non supporté. Extensions autorisées : ${ALLOWED_FILE_EXTENSIONS.join(', ')}`

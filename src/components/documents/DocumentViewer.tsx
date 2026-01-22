@@ -48,9 +48,9 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   if (!document) return null;
 
-  const file = { type: document.mimeType, name: document.filename };
-  const isPDF = isPDFFile(file as any);
-  const isImage = isImageFile(file as any);
+  const file = { type: document.mimeType, name: document.filename } as Pick<File, 'type' | 'name'>;
+  const isPDF = isPDFFile(file);
+  const isImage = isImageFile(file);
 
   const handleDownload = () => {
     const link = document.createElement('a');

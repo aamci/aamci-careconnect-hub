@@ -123,7 +123,7 @@ export function DocumentCategoryPicker({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[500px] p-0" align="start">
+      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[500px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Rechercher une catégorie..."

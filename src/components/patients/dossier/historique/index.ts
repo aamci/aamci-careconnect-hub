@@ -10,3 +10,4 @@ export { default as EventTimeline } from './EventTimeline';
 export { default as TimelineEventCard } from './TimelineEventCard';
 export { default as TimelineFilterBar } from './TimelineFilterBar';
 export { default as HistorySidebar } from './HistorySidebar';
+export { DocumentsTimeline } from './DocumentsTimeline';

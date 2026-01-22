@@ -119,11 +119,11 @@ export function SendDocumentsModal({
     }
   };
 
-  const patientHasDMP = Boolean((patient as any).hasDMP);
+  const patientHasDMP = Boolean('hasDMP' in patient && (patient as { hasDMP?: boolean }).hasDMP);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Envoyer les documents au patient</DialogTitle>
           <DialogDescription>

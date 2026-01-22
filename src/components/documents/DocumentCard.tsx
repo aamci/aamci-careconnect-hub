@@ -43,11 +43,11 @@ export function DocumentCard({
   const icon = getCategoryIcon(document.category);
 
   const getFileIcon = () => {
-    const file = { type: document.mimeType, name: document.filename };
-    if (isPDFFile(file as any)) {
+    const file = { type: document.mimeType, name: document.filename } as Pick<File, 'type' | 'name'>;
+    if (isPDFFile(file)) {
       return <FileText className="h-4 w-4 text-red-500" />;
     }
-    if (isImageFile(file as any)) {
+    if (isImageFile(file)) {
       return <ImageIcon className="h-4 w-4 text-blue-500" />;
     }
     return <FileText className="h-4 w-4 text-muted-foreground" />;

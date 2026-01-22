@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { Stethoscope, Plus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DossierPageLayout from './shared/DossierPageLayout';
+import { ConsultationWorkspace } from '@/components/consultation';
 
 interface OutletContext {
   patient: Patient;
@@ -12,6 +13,15 @@ interface OutletContext {
 
 const PatientConsultationTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
+  const [hasActiveConsultation, setHasActiveConsultation] = useState(false);
+
+  const handleStartConsultation = () => {
+    setHasActiveConsultation(true);
+  };
+
+  if (hasActiveConsultation) {
+    return <ConsultationWorkspace patient={patient} />;
+  }
 
   return (
     <DossierPageLayout
@@ -38,7 +48,7 @@ const PatientConsultationTab: React.FC = () => {
             ou sélectionnez une consultation existante dans l'historique.
           </p>
           <div className="flex gap-3">
-            <Button className="gap-1.5">
+            <Button className="gap-1.5" onClick={handleStartConsultation}>
               <Plus className="h-4 w-4" />
               Démarrer une consultation
             </Button>
