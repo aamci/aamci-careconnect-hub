@@ -202,3 +202,7 @@ export interface FilterState {
     end: Date;
   };
 }
+
+// Document Management Types
+export * from './document';
+export * from './audit';
