@@ -50,8 +50,7 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({ patient }) => {
   const [confirmText, setConfirmText] = useState('');
 
   const handleTakeAppointment = () => {
-    navigate(`/patients/${patient.id}/home`);
-    toast.info('Ouverture de la prise de rendez-vous...');
+    navigate('/', { state: { preselectedPatient: patient } });
   };
 
   const handlePlanMultipleAppointments = () => {

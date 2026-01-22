@@ -492,3 +492,62 @@ function generateOccurrences(
 
   return occurrences;
 }
+
+/**
+ * Apply a substitute practitioner to openings for a date range
+ */
+export async function applySubstitute(
+  practitionerId: string,
+  substituteId: string,
+  startDate: Date,
+  endDate?: Date
+): Promise<boolean> {
+  try {
+    const endDateStr = endDate
+      ? endDate.toISOString().split('T')[0]
+      : startDate.toISOString().split('T')[0];
+
+    const { error } = await supabase
+      .from('openings')
+      .update({ substitute_id: substituteId })
+      .eq('practitioner_id', practitionerId)
+      .gte('opening_date', startDate.toISOString().split('T')[0])
+      .lte('opening_date', endDateStr)
+      .is('substitute_id', null); // Only update openings without substitute
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error applying substitute:', error);
+    throw error;
+  }
+}
+
+/**
+ * Cancel substitute for a specific date or date range
+ */
+export async function cancelSubstitute(
+  practitionerId: string,
+  startDate: Date,
+  endDate?: Date
+): Promise<boolean> {
+  try {
+    const endDateStr = endDate
+      ? endDate.toISOString().split('T')[0]
+      : startDate.toISOString().split('T')[0];
+
+    const { error } = await supabase
+      .from('openings')
+      .update({ substitute_id: null })
+      .eq('practitioner_id', practitionerId)
+      .gte('opening_date', startDate.toISOString().split('T')[0])
+      .lte('opening_date', endDateStr)
+      .not('substitute_id', 'is', null); // Only update openings with substitute
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error cancelling substitute:', error);
+    throw error;
+  }
+}

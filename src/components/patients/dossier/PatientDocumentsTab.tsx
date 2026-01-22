@@ -62,6 +62,7 @@ import { cn } from '@/lib/utils';
 import {
   usePatientDocuments,
   useUpdateDocumentStatus,
+  useDeleteDocument,
   WORKFLOW_STATUS_CONFIG,
   type PatientDocument as Document,
   type DocumentWorkflowStatus,
@@ -69,6 +70,9 @@ import {
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import { toast } from 'sonner';
+import { DocumentUploadModal } from '@/components/documents/DocumentUploadModal';
+import { DocumentViewerModal } from '@/components/documents/DocumentViewerModal';
+import { downloadFileFromStorage } from '@/lib/fileUtils';
 
 interface OutletContext {
   patient: Patient;
@@ -98,12 +102,17 @@ const PatientDocumentsTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
   const { data: documents, isLoading, error } = usePatientDocuments(patient.id);
   const updateStatusMutation = useUpdateDocumentStatus();
+  const deleteMutation = useDeleteDocument();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [viewerModalOpen, setViewerModalOpen] = useState(false);
+  const [documentToView, setDocumentToView] = useState<Document | null>(null);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
   // Filter documents
   const filteredDocuments = documents?.filter((doc) => {
@@ -140,15 +149,30 @@ const PatientDocumentsTab: React.FC = () => {
   }, {} as Record<string, Document[]>);
 
   const handleUpload = () => {
-    toast.info('Upload de document à implémenter');
+    setUploadModalOpen(true);
   };
 
   const handleView = (doc: Document) => {
-    toast.info(`Aperçu de "${doc.name}" à implémenter`);
+    setDocumentToView(doc);
+    setViewerModalOpen(true);
   };
 
-  const handleDownload = (doc: Document) => {
-    toast.info(`Téléchargement de "${doc.name}" à implémenter`);
+  const handleDownload = async (doc: Document) => {
+    if (!doc.file_path) {
+      toast.error('URL du document manquante');
+      return;
+    }
+
+    setIsDownloading(doc.id);
+    try {
+      await downloadFileFromStorage(doc.file_path, doc.name);
+      toast.success(`Téléchargement de "${doc.name}" démarré`);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Erreur lors du téléchargement');
+    } finally {
+      setIsDownloading(null);
+    }
   };
 
   const handleDeleteClick = (doc: Document) => {
@@ -158,10 +182,21 @@ const PatientDocumentsTab: React.FC = () => {
 
   const confirmDelete = () => {
     if (documentToDelete) {
-      toast.success(`Document "${documentToDelete.name}" supprimé`);
-      setDeleteDialogOpen(false);
-      setDocumentToDelete(null);
+      deleteMutation.mutate(
+        { id: documentToDelete.id, patientId: patient.id },
+        {
+          onSuccess: () => {
+            setDeleteDialogOpen(false);
+            setDocumentToDelete(null);
+          }
+        }
+      );
     }
+  };
+
+  const handleUploadSuccess = () => {
+    // Query will be automatically invalidated by the mutation
+    toast.success('Document ajouté avec succès');
   };
 
   const getCategoryConfig = (category: string | null) => {
@@ -323,8 +358,18 @@ const PatientDocumentsTab: React.FC = () => {
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
-                            <Download className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDownload(doc)}
+                            disabled={isDownloading === doc.id}
+                          >
+                            {isDownloading === doc.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Télécharger</TooltipContent>
@@ -381,21 +426,47 @@ const PatientDocumentsTab: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce document ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Le document "{documentToDelete?.name}" sera définitivement supprimé.
-              Cette action est irréversible.
+              Le document "{documentToDelete?.name}" sera archivé (soft delete).
+              Il restera récupérable par un administrateur.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Supprimer
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                'Supprimer'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upload Modal */}
+      <DocumentUploadModal
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        patientId={patient.id}
+        onSuccess={handleUploadSuccess}
+      />
+
+      {/* Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={viewerModalOpen}
+        onClose={() => {
+          setViewerModalOpen(false);
+          setDocumentToView(null);
+        }}
+        document={documentToView}
+      />
     </DossierPageLayout>
   );
 };

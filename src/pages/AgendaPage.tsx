@@ -199,20 +199,60 @@ const AgendaPage: React.FC = () => {
     setShowCancelSubstitute(true);
   };
 
-  const handleConfirmApplySubstitute = (substituteId: string, endDate?: Date) => {
-    // TODO: Implement substitute application via service
-    toast({
-      title: 'Remplaçant appliqué',
-      description: 'Le remplaçant a été appliqué avec succès.',
-    });
+  const handleConfirmApplySubstitute = async (substituteId: string, endDate?: Date) => {
+    if (!activePractitioner) return;
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { applySubstitute } = await import('@/services/supabase/openingsService');
+      await applySubstitute(
+        activePractitioner.id,
+        substituteId,
+        substituteDialogDate,
+        endDate
+      );
+
+      toast({
+        title: 'Remplaçant appliqué',
+        description: 'Le remplaçant a été appliqué avec succès.',
+      });
+
+      setShowApplySubstitute(false);
+    } catch (error) {
+      console.error('Error applying substitute:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'appliquer le remplaçant.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleConfirmCancelSubstitute = () => {
-    // TODO: Implement substitute cancellation via service
-    toast({
-      title: 'Remplacement annulé',
-      description: 'Le remplacement a été annulé avec succès.',
-    });
+  const handleConfirmCancelSubstitute = async () => {
+    if (!activePractitioner) return;
+
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { cancelSubstitute } = await import('@/services/supabase/openingsService');
+      await cancelSubstitute(
+        activePractitioner.id,
+        substituteDialogDate
+      );
+
+      toast({
+        title: 'Remplacement annulé',
+        description: 'Le remplacement a été annulé avec succès.',
+      });
+
+      setShowCancelSubstitute(false);
+    } catch (error) {
+      console.error('Error cancelling substitute:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'annuler le remplacement.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Toggle opening edit mode

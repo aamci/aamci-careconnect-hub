@@ -85,6 +85,27 @@ const PatientHomeTab: React.FC = () => {
   const recentNotes = notesData?.slice(0, isCompact ? 2 : 3) ?? [];
   const totalNotes = notesData?.length ?? 0;
 
+  // Handlers
+  const handleNewAppointment = () => {
+    navigate('/', { state: { preselectedPatient: patient } });
+  };
+
+  const handleViewAllAppointments = () => {
+    navigate('../historique');
+  };
+
+  const handleViewAllNotes = () => {
+    navigate('../observations');
+  };
+
+  const handleViewAlerts = () => {
+    navigate('../antecedents'); // Alerts are part of clinical summary
+  };
+
+  const handleImportDocument = () => {
+    navigate('../documents');
+  };
+
   return (
     <div
       className="h-full flex flex-col custom-scrollbar"
@@ -200,6 +221,7 @@ const PatientHomeTab: React.FC = () => {
             borderColor="border-success/20"
             iconColor="text-success"
             iconBg="bg-success/20"
+            onClick={handleViewAllNotes}
             isLoading={loadingNotes}
           />
           <KPICard
@@ -210,6 +232,7 @@ const PatientHomeTab: React.FC = () => {
             borderColor="border-warning/20"
             iconColor="text-warning"
             iconBg="bg-warning/20"
+            onClick={handleViewAlerts}
           />
         </div>
 
@@ -239,6 +262,7 @@ const PatientHomeTab: React.FC = () => {
                 size="sm"
                 className="h-auto py-0.5 px-1.5"
                 style={{ fontSize: `var(--density-text-xs)` }}
+                onClick={handleViewAllAppointments}
               >
                 Voir tout
                 <ChevronRight style={{ width: 12, height: 12 }} />
@@ -270,7 +294,7 @@ const PatientHomeTab: React.FC = () => {
                         {apt.practitioner.title} {apt.practitioner.lastName}
                       </span>
                     }
-                    onClick={() => {}}
+                    onClick={() => navigate('/', { state: { selectedAppointment: apt } })}
                   />
                 ))}
                 <div style={{ padding: `var(--density-space-sm)` }}>
@@ -278,6 +302,7 @@ const PatientHomeTab: React.FC = () => {
                     size="sm"
                     className="w-full"
                     style={{ height: `var(--density-btn-height)` }}
+                    onClick={handleNewAppointment}
                   >
                     <Plus style={{ width: 14, height: 14, marginRight: 4 }} />
                     Nouveau RDV
@@ -362,6 +387,7 @@ const PatientHomeTab: React.FC = () => {
                   height: `var(--density-btn-height)`,
                   fontSize: `var(--density-text-sm)`,
                 }}
+                onClick={handleNewAppointment}
               >
                 <Plus style={{ width: 14, height: 14, marginRight: 4 }} />
                 RDV
@@ -374,6 +400,7 @@ const PatientHomeTab: React.FC = () => {
                   height: `var(--density-btn-height)`,
                   fontSize: `var(--density-text-sm)`,
                 }}
+                onClick={handleViewAllNotes}
               >
                 <FileText style={{ width: 14, height: 14, marginRight: 4 }} />
                 Note
@@ -386,6 +413,7 @@ const PatientHomeTab: React.FC = () => {
                   height: `var(--density-btn-height)`,
                   fontSize: `var(--density-text-sm)`,
                 }}
+                onClick={() => navigate('/', { state: { preselectedPatient: patient, action: 'sms' } })}
               >
                 <MessageSquare style={{ width: 14, height: 14, marginRight: 4 }} />
                 SMS
@@ -398,6 +426,7 @@ const PatientHomeTab: React.FC = () => {
                   height: `var(--density-btn-height)`,
                   fontSize: `var(--density-text-sm)`,
                 }}
+                onClick={() => navigate('/', { state: { preselectedPatient: patient, action: 'multi-rdv' } })}
               >
                 <Calendar style={{ width: 14, height: 14, marginRight: 4 }} />
                 Multi-RDV
@@ -418,6 +447,7 @@ const PatientHomeTab: React.FC = () => {
                 size="sm"
                 className="h-auto py-0.5 px-1.5"
                 style={{ fontSize: `var(--density-text-xs)` }}
+                onClick={handleViewAllNotes}
               >
                 Voir tout
                 <ChevronRight style={{ width: 12, height: 12 }} />
@@ -433,7 +463,7 @@ const PatientHomeTab: React.FC = () => {
                     <span className="line-clamp-1">{note.content}</span>
                   }
                   secondary={`${format(note.createdAt, 'dd/MM/yy', { locale: fr })} - ${note.authorName}`}
-                  onClick={() => {}}
+                  onClick={() => navigate('../observations')}
                 />
               ))
             ) : (
@@ -515,6 +545,7 @@ const PatientHomeTab: React.FC = () => {
                 size="sm"
                 className="w-full"
                 style={{ height: `var(--density-btn-height)` }}
+                onClick={handleImportDocument}
               >
                 <FileUp style={{ width: 14, height: 14, marginRight: 4 }} />
                 Importer

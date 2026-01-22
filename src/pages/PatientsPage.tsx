@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import PatientSearchBar from '@/components/patients/PatientSearchBar';
 import PatientCard from '@/components/patients/PatientCard';
@@ -16,6 +17,7 @@ import { Plus, Users, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PatientsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('patients');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -65,11 +67,19 @@ const PatientsPage: React.FC = () => {
   };
 
   const handleEditPatient = () => {
-    toast.info('Édition patient - fonctionnalité à venir');
+    if (selectedPatient) {
+      // Navigate to patient dossier infos tab for editing
+      navigate(`/patients/${selectedPatient.id}/infos-administratives`);
+      setSelectedPatient(null);
+    }
   };
 
   const handleNewAppointment = () => {
-    toast.info('Nouveau RDV - redirection vers l\'agenda');
+    if (selectedPatient) {
+      // Navigate to agenda with patient pre-selected
+      navigate('/', { state: { preselectedPatient: selectedPatient } });
+      setSelectedPatient(null);
+    }
   };
 
   return (
