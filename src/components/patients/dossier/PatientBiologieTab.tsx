@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
@@ -16,8 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { usePatientLabResults } from '@/hooks/data/useLabResults';
-import { usePatientVitalSigns } from '@/hooks/data/useVitalSigns';
+import { usePatientLabResults, useCreateLabResult } from '@/hooks/data/useLabResults';
+import { usePatientVitalSigns, useCreateVitalSigns } from '@/hooks/data/useVitalSigns';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import StatusBadge from './shared/StatusBadge';
@@ -39,15 +39,20 @@ const PatientBiologieTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
   const { data: labResults, isLoading: loadingLab } = usePatientLabResults(patient.id);
   const { data: vitalSigns, isLoading: loadingVitals } = usePatientVitalSigns(patient.id);
-  
+  const createLabResultMutation = useCreateLabResult();
+  const createVitalSignsMutation = useCreateVitalSigns();
+
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [showVitalsModal, setShowVitalsModal] = useState(false);
+
   const isLoading = loadingLab || loadingVitals;
 
   const handleAddLabResult = () => {
-    toast.info('Ajout de résultat biologique à implémenter');
+    setShowLabModal(true);
   };
 
   const handleAddVitals = () => {
-    toast.info('Ajout de constantes à implémenter');
+    setShowVitalsModal(true);
   };
 
   // Parse results safely

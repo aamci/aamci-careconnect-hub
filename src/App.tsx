@@ -20,6 +20,11 @@ import PatientTraitementTab from "./components/patients/dossier/PatientTraitemen
 import PatientBiologieTab from "./components/patients/dossier/PatientBiologieTab";
 import PatientVaccinationTab from "./components/patients/dossier/PatientVaccinationTab";
 import PatientFacturesTab from "./components/patients/dossier/PatientFacturesTab";
+import WaitingRoomPage from "./pages/WaitingRoomPage";
+import VideoRoomPage from "./pages/VideoRoomPage";
+import TeleconsultationListPage from "./pages/TeleconsultationListPage";
+import AdminTeleconsultationSetup from "./pages/AdminTeleconsultationSetup";
+import ActivityPage from "./pages/ActivityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +55,13 @@ const App = () => (
               <Route path="vaccination" element={<PatientVaccinationTab />} />
               <Route path="factures" element={<PatientFacturesTab />} />
             </Route>
+            {/* Stats/Activity route */}
+            <Route path="/stats" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+            {/* Teleconsultation routes */}
+            <Route path="/teleconsult" element={<ProtectedRoute><TeleconsultationListPage /></ProtectedRoute>} />
+            <Route path="/admin/teleconsult-setup" element={<ProtectedRoute><AdminTeleconsultationSetup /></ProtectedRoute>} />
+            <Route path="/visio/waiting/:teleconsultationId" element={<WaitingRoomPage />} />
+            <Route path="/visio/:teleconsultationId" element={<VideoRoomPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -5,16 +5,14 @@ import { Stethoscope, Plus, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DossierPageLayout from './shared/DossierPageLayout';
+import { ConsultationWorkspace } from '@/components/consultation';
 import {
   useActiveConsultation,
   useCreateConsultation,
-  useUpdateConsultation,
-  useEndConsultation,
 } from '@/hooks/data/useConsultations';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchPractitionerByUserId } from '@/services/supabase/practitionersService';
+import { useToast } from '@/hooks/use-toast';
 
 interface OutletContext {
   patient: Patient;
@@ -23,75 +21,74 @@ interface OutletContext {
 const PatientConsultationTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: activeConsultation, isLoading } = useActiveConsultation(patient.id);
   const createConsultation = useCreateConsultation();
-  const updateConsultation = useUpdateConsultation();
-  const endConsultation = useEndConsultation();
-
-  const [chiefComplaint, setChiefComplaint] = React.useState('');
-  const [notes, setNotes] = React.useState('');
-
-  // Load active consultation data
-  React.useEffect(() => {
-    if (activeConsultation) {
-      setChiefComplaint(activeConsultation.chief_complaint || '');
-      setNotes(activeConsultation.notes || '');
-    }
-  }, [activeConsultation]);
 
   const handleStartConsultation = async () => {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-
-    createConsultation.mutate({
-      patient_id: patient.id,
-      practitioner_id: user.user.id,
-      status: 'in-progress'
-    });
-  };
-
-  const handleSaveConsultation = () => {
-    if (!activeConsultation) return;
-
-    updateConsultation.mutate({
-      id: activeConsultation.id,
-      patientId: patient.id,
-      updates: {
-        chief_complaint: chiefComplaint || null,
-        notes: notes || null
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast({
+          variant: 'destructive',
+          title: 'Erreur d\'authentification',
+          description: 'Vous devez être connecté pour démarrer une consultation.'
+        });
+        return;
       }
-    });
-  };
 
-  const handleEndConsultation = () => {
-    if (!activeConsultation) return;
+      // Look up the practitioner record for this user
+      let { data: practitioner } = await fetchPractitionerByUserId(user.user.id);
 
-    // Save first
-    if (chiefComplaint || notes) {
-      updateConsultation.mutate(
-        {
-          id: activeConsultation.id,
-          patientId: patient.id,
-          updates: {
-            chief_complaint: chiefComplaint || null,
-            notes: notes || null
-          }
-        },
-        {
-          onSuccess: () => {
-            // Then end
-            endConsultation.mutate({
-              id: activeConsultation.id,
-              patientId: patient.id
-            });
-          }
+      // TEMPORARY FIX: If no practitioner found by user_id, use the first available practitioner
+      // This happens because practitioners.user_id is NULL in the database
+      if (!practitioner) {
+        console.warn('[PatientConsultationTab] No practitioner found for user_id, using first available practitioner');
+
+        const { data: practitioners } = await supabase
+          .from('practitioners')
+          .select('*')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        if (practitioners) {
+          practitioner = {
+            id: practitioners.id,
+            firstName: practitioners.first_name,
+            lastName: practitioners.last_name,
+            title: practitioners.title || 'Dr',
+            specialty: practitioners.specialty || '',
+            email: practitioners.email || '',
+            phone: practitioners.phone || undefined,
+            avatarUrl: practitioners.avatar_url || undefined,
+            color: practitioners.color || '#3B82F6',
+            siteIds: practitioners.site_ids || []
+          };
         }
-      );
-    } else {
-      endConsultation.mutate({
-        id: activeConsultation.id,
-        patientId: patient.id
+      }
+
+      if (!practitioner) {
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'Aucun praticien disponible dans le système.'
+        });
+        return;
+      }
+
+      // Create consultation with the correct practitioner ID
+      createConsultation.mutate({
+        patient_id: patient.id,
+        practitioner_id: practitioner.id,
+        status: 'in-progress'
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue.'
       });
     }
   };
@@ -100,91 +97,9 @@ const PatientConsultationTab: React.FC = () => {
     navigate('/patients/' + patient.id + '/historique');
   };
 
-  // Active consultation workspace
+  // Active consultation workspace - Layout complet 3 colonnes
   if (activeConsultation) {
-    return (
-      <DossierPageLayout
-        patient={patient}
-        title="Consultation en cours"
-        breadcrumbLabel="Consultation"
-        headerActions={
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleSaveConsultation}
-              disabled={updateConsultation.isPending}
-            >
-              {updateConsultation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                'Enregistrer'
-              )}
-            </Button>
-            <Button onClick={handleEndConsultation} disabled={endConsultation.isPending}>
-              {endConsultation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Clôture...
-                </>
-              ) : (
-                'Terminer la consultation'
-              )}
-            </Button>
-          </div>
-        }
-      >
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Stethoscope className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Consultation active</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Démarrée le {new Date(activeConsultation.start_time).toLocaleString('fr-FR')}
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="chief-complaint">Motif de consultation *</Label>
-                <Textarea
-                  id="chief-complaint"
-                  value={chiefComplaint}
-                  onChange={(e) => setChiefComplaint(e.target.value)}
-                  placeholder="Décrivez le motif principal de la consultation..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes cliniques</Label>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Observations, examens cliniques, impressions diagnostiques..."
-                  rows={10}
-                />
-              </div>
-
-              <div className="bg-muted/50 border border-border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Note :</strong> Cette interface de consultation est simplifiée.
-                  Les fonctionnalités complètes (examen physique, diagnostics structurés,
-                  ordonnances intégrées) seront disponibles dans une version ultérieure.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </DossierPageLayout>
-    );
+    return <ConsultationWorkspace patient={patient} consultationId={activeConsultation.id} />;
   }
 
   // No active consultation - show empty state

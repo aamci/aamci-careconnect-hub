@@ -12,3 +12,4 @@ export { ImageViewer } from './ImageViewer';
 export { DocumentViewer } from './DocumentViewer';
 export { SendDocumentsModal } from './SendDocumentsModal';
 export { DeleteDocumentDialog } from './DeleteDocumentDialog';
+export { DocumentDuplicationGuard, DocumentDuplicationWarning } from './DocumentDuplicationGuard';

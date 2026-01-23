@@ -1,11 +1,17 @@
 /**
  * Hook de gestion d'une consultation
- * État, documents, prescriptions, actions
+ * État, documents, prescriptions, actions - Connecté à Supabase
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Document } from '@/types/document';
+import {
+  useActiveConsultation,
+  useUpdateConsultation,
+  useEndConsultation
+} from '@/hooks/data/useConsultations';
+import { useNavigate } from 'react-router-dom';
 
 export interface ConsultationData {
   id: string;
@@ -30,6 +36,16 @@ interface UseConsultationOptions {
 
 export function useConsultation(options: UseConsultationOptions) {
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Load real data from Supabase
+  const { data: activeConsultation, isLoading } = useActiveConsultation(options.patientId);
+  const updateMutation = useUpdateConsultation();
+  const endMutation = useEndConsultation();
+
+  // Use the consultation passed as parameter or the active one
+  const consultationData = activeConsultation;
+
   const [consultation, setConsultation] = useState<ConsultationData>({
     id: options.consultationId || `temp-${Date.now()}`,
     patientId: options.patientId,
@@ -41,6 +57,25 @@ export function useConsultation(options: UseConsultationOptions) {
     examination: '',
     documents: []
   });
+
+  // Sync with real Supabase data
+  useEffect(() => {
+    if (consultationData && !isLoading) {
+      setConsultation({
+        id: consultationData.id,
+        patientId: consultationData.patient_id,
+        practitionerId: consultationData.practitioner_id,
+        startedAt: new Date(consultationData.start_time),
+        status: consultationData.status as 'in_progress' | 'completed' | 'canceled',
+        templateId: undefined,
+        templateName: undefined,
+        reason: consultationData.chief_complaint || '',
+        anamnesis: consultationData.history_of_present_illness || '',
+        examination: consultationData.notes || '',
+        documents: []
+      });
+    }
+  }, [consultationData, isLoading]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -64,24 +99,23 @@ export function useConsultation(options: UseConsultationOptions) {
   }, []);
 
   const save = useCallback(async () => {
+    if (!consultationData) return;
+
     setIsSaving(true);
     try {
       if (options.onSave) {
         await options.onSave(consultation);
       } else {
-        const response = await fetch('/api/consultations', {
-          method: consultation.id.startsWith('temp-') ? 'POST' : 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(consultation)
+        // Save to Supabase
+        await updateMutation.mutateAsync({
+          id: consultationData.id,
+          patientId: options.patientId,
+          updates: {
+            chief_complaint: consultation.reason || null,
+            history_of_present_illness: consultation.anamnesis || null,
+            notes: consultation.examination || null
+          }
         });
-
-        if (!response.ok) {
-          throw new Error('Erreur lors de la sauvegarde');
-        }
-
-        const saved = await response.json();
-        setConsultation(saved);
       }
 
       toast({
@@ -98,9 +132,11 @@ export function useConsultation(options: UseConsultationOptions) {
     } finally {
       setIsSaving(false);
     }
-  }, [consultation, options, toast]);
+  }, [consultation, consultationData, options, toast, updateMutation]);
 
   const complete = useCallback(async () => {
+    if (!consultationData) return;
+
     if (!consultation.reason.trim()) {
       toast({
         variant: 'destructive',
@@ -112,25 +148,28 @@ export function useConsultation(options: UseConsultationOptions) {
 
     setIsCompleting(true);
     try {
-      const completedConsultation = {
-        ...consultation,
-        status: 'completed' as const,
-        endedAt: new Date()
-      };
-
-      if (options.onComplete) {
-        await options.onComplete(completedConsultation);
-      } else {
-        const response = await fetch(`/api/consultations/${consultation.id}/complete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(completedConsultation)
-        });
-
-        if (!response.ok) {
-          throw new Error('Erreur lors de la finalisation');
+      // Save first
+      await updateMutation.mutateAsync({
+        id: consultationData.id,
+        patientId: options.patientId,
+        updates: {
+          chief_complaint: consultation.reason || null,
+          history_of_present_illness: consultation.anamnesis || null,
+          notes: consultation.examination || null
         }
+      });
+
+      // Then end
+      if (options.onComplete) {
+        await options.onComplete({
+          ...consultation,
+          status: 'completed'
+        });
+      } else {
+        await endMutation.mutateAsync({
+          id: consultationData.id,
+          patientId: options.patientId
+        });
       }
 
       toast({
@@ -138,7 +177,10 @@ export function useConsultation(options: UseConsultationOptions) {
         description: 'La consultation a été finalisée avec succès.'
       });
 
-      setConsultation(completedConsultation);
+      // Navigate back to home page after completion
+      setTimeout(() => {
+        navigate(`/patients/${options.patientId}/home`);
+      }, 1000);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -149,14 +191,11 @@ export function useConsultation(options: UseConsultationOptions) {
     } finally {
       setIsCompleting(false);
     }
-  }, [consultation, options, toast]);
+  }, [consultation, consultationData, options, toast, updateMutation, endMutation, navigate]);
 
   const cancel = useCallback(() => {
-    setConsultation(prev => ({
-      ...prev,
-      status: 'canceled'
-    }));
-  }, []);
+    navigate(`/patients/${options.patientId}/home`);
+  }, [navigate, options.patientId]);
 
   return {
     consultation,
@@ -166,8 +205,8 @@ export function useConsultation(options: UseConsultationOptions) {
     save,
     complete,
     cancel,
-    isSaving,
-    isCompleting,
+    isSaving: isSaving || updateMutation.isPending,
+    isCompleting: isCompleting || endMutation.isPending,
     canComplete: consultation.reason.trim().length > 0
   };
 }

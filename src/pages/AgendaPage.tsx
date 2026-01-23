@@ -19,15 +19,19 @@ import {
 import { AgendaSettingsModal } from '@/components/calendar/settings';
 import NewPatientModal from '@/components/patients/NewPatientModal';
 import NewNoteModal from '@/components/notes/NewNoteModal';
+import { CreateAppointmentModal } from '@/components/appointments/CreateAppointmentModal';
+import { TeleconsultationSetupAlert } from '@/components/teleconsultation/TeleconsultationSetupAlert';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
 import { useAgendaPreferences } from '@/hooks/useAgendaPreferences';
-import { useMotifs, useWeekAppointments } from '@/hooks/data/useAppointments';
+import { useMotifs, useWeekAppointments, useCreateAppointment } from '@/hooks/data/useAppointments';
 import { usePractitioners } from '@/hooks/data/usePractitioners';
 import { usePatients } from '@/hooks/data/usePatients';
 import { useWeekOpenings, type PractitionerOpening } from '@/hooks/data/useOpenings';
 import { Appointment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import * as teleconsultationService from '@/services/supabase/teleconsultationService';
 
 const AgendaPage: React.FC = () => {
   const { toast } = useToast();
@@ -41,13 +45,18 @@ const AgendaPage: React.FC = () => {
   const { data: patients = [] } = usePatients();
   const { data: appointments = [] } = useWeekAppointments(calendar.currentDate);
   const { data: openings = [] } = useWeekOpenings(calendar.currentDate);
-  
+
+  // Mutation for creating appointments
+  const createAppointmentMutation = useCreateAppointment();
+
   const [activeNav, setActiveNav] = React.useState('agenda');
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isNewPatientOpen, setIsNewPatientOpen] = React.useState(false);
   const [isNewNoteOpen, setIsNewNoteOpen] = React.useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = React.useState(true);
+  const [isCreateAppointmentOpen, setIsCreateAppointmentOpen] = React.useState(false);
+  const [selectedSlot, setSelectedSlot] = React.useState<{ date: Date; hour: number } | null>(null);
   
   // Opening edit mode
   const [isOpeningEditMode, setIsOpeningEditMode] = React.useState(false);
@@ -125,14 +134,15 @@ const AgendaPage: React.FC = () => {
       const startTime = `${hour.toString().padStart(2, '0')}:00`;
       const endHour = Math.min(hour + 1, 20);
       const endTime = `${endHour.toString().padStart(2, '0')}:00`;
-      
+
       setNewOpeningData({ date, startTime, endTime });
       setEditingOpening(null);
       setIsOpeningWizardOpen(true);
     } else {
-      // Normal mode - open new patient modal for booking
+      // Normal mode - open appointment creation modal
       calendar.selectDate(date);
-      setIsNewPatientOpen(true);
+      setSelectedSlot({ date, hour });
+      setIsCreateAppointmentOpen(true);
     }
   };
 
@@ -314,6 +324,9 @@ const AgendaPage: React.FC = () => {
 
   return (
     <MainLayout activeNav={activeNav} onNavChange={setActiveNav}>
+      {/* Alerte automatique si tables de téléconsultation manquantes */}
+      <TeleconsultationSetupAlert />
+
       {/* Secondary Header - Below main blue header */}
       <SecondaryHeader
         dateLabel={calendar.getDateRangeLabel()}
@@ -429,6 +442,131 @@ const AgendaPage: React.FC = () => {
         isOpen={isNewPatientOpen}
         onClose={() => setIsNewPatientOpen(false)}
         onSave={handleNewPatient}
+      />
+
+      <CreateAppointmentModal
+        open={isCreateAppointmentOpen}
+        onOpenChange={setIsCreateAppointmentOpen}
+        selectedDate={selectedSlot?.date || null}
+        selectedHour={selectedSlot?.hour || null}
+        patients={patients}
+        motifs={motifs}
+        onCreateNewPatient={() => {
+          setIsCreateAppointmentOpen(false);
+          setIsNewPatientOpen(true);
+        }}
+        onCreateAppointment={async (data) => {
+          try {
+            // Get current user to find associated practitioner
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !userData.user) {
+              console.error('Auth error:', userError);
+              toast({
+                title: 'Erreur d\'authentification',
+                description: 'Vous devez être connecté pour créer un rendez-vous',
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            console.log('Current user:', userData.user.id);
+            console.log('Available practitioners:', practitioners);
+
+            // Find practitioner associated with current user
+            const currentUserPractitioner = practitioners.find(p => p.userId === userData.user.id);
+            const practitionerId = currentUserPractitioner?.id || activePractitioner?.id || practitioners[0]?.id;
+
+            console.log('Selected practitioner ID:', practitionerId);
+
+            if (!practitionerId) {
+              toast({
+                title: 'Erreur de configuration',
+                description: 'Aucun praticien disponible. Contactez l\'administrateur.',
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            // Construct start and end times
+            const startTime = new Date(data.date);
+            startTime.setHours(data.hour, 0, 0, 0);
+
+            const endTime = new Date(startTime);
+            endTime.setMinutes(startTime.getMinutes() + data.duration);
+
+            console.log('Creating appointment with:', {
+              patientId: data.patient.id,
+              practitionerId,
+              motifId: data.motif,
+              startTime,
+              endTime,
+              duration: data.duration,
+              type: 'consultation',
+            });
+
+            // Create appointment in database
+            const createdAppointment = await createAppointmentMutation.mutateAsync({
+              patientId: data.patient.id,
+              practitionerId,
+              motifId: data.motif,
+              startTime,
+              endTime,
+              duration: data.duration,
+              status: 'scheduled',
+              type: 'consultation',
+              isFirstVisit: false,
+              isOnWaitingList: false,
+              roomId: null,
+              referredBy: null,
+              notes: null,
+              internalNotes: null,
+            });
+
+            // Si l'option téléconsultation est cochée, créer automatiquement la téléconsultation
+            if (data.createTeleconsultation && createdAppointment?.id) {
+              try {
+                const motif = motifs.find(m => m.id === data.motif);
+                await teleconsultationService.createTeleconsultation({
+                  appointment_id: createdAppointment.id,
+                  patient_id: data.patient.id,
+                  practitioner_id: practitionerId,
+                  scheduled_start: startTime.toISOString(),
+                  consultation_reason: motif?.name || 'Consultation',
+                  settings: {
+                    video_enabled: true,
+                    audio_enabled: true,
+                    screen_share_enabled: false,
+                    recording_enabled: false,
+                    quality: 'auto',
+                  },
+                });
+
+                toast({
+                  title: 'Rendez-vous et téléconsultation créés',
+                  description: 'Les liens de visioconférence ont été générés automatiquement',
+                });
+              } catch (teleError) {
+                console.error('Error creating teleconsultation:', teleError);
+                toast({
+                  title: 'Rendez-vous créé',
+                  description: 'Mais impossible de créer la téléconsultation automatiquement. Vous pouvez la créer manuellement.',
+                  variant: 'destructive',
+                });
+              }
+            }
+
+            setIsCreateAppointmentOpen(false);
+            setSelectedSlot(null);
+          } catch (error) {
+            console.error('Error creating appointment:', error);
+            toast({
+              title: 'Erreur',
+              description: error instanceof Error ? error.message : 'Impossible de créer le rendez-vous',
+              variant: 'destructive',
+            });
+          }
+        }}
       />
 
       <NewNoteModal

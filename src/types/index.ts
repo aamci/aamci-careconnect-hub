@@ -206,3 +206,10 @@ export interface FilterState {
 // Document Management Types
 export * from './document';
 export * from './audit';
+
+// Teleconsultation Types
+export * from './teleconsultation';
+export * from './webrtc';
+
+// History Types
+export * from './history';

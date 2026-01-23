@@ -344,7 +344,7 @@ const DayColumn: React.FC<DayColumnProps> = React.memo(
     return (
       <div
         className={cn(
-          'flex-1 min-w-[100px] relative border-r border-border last:border-r-0 pt-2',
+          'flex-1 min-w-0 sm:min-w-[80px] md:min-w-[100px] lg:min-w-[120px] relative border-r border-border last:border-r-0 pt-2',
           isTodayDate && 'bg-accent/[0.02]',
           isOpeningEditMode && 'cursor-crosshair'
         )}
@@ -398,7 +398,7 @@ const DayColumn: React.FC<DayColumnProps> = React.memo(
         {/* Drag selection preview */}
         {isDragging && dragSelectionStyle && (
           <div
-            className="absolute left-1 right-1 bg-amber-200/60 dark:bg-amber-700/40 border-2 border-dashed border-amber-500 rounded-md pointer-events-none z-10"
+            className="absolute left-1 right-1 bg-amber-200/60 dark:bg-amber-700/40 border-2 border-dashed border-amber-500 rounded-md pointer-events-none z-[15]"
             style={{
               top: `${dragSelectionStyle.top}px`,
               height: `${dragSelectionStyle.height}px`,

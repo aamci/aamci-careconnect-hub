@@ -1,0 +1,1 @@
+export { CreateTeleconsultationDialog } from './CreateTeleconsultationDialog';

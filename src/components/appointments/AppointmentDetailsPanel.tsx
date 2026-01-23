@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  X, 
-  Calendar, 
-  Clock, 
-  User, 
-  Phone, 
-  Mail, 
+import {
+  X,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Mail,
   MapPin,
   AlertCircle,
   ChevronRight,
@@ -21,7 +21,8 @@ import {
   UserCheck,
   UserX,
   ClipboardList,
-  ExternalLink
+  ExternalLink,
+  Video
 } from 'lucide-react';
 import { format, differenceInYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -30,6 +31,8 @@ import { Button } from '@/components/ui/button';
 import { Appointment } from '@/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { CreateTeleconsultationDialog } from '@/components/teleconsultation/modals/CreateTeleconsultationDialog';
+import { useTeleconsultationByAppointment } from '@/hooks/data/useTeleconsultation';
 
 interface AppointmentDetailsPanelProps {
   appointment: Appointment | null;
@@ -45,6 +48,12 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
   onStatusChange,
 }) => {
   const navigate = useNavigate();
+  const [isCreateVisioOpen, setIsCreateVisioOpen] = useState(false);
+
+  // Vérifier si une téléconsultation existe déjà pour ce rendez-vous
+  const { data: existingTeleconsultation } = useTeleconsultationByAppointment(
+    appointment?.id || null
+  );
 
   if (!appointment) return null;
 
@@ -60,6 +69,14 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
   ];
 
   const actions = [
+    {
+      id: 'visio',
+      label: existingTeleconsultation
+        ? 'Rejoindre téléconsultation'
+        : 'Créer téléconsultation',
+      icon: Video,
+      highlighted: true, // Make this action stand out
+    },
     { id: 'move', label: 'Déplacer le RDV', icon: Move },
     { id: 'copy', label: 'Copier le RDV', icon: Copy },
     { id: 'print', label: 'Imprimer le RDV', icon: Printer },
@@ -74,16 +91,40 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
     onClose();
   };
 
+  const handleActionClick = (actionId: string) => {
+    if (actionId === 'visio') {
+      if (existingTeleconsultation) {
+        // Ouvrir le lien praticien dans un nouvel onglet
+        window.open(existingTeleconsultation.practitioner_link, '_blank');
+      } else {
+        // Ouvrir le modal de création
+        setIsCreateVisioOpen(true);
+      }
+    }
+    // Autres actions à implémenter plus tard
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ x: '100%', opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: '100%', opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="absolute top-0 right-0 h-full w-full sm:w-96 md:w-[420px] lg:max-w-md bg-card border-l border-border shadow-xl z-40 flex flex-col"
-        >
+        <>
+          {/* Backdrop overlay - especially for mobile */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 sm:hidden"
+            onClick={onClose}
+          />
+
+          <motion.div
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-full sm:absolute sm:w-96 md:w-[420px] lg:w-[440px] bg-card border-l border-border shadow-2xl z-40 flex flex-col"
+          >
           {/* Header */}
           <div className="flex-shrink-0 p-5 border-b border-border bg-gradient-to-b from-card to-muted/20">
             <div className="flex items-start justify-between gap-3">
@@ -302,7 +343,15 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
                     {actions.map((action) => (
                       <button
                         key={action.id}
-                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-left group"
+                        onClick={() => handleActionClick(action.id)}
+                        className={cn(
+                          'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all text-left group',
+                          action.id === 'visio' && existingTeleconsultation
+                            ? 'text-primary hover:text-primary hover:bg-primary/10 font-medium'
+                            : action.id === 'visio' && !existingTeleconsultation
+                            ? 'bg-primary/10 text-primary hover:bg-primary/20 font-medium border border-primary/30'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
                       >
                         <action.icon className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate flex-1">{action.label}</span>
@@ -325,7 +374,15 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
             </Button>
           </div>
         </motion.div>
+        </>
       )}
+
+      {/* Modal de création de téléconsultation */}
+      <CreateTeleconsultationDialog
+        appointment={appointment}
+        open={isCreateVisioOpen}
+        onOpenChange={setIsCreateVisioOpen}
+      />
     </AnimatePresence>
   );
 };

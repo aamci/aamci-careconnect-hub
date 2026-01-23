@@ -20,7 +20,9 @@ import {
   DocumentClassificationDrawer,
   DocumentViewer,
   SendDocumentsModal,
-  DeleteDocumentDialog
+  DeleteDocumentDialog,
+  DocumentDuplicationGuard,
+  DocumentDuplicationWarning
 } from '@/components/documents';
 import { canDeleteDocument } from '@/constants/permissions';
 import { useToast } from '@/hooks/use-toast';
@@ -50,6 +52,8 @@ export function CarePlanPanel({
   const [showSendModal, setShowSendModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [showDuplicationGuard, setShowDuplicationGuard] = useState(false);
+  const [pendingDocumentType, setPendingDocumentType] = useState<Document['type'] | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -115,6 +119,21 @@ export function CarePlanPanel({
     setShowSendModal(true);
   };
 
+  const handleCreateDocument = (type: Document['type']) => {
+    setPendingDocumentType(type);
+    setShowDuplicationGuard(true);
+  };
+
+  const handleConfirmCreateNew = () => {
+    setShowDuplicationGuard(false);
+    setPendingDocumentType(null);
+    // TODO: Ouvrir le formulaire de création de document
+    toast({
+      title: 'Création de document',
+      description: `Création d'un nouveau ${pendingDocumentType || 'document'}`
+    });
+  };
+
   const currentUser = {
     id: 'current-user',
     role: 'doctor' as const,
@@ -143,7 +162,7 @@ export function CarePlanPanel({
       <Tabs defaultValue="documents" className="flex-1 flex flex-col">
         <TabsList className="px-4">
           <TabsTrigger value="pharmacie" className="text-xs">
-            Pharmacie
+            Ordonnance pharmaceutique
           </TabsTrigger>
           <TabsTrigger value="biologie" className="text-xs">
             Biologie
@@ -159,28 +178,155 @@ export function CarePlanPanel({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pharmacie" className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground">
-            Ordonnances de pharmacie à implémenter
-          </p>
+        <TabsContent value="pharmacie" className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Document duplication guard */}
+          {showDuplicationGuard && pendingDocumentType === 'prescription' && (
+            <DocumentDuplicationGuard
+              documentType="prescription"
+              consultationId={consultation.id}
+              existingDocuments={consultation.documents}
+              onViewExisting={handleViewDocument}
+              onEditExisting={(doc) => {
+                toast({ title: 'Édition à implémenter' });
+                setShowDuplicationGuard(false);
+              }}
+              onCreateNew={handleConfirmCreateNew}
+            />
+          )}
+
+          {/* Create button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => handleCreateDocument('prescription')}
+          >
+            <Plus className="h-4 w-4" />
+            Créer une ordonnance pharmaceutique
+          </Button>
+
+          {/* Liste des ordonnances existantes */}
+          {consultation.documents.filter(doc => doc.type === 'prescription').length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Ordonnances existantes</h4>
+              {consultation.documents
+                .filter(doc => doc.type === 'prescription')
+                .map(document => (
+                  <DocumentCard
+                    key={document.id}
+                    document={document}
+                    onView={() => handleViewDocument(document)}
+                    onEdit={() => toast({ title: 'Édition à implémenter' })}
+                    onCopy={() => toast({ title: 'Copie à implémenter' })}
+                    onDelete={() => handleDeleteDocument(document)}
+                    canDelete={canDeleteDocument(
+                      currentUser,
+                      { createdBy: document.createdBy, consultationId: document.consultationId },
+                      { id: consultation.id, status: consultation.status, patientId: consultation.patientId, practitionerId: consultation.practitionerId }
+                    )}
+                    compact
+                  />
+                ))}
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="biologie" className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground">
-            Ordonnances de biologie à implémenter
-          </p>
+        <TabsContent value="biologie" className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Document duplication guard */}
+          {showDuplicationGuard && pendingDocumentType === 'exam_request' && (
+            <DocumentDuplicationGuard
+              documentType="exam_request"
+              consultationId={consultation.id}
+              existingDocuments={consultation.documents}
+              onViewExisting={handleViewDocument}
+              onEditExisting={(doc) => {
+                toast({ title: 'Édition à implémenter' });
+                setShowDuplicationGuard(false);
+              }}
+              onCreateNew={handleConfirmCreateNew}
+            />
+          )}
+
+          {/* Create button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => handleCreateDocument('exam_request')}
+          >
+            <Plus className="h-4 w-4" />
+            Créer une demande de biologie
+          </Button>
+
+          {/* Warning si documents existants */}
+          <DocumentDuplicationWarning
+            documentType="exam_request"
+            count={consultation.documents.filter(doc => doc.type === 'exam_request').length}
+          />
         </TabsContent>
 
-        <TabsContent value="courrier" className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground">
-            Courriers à implémenter
-          </p>
+        <TabsContent value="courrier" className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Document duplication guard */}
+          {showDuplicationGuard && pendingDocumentType === 'letter' && (
+            <DocumentDuplicationGuard
+              documentType="letter"
+              consultationId={consultation.id}
+              existingDocuments={consultation.documents}
+              onViewExisting={handleViewDocument}
+              onEditExisting={(doc) => {
+                toast({ title: 'Édition à implémenter' });
+                setShowDuplicationGuard(false);
+              }}
+              onCreateNew={handleConfirmCreateNew}
+            />
+          )}
+
+          {/* Create button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => handleCreateDocument('letter')}
+          >
+            <Plus className="h-4 w-4" />
+            Créer un courrier
+          </Button>
+
+          {/* Warning si documents existants */}
+          <DocumentDuplicationWarning
+            documentType="letter"
+            count={consultation.documents.filter(doc => doc.type === 'letter').length}
+          />
         </TabsContent>
 
-        <TabsContent value="imagerie" className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground">
-            Ordonnances d'imagerie à implémenter
-          </p>
+        <TabsContent value="imagerie" className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Document duplication guard */}
+          {showDuplicationGuard && pendingDocumentType === 'exam_request' && (
+            <DocumentDuplicationGuard
+              documentType="exam_request"
+              consultationId={consultation.id}
+              existingDocuments={consultation.documents}
+              onViewExisting={handleViewDocument}
+              onEditExisting={(doc) => {
+                toast({ title: 'Édition à implémenter' });
+                setShowDuplicationGuard(false);
+              }}
+              onCreateNew={handleConfirmCreateNew}
+            />
+          )}
+
+          {/* Create button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => handleCreateDocument('exam_request')}
+          >
+            <Plus className="h-4 w-4" />
+            Créer une demande d'imagerie
+          </Button>
+
+          {/* Warning si documents existants */}
+          <DocumentDuplicationWarning
+            documentType="exam_request"
+            count={consultation.documents.filter(doc => doc.type === 'exam_request').length}
+          />
         </TabsContent>
 
         <TabsContent value="documents" className="flex-1 flex flex-col overflow-hidden">

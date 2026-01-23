@@ -132,7 +132,7 @@ export function useUpdatePrescriptionStatus() {
       status: string;
     }) => {
       const updates: Record<string, unknown> = { status };
-      
+
       if (status === 'stopped') {
         updates.end_date = new Date().toISOString().split('T')[0];
       }
@@ -154,6 +154,75 @@ export function useUpdatePrescriptionStatus() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    },
+  });
+}
+
+// Renew prescription
+export function useRenewPrescription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      prescriptionId,
+      patientId,
+    }: {
+      prescriptionId: string;
+      patientId: string;
+    }) => {
+      // Get original prescription
+      const { data: original, error: fetchError } = await supabase
+        .from('prescriptions')
+        .select('*')
+        .eq('id', prescriptionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create renewed prescription
+      const { data: user } = await supabase.auth.getUser();
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('prescriptions')
+        .insert({
+          patient_id: original.patient_id,
+          practitioner_id: user.user?.id || original.practitioner_id,
+          type: original.type,
+          content: original.content,
+          status: 'active',
+          start_date: today,
+          end_date: original.duration_days
+            ? new Date(Date.now() + original.duration_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            : null,
+          duration_days: original.duration_days,
+          renewable: original.renewable,
+          renewal_count: (original.renewal_count || 0) + 1,
+          max_renewals: original.max_renewals,
+          notes: original.notes,
+          created_by: user.user?.id || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update original prescription renewal count
+      await supabase
+        .from('prescriptions')
+        .update({ renewal_count: (original.renewal_count || 0) + 1 })
+        .eq('id', prescriptionId);
+
+      return { ...data, patientId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', data.patientId] });
+      queryClient.invalidateQueries({ queryKey: ['active-prescriptions', data.patientId] });
+      toast.success('Ordonnance renouvelée');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors du renouvellement');
       console.error(error);
     },
   });

@@ -86,14 +86,14 @@ const DossierPageLayout: React.FC<DossierPageLayoutProps> = ({
         // Base: CSS Grid layout with anti-overlap protection
         "grid w-full",
         // Height constraint: fit screen or allow scroll
-        fitScreen ? "h-full max-h-full" : "min-h-full",
+        fitScreen ? "h-full max-h-full overflow-hidden" : "min-h-full",
         // Grid columns: responsive with minmax protection
         // Mobile/Tablet: single column
         "grid-cols-[1fr]",
-        // Large screens: main content + actions panel
-        "lg:grid-cols-[minmax(0,1fr)_minmax(200px,220px)]",
-        "xl:grid-cols-[minmax(0,1fr)_minmax(220px,240px)]",
-        "2xl:grid-cols-[minmax(0,1fr)_minmax(240px,260px)]"
+        // Large screens: main content + actions panel (more flexible sizing)
+        "lg:grid-cols-[minmax(0,1fr)_minmax(180px,200px)]",
+        "xl:grid-cols-[minmax(0,1fr)_minmax(200px,220px)]",
+        "2xl:grid-cols-[minmax(0,1fr)_minmax(220px,240px)]"
       )}
     >
       {/* Column B: Main Content Area */}
@@ -220,7 +220,7 @@ const DossierPageLayout: React.FC<DossierPageLayoutProps> = ({
         className={cn(
           "hidden lg:flex flex-col",
           "border-l border-border/50",
-          "sticky top-0 h-screen",
+          "sticky top-0 max-h-screen",
           "overflow-y-auto custom-scrollbar"
         )}
       >

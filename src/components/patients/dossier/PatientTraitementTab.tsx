@@ -16,7 +16,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useActivePrescriptions, usePatientPrescriptions } from '@/hooks/data/usePrescriptions';
+import {
+  useActivePrescriptions,
+  usePatientPrescriptions,
+  useUpdatePrescriptionStatus,
+  useRenewPrescription,
+} from '@/hooks/data/usePrescriptions';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import StatusBadge from './shared/StatusBadge';
@@ -38,23 +43,34 @@ const PatientTraitementTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
   const { data: activePrescriptions, isLoading: loadingActive } = useActivePrescriptions(patient.id);
   const { data: allPrescriptions, isLoading: loadingAll } = usePatientPrescriptions(patient.id);
-  
+  const updateStatusMutation = useUpdatePrescriptionStatus();
+  const renewMutation = useRenewPrescription();
+
   const isLoading = loadingActive || loadingAll;
 
   const handleNewPrescription = () => {
     toast.info('Création d\'ordonnance à implémenter');
   };
 
-  const handleStopMedication = (medication: string) => {
-    toast.info(`Arrêt de "${medication}" à implémenter`);
+  const handleStopMedication = (prescriptionId: string, medication: string) => {
+    if (confirm(`Arrêter le traitement "${medication}" ?`)) {
+      updateStatusMutation.mutate({
+        id: prescriptionId,
+        patientId: patient.id,
+        status: 'stopped',
+      });
+    }
   };
 
   const handleRenew = (prescriptionId: string) => {
-    toast.info('Renouvellement à implémenter');
+    renewMutation.mutate({
+      prescriptionId,
+      patientId: patient.id,
+    });
   };
 
   const handlePrint = () => {
-    toast.info('Impression à implémenter');
+    window.print();
   };
 
   // Parse content safely
@@ -166,15 +182,22 @@ const PatientTraitementTab: React.FC = () => {
                         </div>
                         
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleRenew(med.prescriptionId)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-xs"
+                            onClick={() => handleRenew(med.prescriptionId)}
+                            disabled={renewMutation.isPending}
+                          >
                             <RefreshCw className="h-3.5 w-3.5" />
                             Renouveler
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="gap-1 text-xs text-destructive hover:text-destructive"
-                            onClick={() => handleStopMedication(med.name)}
+                            onClick={() => handleStopMedication(med.prescriptionId, med.name)}
+                            disabled={updateStatusMutation.isPending}
                           >
                             <StopCircle className="h-3.5 w-3.5" />
                             Arrêter

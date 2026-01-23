@@ -4,12 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Patient, Appointment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { usePatientHistory } from '@/hooks/data/usePatientHistory';
+import { usePatientHistory as useAppointmentsHistory } from '@/hooks/data/usePatientHistory';
+import { usePatientHistory } from '@/hooks/data/useHistory';
+import { usePatientDocuments } from '@/hooks/data/useDocuments';
 import {
   PresenceSummaryCard,
   HistorySection,
@@ -17,6 +19,7 @@ import {
   AuditLink,
   DocumentsTimeline,
 } from './historique';
+import HistoryTimeline from '@/components/patients/history/HistoryTimeline';
 import DossierPageLayout from './shared/DossierPageLayout';
 
 interface OutletContext {
@@ -25,22 +28,34 @@ interface OutletContext {
 
 const PatientHistoriqueTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
-  const [activeTab, setActiveTab] = useState<'all' | 'consultations' | 'documents'>('all');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'timeline' | 'all' | 'consultations' | 'documents'>('timeline');
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
-  // Récupérer l'historique du patient
+  // Récupérer l'historique des rendez-vous
   const {
     data: historyData,
-    isLoading,
-    error,
+    isLoading: isLoadingAppointments,
+    error: appointmentsError,
     refetch,
+  } = useAppointmentsHistory(patient.id);
+
+  // Récupérer l'historique complet (timeline)
+  const {
+    data: timelineEvents,
+    isLoading: isLoadingTimeline
   } = usePatientHistory(patient.id);
 
-  // Mock documents - À remplacer par un vrai hook
-  const mockDocuments = [];
+  // Récupérer les documents réels du patient
+  const { data: documents } = usePatientDocuments(patient.id);
+
+  const isLoading = isLoadingAppointments || isLoadingTimeline;
+  const error = appointmentsError;
 
   // Handlers
   const handleOpenAppointment = (appointment: Appointment) => {
-    toast.info(`Ouverture du rendez-vous ${appointment.id}`);
+    // Navigate to agenda with selected appointment
+    navigate('/', { state: { selectedAppointment: appointment } });
   };
 
   const handleViewAudit = () => {
@@ -81,10 +96,22 @@ const PatientHistoriqueTab: React.FC = () => {
           {/* Tabs pour filtrer par type */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="space-y-6">
             <TabsList>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
               <TabsTrigger value="all">Tout</TabsTrigger>
               <TabsTrigger value="consultations">Consultations</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
+
+            {/* Vue Timeline - Vue chronologique unifiée premium */}
+            <TabsContent value="timeline">
+              <HistoryTimeline
+                events={timelineEvents || []}
+                isLoading={isLoadingTimeline}
+                showFilters={true}
+                showStats={true}
+                compactMode={false}
+              />
+            </TabsContent>
 
             {/* Vue Tout */}
             <TabsContent value="all" className="space-y-6">
@@ -108,12 +135,12 @@ const PatientHistoriqueTab: React.FC = () => {
                 />
               )}
 
-              {mockDocuments.length > 0 && (
+              {documents && documents.length > 0 && (
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4">Documents récents</h3>
                   <DocumentsTimeline
                     patientId={patient.id}
-                    documents={mockDocuments}
+                    documents={documents.slice(0, 10)}
                     onDocumentUpdate={() => refetch()}
                   />
                 </div>
@@ -151,7 +178,7 @@ const PatientHistoriqueTab: React.FC = () => {
             <TabsContent value="documents">
               <DocumentsTimeline
                 patientId={patient.id}
-                documents={mockDocuments}
+                documents={documents || []}
                 onDocumentUpdate={() => refetch()}
               />
             </TabsContent>

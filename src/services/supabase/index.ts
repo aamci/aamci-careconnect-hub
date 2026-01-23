@@ -29,3 +29,4 @@ export * from './medicalService';
 export * from './auditService';
 export * from './allergiesService';
 export * from './openingsService';
+export * from './teleconsultationService';

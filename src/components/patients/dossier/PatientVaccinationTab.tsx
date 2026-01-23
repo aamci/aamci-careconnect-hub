@@ -1,5 +1,5 @@
-import React from 'react';
-import { useOutletContext } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format, isPast, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { usePatientVaccinations, useUpcomingVaccinations } from '@/hooks/data/useVaccinations';
+import { usePatientVaccinations, useUpcomingVaccinations, useCreateVaccination } from '@/hooks/data/useVaccinations';
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import { toast } from 'sonner';
@@ -26,19 +26,23 @@ interface OutletContext {
 
 const PatientVaccinationTab: React.FC = () => {
   const { patient } = useOutletContext<OutletContext>();
+  const navigate = useNavigate();
   const { data: vaccinations, isLoading } = usePatientVaccinations(patient.id);
   const { data: upcomingVaccinations } = useUpcomingVaccinations(patient.id);
+  const createVaccinationMutation = useCreateVaccination();
+
+  const [showVaccinationModal, setShowVaccinationModal] = useState(false);
 
   const handleAddVaccination = () => {
-    toast.info('Ajout de vaccination à implémenter');
+    setShowVaccinationModal(true);
   };
 
-  const handlePlanReminder = () => {
-    toast.info('Planification de rappel à implémenter');
+  const handlePlanReminder = (nextDoseDate: string) => {
+    navigate('/', { state: { preselectedPatient: patient, preselectedDate: nextDoseDate } });
   };
 
   const handleExport = () => {
-    toast.info('Export du carnet vaccinal à implémenter');
+    window.print();
   };
 
   // Separate past and completed vaccinations
@@ -96,7 +100,7 @@ const PatientVaccinationTab: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button size="sm" className="gap-1.5" onClick={handlePlanReminder}>
+                <Button size="sm" className="gap-1.5" onClick={() => vacc.next_dose_date && handlePlanReminder(vacc.next_dose_date)}>
                   <Calendar className="h-3.5 w-3.5" />
                   Planifier
                 </Button>

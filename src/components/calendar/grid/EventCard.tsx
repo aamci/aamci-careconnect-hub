@@ -46,25 +46,38 @@ const EventCard: React.FC<EventCardProps> = ({
   const widthPercent = totalColumns > 1 ? 100 / totalColumns : 100;
   const leftPercent = columnIndex * widthPercent;
 
+  // Use simpler positioning for narrow screens to avoid calc() issues
+  const eventStyle: React.CSSProperties = {
+    ...style,
+  };
+
+  if (totalColumns > 1) {
+    // For overlapping events, use percentage-based positioning
+    eventStyle.left = `${leftPercent}%`;
+    eventStyle.width = `${widthPercent}%`;
+    // Use padding to create visual separation instead of complex calc()
+    eventStyle.paddingLeft = columnIndex > 0 ? '1px' : undefined;
+    eventStyle.paddingRight = columnIndex < totalColumns - 1 ? '1px' : undefined;
+  } else {
+    // Single column: simple fixed margins
+    eventStyle.left = '2px';
+    eventStyle.right = '2px';
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02, zIndex: 40 }}
+      whileHover={{ scale: 1.02, zIndex: 30 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        'absolute z-10 cursor-pointer overflow-hidden border-l-3 rounded-r-md transition-shadow hover:shadow-md',
+        'absolute z-20 cursor-pointer overflow-hidden border-l-3 rounded-r-md transition-shadow hover:shadow-md',
         colorClass,
         appointment.status === 'completed' && 'opacity-60',
         appointment.status === 'cancelled' && 'opacity-40 line-through',
         compact ? 'px-1.5 py-0.5' : 'px-2 py-1'
       )}
-      style={{
-        ...style,
-        left: totalColumns > 1 ? `calc(${leftPercent}% + 2px)` : '2px',
-        right: totalColumns > 1 ? `calc(${100 - leftPercent - widthPercent}% + 2px)` : '2px',
-        width: totalColumns > 1 ? `calc(${widthPercent}% - 4px)` : 'auto',
-      }}
+      style={eventStyle}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

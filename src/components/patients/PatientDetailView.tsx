@@ -77,13 +77,24 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ x: '100%', opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="absolute top-0 right-0 h-full w-full sm:w-96 md:w-[420px] lg:max-w-md bg-card border-l border-border shadow-xl z-40 flex flex-col"
-      >
+      <>
+        {/* Backdrop overlay - especially for mobile */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 sm:hidden"
+          onClick={onClose}
+        />
+
+        <motion.div
+          initial={{ x: '100%', opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: '100%', opacity: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className="fixed top-0 right-0 h-full w-full sm:absolute sm:w-96 md:w-[420px] lg:w-[440px] bg-card border-l border-border shadow-2xl z-40 flex flex-col"
+        >
         {/* Header - Sticky */}
         <div className="sticky top-0 z-10 p-5 border-b border-border bg-gradient-to-b from-card to-muted/20">
           <div className="flex items-start justify-between mb-4 gap-3">
@@ -367,6 +378,7 @@ const PatientDetailView: React.FC<PatientDetailViewProps> = ({
           </Button>
         </div>
       </motion.div>
+      </>
     </AnimatePresence>
   );
 };
