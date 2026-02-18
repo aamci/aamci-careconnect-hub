@@ -213,3 +213,6 @@ export * from './webrtc';
 
 // History Types
 export * from './history';
+
+// Advanced Analytics Types
+export * from './advancedAnalytics';

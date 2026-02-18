@@ -33,6 +33,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { fr } from 'date-fns/locale';
+import CIM10Search from './CIM10Search';
 
 export type AntecedentCategory = 
   | 'medical' 
@@ -161,10 +162,18 @@ const AntecedentFormModal: React.FC<AntecedentFormModalProps> = ({
                     Titre <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder={categoryPlaceholders[category].title}
-                      {...field} 
-                    />
+                    {(category === 'medical' || category === 'cardiovascular' || category === 'surgical' || category === 'family') ? (
+                      <CIM10Search
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={categoryPlaceholders[category].title}
+                      />
+                    ) : (
+                      <Input
+                        placeholder={categoryPlaceholders[category].title}
+                        {...field}
+                      />
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -28,6 +28,7 @@ import AntecedentFormModal, {
 } from './AntecedentFormModal';
 import MemoModal from './MemoModal';
 import PatientAllergyManager from '@/components/patients/PatientAllergyManager';
+import CardiovascularRiskFactors from './CardiovascularRiskFactors';
 import DossierPageLayout from './shared/DossierPageLayout';
 import {
   AlertDialog,
@@ -132,6 +133,11 @@ const PatientAntecedentsTab: React.FC = () => {
       {/* Allergies Section - Dedicated Manager with real Supabase data */}
       <div className="mb-6">
         <PatientAllergyManager patientId={patient.id} />
+      </div>
+
+      {/* Facteurs de Risque Cardiovasculaire */}
+      <div className="mb-6">
+        <CardiovascularRiskFactors patientId={patient.id} />
       </div>
 
       {/* Main Sections List */}

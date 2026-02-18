@@ -52,6 +52,7 @@ import { usePatientLabResults } from '@/hooks/data/useLabResults';
 
 interface PatientDossierSidebarProps {
   patient: Patient;
+  onNavigate?: () => void;
 }
 
 interface NavItem {
@@ -105,7 +106,7 @@ const InfoField: React.FC<{
   </button>
 );
 
-const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }) => {
+const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient, onNavigate }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showSSN, setShowSSN] = useState(false);
@@ -158,18 +159,22 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
 
   const handleNavigateToInfos = () => {
     navigate('infos-administratives');
+    onNavigate?.();
   };
 
   const handleNavigateToAntecedents = () => {
     navigate('antecedents');
+    onNavigate?.();
   };
 
   const handleNavigateToTraitement = () => {
     navigate('traitement');
+    onNavigate?.();
   };
 
   const handleNavigateToBiologie = () => {
     navigate('biologie');
+    onNavigate?.();
   };
 
   // Render admin info content inside accordion
@@ -411,12 +416,12 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   <div className="relative">
                     <CollapsibleTrigger asChild>
                       <button
-                        onClick={() => navigate('infos-administratives')}
+                        onClick={() => { navigate('infos-administratives'); onNavigate?.(); }}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                           'hover:bg-muted/50 group',
-                          isActive 
-                            ? 'text-primary bg-primary/5' 
+                          isActive
+                            ? 'text-primary bg-primary/5'
                             : 'text-foreground'
                         )}
                       >
@@ -442,7 +447,7 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   <div className="relative">
                     <CollapsibleTrigger asChild>
                       <button
-                        onClick={() => navigate('antecedents')}
+                        onClick={() => { navigate('antecedents'); onNavigate?.(); }}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                           'hover:bg-muted/50 group',
@@ -473,7 +478,7 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   <div className="relative">
                     <CollapsibleTrigger asChild>
                       <button
-                        onClick={() => navigate('traitement')}
+                        onClick={() => { navigate('traitement'); onNavigate?.(); }}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                           'hover:bg-muted/50 group',
@@ -507,7 +512,7 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
                   <div className="relative">
                     <CollapsibleTrigger asChild>
                       <button
-                        onClick={() => navigate('biologie')}
+                        onClick={() => { navigate('biologie'); onNavigate?.(); }}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                           'hover:bg-muted/50 group',
@@ -569,11 +574,12 @@ const PatientDossierSidebar: React.FC<PatientDossierSidebarProps> = ({ patient }
               <div key={item.id} className="relative">
                 <NavLink
                   to={item.path}
+                  onClick={() => onNavigate?.()}
                   className={({ isActive: linkActive }) => cn(
                     'flex items-center gap-2 px-3 py-2.5 text-xs font-semibold tracking-wide rounded-lg transition-all',
                     'hover:bg-muted/50',
-                    linkActive 
-                      ? 'text-primary bg-primary/5' 
+                    linkActive
+                      ? 'text-primary bg-primary/5'
                       : 'text-foreground'
                   )}
                   aria-current={isActive ? 'page' : undefined}

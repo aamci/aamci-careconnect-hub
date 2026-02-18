@@ -1,6 +1,7 @@
 /**
  * Page ACTIVITÉ - Dashboard statistique premium
- * KPIs, graphiques, exports, drill-down
+ * KPIs de base + KPIs avancés (Performance, Qualité, Prédictif, Stratégique)
+ * Extension zéro régression
  */
 
 import React, { useState, useMemo } from 'react';
@@ -14,9 +15,12 @@ import {
   Download,
   Filter,
   BarChart3,
-  PieChart,
   Activity,
-  Loader2
+  Loader2,
+  Gauge,
+  HeartPulse,
+  LineChart as LineChartIcon,
+  Target
 } from 'lucide-react';
 import {
   LineChart,
@@ -48,9 +52,31 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAllKPIs, useAppointmentsTimeSeries, useAppointmentsDistribution } from '@/hooks/data/useAnalytics';
+import {
+  useNoShowMetrics,
+  useRevenuePerHourMetrics,
+  useFirstVisitDelayMetrics,
+  useConsultationDurationMetrics,
+  useDocumentCompletionMetrics,
+  useFollowupMetrics,
+  useSlotOccupancyMetrics,
+  useTelemedicineMetrics,
+  useCollectionMetrics,
+  usePatientSegmentMetrics,
+  useAgeDistributionMetrics,
+  useEmergencyRecurrenceMetrics,
+  useWorkloadVariabilityMetrics,
+  useDocumentRatioMetrics,
+  useCascadeCancellationMetrics,
+  useComplexConsultationMetrics,
+  useReschedulingMetrics
+} from '@/hooks/data/useAdvancedAnalytics';
 import { exportToCSV, exportToPDF } from '@/services/supabase/analyticsService';
-import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+// Import advanced tabs
+import { PerformanceTab, QualityTab, PredictiveTab, StrategicTab } from '@/components/activity';
 
 // Types for metrics
 interface MetricCard {
@@ -113,10 +139,40 @@ const ActivityPage: React.FC = () => {
     };
   }, [filters]);
 
-  // Fetch analytics data
+  // ==================== BASE KPIs HOOKS ====================
   const { data: kpisData, isLoading: kpisLoading } = useAllKPIs(analyticsFilters);
   const { data: timeSeriesData, isLoading: timeSeriesLoading } = useAppointmentsTimeSeries(analyticsFilters);
   const { data: distributionData, isLoading: distributionLoading } = useAppointmentsDistribution(analyticsFilters, 'type');
+
+  // ==================== ADVANCED KPIs HOOKS ====================
+  // Phase 1
+  const { data: noShowData, isLoading: noShowLoading } = useNoShowMetrics(analyticsFilters);
+  const { data: rphData, isLoading: rphLoading } = useRevenuePerHourMetrics(analyticsFilters);
+  const { data: firstVisitData, isLoading: firstVisitLoading } = useFirstVisitDelayMetrics(analyticsFilters);
+  const { data: durationData, isLoading: durationLoading } = useConsultationDurationMetrics(analyticsFilters);
+  const { data: docCompletionData, isLoading: docCompletionLoading } = useDocumentCompletionMetrics(analyticsFilters);
+
+  // Phase 2
+  const { data: followupData, isLoading: followupLoading } = useFollowupMetrics(analyticsFilters);
+  const { data: occupancyData, isLoading: occupancyLoading } = useSlotOccupancyMetrics(analyticsFilters);
+  const { data: telemedData, isLoading: telemedLoading } = useTelemedicineMetrics(analyticsFilters);
+  const { data: collectionData, isLoading: collectionLoading } = useCollectionMetrics(analyticsFilters);
+  const { data: segmentData, isLoading: segmentLoading } = usePatientSegmentMetrics(analyticsFilters);
+
+  // Phase 3
+  const { data: ageData, isLoading: ageLoading } = useAgeDistributionMetrics(analyticsFilters);
+  const { data: emergencyData, isLoading: emergencyLoading } = useEmergencyRecurrenceMetrics(analyticsFilters);
+  const { data: workloadData, isLoading: workloadLoading } = useWorkloadVariabilityMetrics(analyticsFilters);
+  const { data: docRatioData, isLoading: docRatioLoading } = useDocumentRatioMetrics(analyticsFilters);
+  const { data: cascadeData, isLoading: cascadeLoading } = useCascadeCancellationMetrics(analyticsFilters);
+  const { data: complexData, isLoading: complexLoading } = useComplexConsultationMetrics(analyticsFilters);
+  const { data: rescheduleData, isLoading: rescheduleLoading } = useReschedulingMetrics(analyticsFilters);
+
+  // Combined loading states
+  const performanceLoading = noShowLoading || rphLoading || durationLoading || occupancyLoading;
+  const qualityLoading = firstVisitLoading || followupLoading || docCompletionLoading || collectionLoading;
+  const predictiveLoading = telemedLoading || segmentLoading || emergencyLoading || workloadLoading;
+  const strategicLoading = ageLoading || docRatioLoading || cascadeLoading || complexLoading || rescheduleLoading;
 
   // Prepare KPI cards from data
   const kpiCards: MetricCard[] = useMemo(() => {
@@ -173,7 +229,7 @@ const ActivityPage: React.FC = () => {
     ];
   }, [kpisData]);
 
-  const handleExport = (format: 'csv' | 'pdf') => {
+  const handleExport = (exportFormat: 'csv' | 'pdf') => {
     if (!kpisData || !timeSeriesData) {
       toast({
         variant: 'destructive',
@@ -184,7 +240,7 @@ const ActivityPage: React.FC = () => {
     }
 
     try {
-      if (format === 'csv') {
+      if (exportFormat === 'csv') {
         exportToCSV(timeSeriesData, `statistiques_${filters.period}`);
         toast({
           title: 'Export CSV',
@@ -341,7 +397,6 @@ const ActivityPage: React.FC = () => {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {kpisLoading ? (
-                // Loading skeletons
                 Array.from({ length: 5 }).map((_, i) => (
                   <Card key={i}>
                     <CardHeader className="pb-3">
@@ -395,9 +450,9 @@ const ActivityPage: React.FC = () => {
               )}
             </div>
 
-            {/* Tabs pour différentes vues */}
+            {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-4">
+              <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-8">
                 <TabsTrigger value="overview" className="gap-2">
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Vue d'ensemble</span>
@@ -415,10 +470,32 @@ const ActivityPage: React.FC = () => {
                 <TabsTrigger value="billing" className="gap-2">
                   <Euro className="h-4 w-4" />
                   <span className="hidden sm:inline">Facturation</span>
-                  <span className="sm:hidden">Factures</span>
+                  <span className="sm:hidden">€</span>
+                </TabsTrigger>
+                {/* Nouveaux onglets avancés */}
+                <TabsTrigger value="performance" className="gap-2">
+                  <Gauge className="h-4 w-4" />
+                  <span className="hidden lg:inline">Performance</span>
+                  <span className="lg:hidden">Perf.</span>
+                </TabsTrigger>
+                <TabsTrigger value="quality" className="gap-2">
+                  <HeartPulse className="h-4 w-4" />
+                  <span className="hidden lg:inline">Qualité</span>
+                  <span className="lg:hidden">Qual.</span>
+                </TabsTrigger>
+                <TabsTrigger value="predictive" className="gap-2">
+                  <LineChartIcon className="h-4 w-4" />
+                  <span className="hidden lg:inline">Prédictif</span>
+                  <span className="lg:hidden">Préd.</span>
+                </TabsTrigger>
+                <TabsTrigger value="strategic" className="gap-2">
+                  <Target className="h-4 w-4" />
+                  <span className="hidden lg:inline">Stratégique</span>
+                  <span className="lg:hidden">Strat.</span>
                 </TabsTrigger>
               </TabsList>
 
+              {/* VUE D'ENSEMBLE */}
               <TabsContent value="overview" className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Card>
@@ -435,11 +512,7 @@ const ActivityPage: React.FC = () => {
                         <ResponsiveContainer width="100%" height={300}>
                           <LineChart data={timeSeriesData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
-                            <XAxis
-                              dataKey="label"
-                              stroke="hsl(var(--muted-foreground))"
-                              fontSize={12}
-                            />
+                            <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                             <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                             <Tooltip
                               contentStyle={{
@@ -448,20 +521,11 @@ const ActivityPage: React.FC = () => {
                                 borderRadius: '6px'
                               }}
                             />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="#3B82F6"
-                              strokeWidth={2}
-                              dot={{ fill: '#3B82F6', r: 4 }}
-                              activeDot={{ r: 6 }}
-                            />
+                            <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 4 }} activeDot={{ r: 6 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                          Aucune donnée disponible
-                        </div>
+                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">Aucune donnée disponible</div>
                       )}
                     </CardContent>
                   </Card>
@@ -493,20 +557,12 @@ const ActivityPage: React.FC = () => {
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'hsl(var(--background))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '6px'
-                              }}
-                            />
+                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '6px' }} />
                             <Legend />
                           </RechartsPieChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                          Aucune donnée disponible
-                        </div>
+                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">Aucune donnée disponible</div>
                       )}
                     </CardContent>
                   </Card>
@@ -526,31 +582,20 @@ const ActivityPage: React.FC = () => {
                       <ResponsiveContainer width="100%" height={250}>
                         <RechartsBarChart data={timeSeriesData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
-                          <XAxis
-                            dataKey="label"
-                            stroke="hsl(var(--muted-foreground))"
-                            fontSize={12}
-                          />
+                          <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'hsl(var(--background))',
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '6px'
-                            }}
-                          />
+                          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '6px' }} />
                           <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                         </RechartsBarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                        Aucune donnée disponible
-                      </div>
+                      <div className="h-[250px] flex items-center justify-center text-muted-foreground">Aucune donnée disponible</div>
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
+              {/* RENDEZ-VOUS */}
               <TabsContent value="appointments" className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -559,36 +604,25 @@ const ActivityPage: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {kpisLoading ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {Array.from({ length: 3 }).map((_, i) => (
-                            <Skeleton key={i} className="h-24 w-full" />
-                          ))}
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {Array.from({ length: 3 }).map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
                       </div>
                     ) : kpisData ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="p-4 bg-muted/30 rounded-lg">
                             <div className="text-sm text-muted-foreground mb-1">Total RDV</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.appointments.total}
-                            </div>
+                            <div className="text-2xl font-bold">{kpisData.appointments.total}</div>
                           </div>
                           <div className="p-4 bg-muted/30 rounded-lg">
                             <div className="text-sm text-muted-foreground mb-1">Taux présence</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.quality.attendanceRate.toFixed(1)}%
-                            </div>
+                            <div className="text-2xl font-bold">{kpisData.quality.attendanceRate.toFixed(1)}%</div>
                           </div>
                           <div className="p-4 bg-muted/30 rounded-lg">
                             <div className="text-sm text-muted-foreground mb-1">Durée moyenne</div>
-                            <div className="text-2xl font-bold">
-                              {Math.round(kpisData.quality.avgDuration)} min
-                            </div>
+                            <div className="text-2xl font-bold">{Math.round(kpisData.quality.avgDuration)} min</div>
                           </div>
                         </div>
-
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                           <div className="p-4 border rounded-lg">
                             <div className="text-sm font-medium mb-3">Par statut</div>
@@ -601,7 +635,6 @@ const ActivityPage: React.FC = () => {
                               ))}
                             </div>
                           </div>
-
                           {distributionData && distributionData.length > 0 && (
                             <div className="p-4 border rounded-lg">
                               <div className="text-sm font-medium mb-3">Par type</div>
@@ -622,6 +655,7 @@ const ActivityPage: React.FC = () => {
                 </Card>
               </TabsContent>
 
+              {/* PATIENTS */}
               <TabsContent value="patients" className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -630,34 +664,22 @@ const ActivityPage: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {kpisLoading ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {Array.from({ length: 3 }).map((_, i) => (
-                            <Skeleton key={i} className="h-24 w-full" />
-                          ))}
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {Array.from({ length: 3 }).map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
                       </div>
                     ) : kpisData ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">Nouveaux patients</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.patients.newPatients}
-                            </div>
-                          </div>
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">Patients actifs</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.patients.activePatients}
-                            </div>
-                          </div>
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">Total vus</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.patients.total}
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">Nouveaux patients</div>
+                          <div className="text-2xl font-bold">{kpisData.patients.newPatients}</div>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">Patients actifs</div>
+                          <div className="text-2xl font-bold">{kpisData.patients.activePatients}</div>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">Total vus</div>
+                          <div className="text-2xl font-bold">{kpisData.patients.total}</div>
                         </div>
                       </div>
                     ) : null}
@@ -665,6 +687,7 @@ const ActivityPage: React.FC = () => {
                 </Card>
               </TabsContent>
 
+              {/* FACTURATION */}
               <TabsContent value="billing" className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -673,39 +696,72 @@ const ActivityPage: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {kpisLoading ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {Array.from({ length: 3 }).map((_, i) => (
-                            <Skeleton key={i} className="h-24 w-full" />
-                          ))}
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {Array.from({ length: 3 }).map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
                       </div>
                     ) : kpisData ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">CA total</div>
-                            <div className="text-2xl font-bold">
-                              {kpisData.revenue.total.toLocaleString('fr-FR')} €
-                            </div>
-                          </div>
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">CA moyen/jour</div>
-                            <div className="text-2xl font-bold">
-                              {Math.round(kpisData.revenue.avgPerDay).toLocaleString('fr-FR')} €
-                            </div>
-                          </div>
-                          <div className="p-4 bg-muted/30 rounded-lg">
-                            <div className="text-sm text-muted-foreground mb-1">Impayés</div>
-                            <div className="text-2xl font-bold text-destructive">
-                              {kpisData.revenue.unpaid.toLocaleString('fr-FR')} €
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">CA total</div>
+                          <div className="text-2xl font-bold">{kpisData.revenue.total.toLocaleString('fr-FR')} €</div>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">CA moyen/jour</div>
+                          <div className="text-2xl font-bold">{Math.round(kpisData.revenue.avgPerDay).toLocaleString('fr-FR')} €</div>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">Impayés</div>
+                          <div className="text-2xl font-bold text-destructive">{kpisData.revenue.unpaid.toLocaleString('fr-FR')} €</div>
                         </div>
                       </div>
                     ) : null}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* PERFORMANCE (NOUVEAU) */}
+              <TabsContent value="performance">
+                <PerformanceTab
+                  noShow={noShowData}
+                  revenuePerHour={rphData}
+                  consultationDuration={durationData}
+                  slotOccupancy={occupancyData}
+                  isLoading={performanceLoading}
+                />
+              </TabsContent>
+
+              {/* QUALITÉ (NOUVEAU) */}
+              <TabsContent value="quality">
+                <QualityTab
+                  firstVisitDelay={firstVisitData}
+                  followup={followupData}
+                  documentCompletion={docCompletionData}
+                  collection={collectionData}
+                  isLoading={qualityLoading}
+                />
+              </TabsContent>
+
+              {/* PRÉDICTIF (NOUVEAU) */}
+              <TabsContent value="predictive">
+                <PredictiveTab
+                  telemedicine={telemedData}
+                  patientSegment={segmentData}
+                  emergencyRecurrence={emergencyData}
+                  workloadVariability={workloadData}
+                  isLoading={predictiveLoading}
+                />
+              </TabsContent>
+
+              {/* STRATÉGIQUE (NOUVEAU) */}
+              <TabsContent value="strategic">
+                <StrategicTab
+                  ageDistribution={ageData}
+                  documentRatio={docRatioData}
+                  cascadeCancellation={cascadeData}
+                  complexConsultation={complexData}
+                  rescheduling={rescheduleData}
+                  isLoading={strategicLoading}
+                />
               </TabsContent>
             </Tabs>
           </div>

@@ -24,6 +24,10 @@ export interface ConsultationData {
   reason: string;
   anamnesis: string;
   examination: string;
+  diagnosis: string;
+  treatmentPlan: string;
+  followUpInstructions: string;
+  conclusion: string;
   documents: Document[];
 }
 
@@ -55,12 +59,37 @@ export function useConsultation(options: UseConsultationOptions) {
     reason: '',
     anamnesis: '',
     examination: '',
+    diagnosis: '',
+    treatmentPlan: '',
+    followUpInstructions: '',
+    conclusion: '',
     documents: []
   });
 
   // Sync with real Supabase data
   useEffect(() => {
     if (consultationData && !isLoading) {
+      const diagnosisData = consultationData.diagnosis;
+      const physicalExam = consultationData.physical_examination;
+
+      // Parse diagnosis JSON if needed
+      let diagnosisText = '';
+      if (typeof diagnosisData === 'string') {
+        diagnosisText = diagnosisData;
+      } else if (diagnosisData && typeof diagnosisData === 'object') {
+        const d = diagnosisData as Record<string, unknown>;
+        diagnosisText = (d.text as string) || (d.description as string) || JSON.stringify(diagnosisData);
+      }
+
+      // Parse physical examination JSON if needed
+      let examinationText = '';
+      if (typeof physicalExam === 'string') {
+        examinationText = physicalExam;
+      } else if (physicalExam && typeof physicalExam === 'object') {
+        const p = physicalExam as Record<string, unknown>;
+        examinationText = (p.text as string) || (p.findings as string) || JSON.stringify(physicalExam);
+      }
+
       setConsultation({
         id: consultationData.id,
         patientId: consultationData.patient_id,
@@ -71,7 +100,11 @@ export function useConsultation(options: UseConsultationOptions) {
         templateName: undefined,
         reason: consultationData.chief_complaint || '',
         anamnesis: consultationData.history_of_present_illness || '',
-        examination: consultationData.notes || '',
+        examination: examinationText || consultationData.notes || '',
+        diagnosis: diagnosisText,
+        treatmentPlan: consultationData.treatment_plan || '',
+        followUpInstructions: consultationData.follow_up_instructions || '',
+        conclusion: consultationData.notes || '',
         documents: []
       });
     }
@@ -98,6 +131,16 @@ export function useConsultation(options: UseConsultationOptions) {
     }));
   }, []);
 
+  const buildUpdates = useCallback(() => {
+    return {
+      chief_complaint: consultation.reason || null,
+      history_of_present_illness: consultation.anamnesis || null,
+      notes: consultation.conclusion || consultation.examination || null,
+      treatment_plan: consultation.treatmentPlan || null,
+      follow_up_instructions: consultation.followUpInstructions || null,
+    };
+  }, [consultation]);
+
   const save = useCallback(async () => {
     if (!consultationData) return;
 
@@ -106,15 +149,10 @@ export function useConsultation(options: UseConsultationOptions) {
       if (options.onSave) {
         await options.onSave(consultation);
       } else {
-        // Save to Supabase
         await updateMutation.mutateAsync({
           id: consultationData.id,
           patientId: options.patientId,
-          updates: {
-            chief_complaint: consultation.reason || null,
-            history_of_present_illness: consultation.anamnesis || null,
-            notes: consultation.examination || null
-          }
+          updates: buildUpdates()
         });
       }
 
@@ -132,7 +170,7 @@ export function useConsultation(options: UseConsultationOptions) {
     } finally {
       setIsSaving(false);
     }
-  }, [consultation, consultationData, options, toast, updateMutation]);
+  }, [consultation, consultationData, options, toast, updateMutation, buildUpdates]);
 
   const complete = useCallback(async () => {
     if (!consultationData) return;
@@ -148,15 +186,11 @@ export function useConsultation(options: UseConsultationOptions) {
 
     setIsCompleting(true);
     try {
-      // Save first
+      // Save all fields first
       await updateMutation.mutateAsync({
         id: consultationData.id,
         patientId: options.patientId,
-        updates: {
-          chief_complaint: consultation.reason || null,
-          history_of_present_illness: consultation.anamnesis || null,
-          notes: consultation.examination || null
-        }
+        updates: buildUpdates()
       });
 
       // Then end
@@ -191,7 +225,7 @@ export function useConsultation(options: UseConsultationOptions) {
     } finally {
       setIsCompleting(false);
     }
-  }, [consultation, consultationData, options, toast, updateMutation, endMutation, navigate]);
+  }, [consultation, consultationData, options, toast, updateMutation, endMutation, navigate, buildUpdates]);
 
   const cancel = useCallback(() => {
     navigate(`/patients/${options.patientId}/home`);

@@ -21,7 +21,9 @@ import { usePatientVitalSigns, useCreateVitalSigns } from '@/hooks/data/useVital
 import DossierPageLayout from './shared/DossierPageLayout';
 import EmptyState from './shared/EmptyState';
 import StatusBadge from './shared/StatusBadge';
-import { toast } from 'sonner';
+import AddLabResultModal from './AddLabResultModal';
+import AddVitalSignsModal from './AddVitalSignsModal';
+import VitalSignsTrendChart from './VitalSignsTrendChart';
 
 interface OutletContext {
   patient: Patient;
@@ -55,17 +57,75 @@ const PatientBiologieTab: React.FC = () => {
     setShowVitalsModal(true);
   };
 
+  const handleSubmitLabResult = (data: {
+    test_date: string;
+    lab_name?: string | null;
+    category?: string | null;
+    interpretation?: string | null;
+    notes?: string | null;
+    results: Array<{
+      name: string;
+      value: string;
+      unit: string;
+      reference_range?: string;
+      is_abnormal: boolean;
+    }>;
+    is_abnormal: boolean;
+  }) => {
+    createLabResultMutation.mutate(
+      {
+        patient_id: patient.id,
+        test_date: data.test_date,
+        lab_name: data.lab_name,
+        category: data.category,
+        interpretation: data.interpretation,
+        notes: data.notes,
+        results: data.results as unknown as import('@/integrations/supabase/types').Json,
+        is_abnormal: data.is_abnormal,
+      },
+      {
+        onSuccess: () => {
+          setShowLabModal(false);
+        },
+      }
+    );
+  };
+
+  const handleSubmitVitals = (data: {
+    weight_kg?: number | null;
+    height_cm?: number | null;
+    systolic_bp?: number | null;
+    diastolic_bp?: number | null;
+    heart_rate?: number | null;
+    temperature_c?: number | null;
+    respiratory_rate?: number | null;
+    oxygen_saturation?: number | null;
+    blood_glucose?: number | null;
+    notes?: string | null;
+  }) => {
+    createVitalSignsMutation.mutate(
+      {
+        patient_id: patient.id,
+        ...data,
+      },
+      {
+        onSuccess: () => {
+          setShowVitalsModal(false);
+        },
+      }
+    );
+  };
+
   // Parse results safely
   const parseResults = (results: unknown): LabResultItem[] => {
     if (Array.isArray(results)) return results as LabResultItem[];
     return [];
   };
 
-
   return (
-    <DossierPageLayout 
-      patient={patient} 
-      title="Biologie et Biométrie" 
+    <DossierPageLayout
+      patient={patient}
+      title="Biologie et Biométrie"
       breadcrumbLabel="Biologie"
       isLoading={isLoading}
     >
@@ -109,7 +169,7 @@ const PatientBiologieTab: React.FC = () => {
               {labResults.map((result) => {
                 const items = parseResults(result.results);
                 const hasAbnormal = items.some(i => i.is_abnormal);
-                
+
                 return (
                   <Card key={result.id} className={cn(hasAbnormal && 'border-warning/50')}>
                     <CardHeader className="pb-3">
@@ -140,7 +200,7 @@ const PatientBiologieTab: React.FC = () => {
                     <CardContent>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {items.slice(0, 6).map((item, idx) => (
-                          <div 
+                          <div
                             key={idx}
                             className={cn(
                               'p-3 rounded-lg border',
@@ -203,7 +263,7 @@ const PatientBiologieTab: React.FC = () => {
                 <CardContent className="py-4">
                   <h3 className="text-sm font-medium text-foreground mb-4">Dernières mesures</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {vitalSigns[0] && (
+                    {vitalSigns[0] && (
                       <>
                         {vitalSigns[0].weight_kg && (
                           <div className="text-center">
@@ -235,6 +295,9 @@ const PatientBiologieTab: React.FC = () => {
                 </CardContent>
               </Card>
 
+              {/* Trend Charts */}
+              <VitalSignsTrendChart vitalSigns={vitalSigns} />
+
               {/* History */}
               <Card>
                 <CardHeader className="pb-3">
@@ -259,6 +322,7 @@ const PatientBiologieTab: React.FC = () => {
                           {(vital.systolic_bp || vital.diastolic_bp) && <span>TA: <strong>{vital.systolic_bp}/{vital.diastolic_bp}</strong></span>}
                           {vital.heart_rate && <span>FC: <strong>{vital.heart_rate} bpm</strong></span>}
                           {vital.temperature_c && <span>T°: <strong>{vital.temperature_c}°C</strong></span>}
+                          {vital.oxygen_saturation && <span>SpO2: <strong>{vital.oxygen_saturation}%</strong></span>}
                         </div>
                       </div>
                     ))}
@@ -269,6 +333,21 @@ const PatientBiologieTab: React.FC = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <AddLabResultModal
+        isOpen={showLabModal}
+        onClose={() => setShowLabModal(false)}
+        onSubmit={handleSubmitLabResult}
+        isLoading={createLabResultMutation.isPending}
+      />
+
+      <AddVitalSignsModal
+        isOpen={showVitalsModal}
+        onClose={() => setShowVitalsModal(false)}
+        onSubmit={handleSubmitVitals}
+        isLoading={createVitalSignsMutation.isPending}
+      />
     </DossierPageLayout>
   );
 };
