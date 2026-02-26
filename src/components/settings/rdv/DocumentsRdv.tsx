@@ -20,19 +20,28 @@ const DocumentsRdv: React.FC = () => {
   const { toast } = useToast();
   const [documents, setDocuments] = useState<RdvDocument[]>(mockRdvDocuments);
   const [showDialog, setShowDialog] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', description: '', isRequired: false });
 
-  const handleCreate = () => {
+  const openEditDialog = (doc: RdvDocument) => {
+    setEditingId(doc.id);
+    setForm({ name: doc.name, description: doc.description || '', isRequired: doc.isRequired });
+    setShowDialog(true);
+  };
+
+  const handleSave = () => {
     if (!form.name) return;
-    const doc: RdvDocument = {
-      id: `doc-${Date.now()}`,
-      ...form,
-      motifIds: [],
-    };
-    setDocuments((prev) => [...prev, doc]);
+    if (editingId) {
+      setDocuments((prev) => prev.map((d) => (d.id === editingId ? { ...d, ...form } : d)));
+      toast({ title: 'Document modifie' });
+    } else {
+      const doc: RdvDocument = { id: `doc-${Date.now()}`, ...form, motifIds: [] };
+      setDocuments((prev) => [...prev, doc]);
+      toast({ title: 'Document ajoute' });
+    }
     setShowDialog(false);
     setForm({ name: '', description: '', isRequired: false });
-    toast({ title: 'Document ajoute' });
+    setEditingId(null);
   };
 
   const handleDelete = (id: string) => {
@@ -81,7 +90,7 @@ const DocumentsRdv: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(doc)} aria-label={`Modifier ${doc.name}`}>
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
                 <Button
@@ -97,10 +106,10 @@ const DocumentsRdv: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setForm({ name: '', description: '', isRequired: false }); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter un document</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier le document' : 'Ajouter un document'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -118,7 +127,7 @@ const DocumentsRdv: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={!form.name}>Ajouter</Button>
+            <Button onClick={handleSave} disabled={!form.name}>{editingId ? 'Enregistrer' : 'Ajouter'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -111,9 +111,9 @@ const JournalSecurite: React.FC = () => {
             <p className="text-sm">Aucune entree trouvee.</p>
           </div>
         ) : (
-          filtered.map((entry) => {
-            const result = Math.random() > 0.15 ? 'success' : Math.random() > 0.5 ? 'failure' : 'warning';
-            const resultConfig = resultLabels[result];
+          filtered.map((entry, index) => {
+            const resultKey = index % 7 === 3 ? 'failure' : index % 5 === 4 ? 'warning' : 'success';
+            const resultConfig = resultLabels[resultKey];
 
             return (
               <div

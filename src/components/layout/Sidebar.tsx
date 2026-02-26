@@ -1,14 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Calendar, 
-  FileText, 
-  Users, 
-  CheckSquare, 
-  MessageSquare, 
-  Video, 
-  BarChart3, 
+import {
+  Calendar,
+  Users,
+  Video,
+  BarChart3,
   Settings,
   HelpCircle
 } from 'lucide-react';
@@ -24,12 +21,9 @@ interface SidebarProps {
 
 const navItems = [
   { id: 'agenda', label: 'Planning', icon: Calendar, path: '/' },
-  { id: 'notes', label: 'Notes', icon: FileText, path: '/notes' },
-  { id: 'tasks', label: 'Tâches', icon: CheckSquare, badge: 3, path: '/tasks' },
   { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
-  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2, path: '/messages' },
   { id: 'teleconsult', label: 'Visio', icon: Video, path: '/teleconsult' },
-  { id: 'stats', label: 'Activité', icon: BarChart3, path: '/stats' },
+  { id: 'stats', label: 'Activite', icon: BarChart3, path: '/stats' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {

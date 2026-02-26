@@ -55,6 +55,19 @@ const MotifsConsultation: React.FC = () => {
   });
 
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedMotifs, setSelectedMotifs] = useState<string[]>([]);
+
+  const openEditDialog = (motif: ConsultationMotifConfig) => {
+    setEditingId(motif.id);
+    setNewMotif({ name: motif.name, color: motif.color, duration: motif.duration, isOnlineBookable: motif.isOnlineBookable, category: motif.category || '' });
+    setCreateStep(2);
+    setShowCreateDialog(true);
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedMotifs((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
+  };
 
   const suggestions = useMemo(() => {
     if (!newMotif.name || newMotif.name.length < 2) return [];
@@ -62,17 +75,20 @@ const MotifsConsultation: React.FC = () => {
     return MOTIF_SUGGESTIONS.filter((s) => s.toLowerCase().includes(q));
   }, [newMotif.name]);
 
-  const handleCreate = () => {
+  const handleSave = () => {
     if (!newMotif.name) return;
-    const motif: ConsultationMotifConfig = {
-      id: `motif-${Date.now()}`,
-      ...newMotif,
-    };
-    setMotifs((prev) => [...prev, motif]);
+    if (editingId) {
+      setMotifs((prev) => prev.map((m) => (m.id === editingId ? { ...m, ...newMotif } : m)));
+      toast({ title: 'Motif modifie', description: `Le motif "${newMotif.name}" a ete mis a jour.` });
+    } else {
+      const motif: ConsultationMotifConfig = { id: `motif-${Date.now()}`, ...newMotif };
+      setMotifs((prev) => [...prev, motif]);
+      toast({ title: 'Motif cree', description: `Le motif "${motif.name}" a ete cree.` });
+    }
     setShowCreateDialog(false);
     setCreateStep(1);
+    setEditingId(null);
     setNewMotif({ name: '', color: '#3B82F6', duration: 20, isOnlineBookable: true, category: '' });
-    toast({ title: 'Motif cree', description: `Le motif "${motif.name}" a ete cree.` });
   };
 
   const formatDuration = (min: number) => {
@@ -122,7 +138,7 @@ const MotifsConsultation: React.FC = () => {
             className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-4 px-4 py-3 items-center border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-            <Checkbox />
+            <Checkbox checked={selectedMotifs.includes(motif.id)} onCheckedChange={() => handleToggleSelect(motif.id)} aria-label={`Selectionner ${motif.name}`} />
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex items-center gap-1.5">
                 <div
@@ -142,10 +158,10 @@ const MotifsConsultation: React.FC = () => {
               </Badge>
             </div>
             <div className="w-20 flex items-center justify-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(motif)} aria-label={`Modifier ${motif.name}`}>
                 <Edit className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setMotifs((prev) => prev.filter((m) => m.id !== motif.id)); toast({ title: 'Motif supprime' }); }} aria-label={`Supprimer ${motif.name}`}>
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -154,10 +170,10 @@ const MotifsConsultation: React.FC = () => {
       </div>
 
       {/* Create Motif Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) setCreateStep(1); }}>
+      <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) { setCreateStep(1); setEditingId(null); } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Creer un motif de consultation</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier le motif' : 'Creer un motif de consultation'}</DialogTitle>
           </DialogHeader>
 
           {/* Step Indicator */}
@@ -283,7 +299,7 @@ const MotifsConsultation: React.FC = () => {
                 Suivant
               </Button>
             ) : (
-              <Button onClick={handleCreate}>Creer le motif</Button>
+              <Button onClick={handleSave}>{editingId ? 'Enregistrer' : 'Creer le motif'}</Button>
             )}
           </DialogFooter>
         </DialogContent>

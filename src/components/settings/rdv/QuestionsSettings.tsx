@@ -39,6 +39,7 @@ const QuestionsSettings: React.FC = () => {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<PatientQuestion[]>(mockQuestions);
   const [showDialog, setShowDialog] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     question: '',
     type: 'text' as PatientQuestion['type'],
@@ -49,18 +50,25 @@ const QuestionsSettings: React.FC = () => {
   const [motifFilter, setMotifFilter] = useState('Tous');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const handleCreate = () => {
+  const openEditDialog = (q: PatientQuestion) => {
+    setEditingId(q.id);
+    setForm({ question: q.question, type: q.type, isRequired: q.isRequired });
+    setShowDialog(true);
+  };
+
+  const handleSave = () => {
     if (!form.question) return;
-    const q: PatientQuestion = {
-      id: `q-${Date.now()}`,
-      ...form,
-      motifIds: [],
-      isActive: true,
-    };
-    setQuestions((prev) => [...prev, q]);
+    if (editingId) {
+      setQuestions((prev) => prev.map((q) => (q.id === editingId ? { ...q, ...form } : q)));
+      toast({ title: 'Question modifiee' });
+    } else {
+      const q: PatientQuestion = { id: `q-${Date.now()}`, ...form, motifIds: [], isActive: true };
+      setQuestions((prev) => [...prev, q]);
+      toast({ title: 'Question ajoutee' });
+    }
     setShowDialog(false);
     setForm({ question: '', type: 'text', isRequired: false });
-    toast({ title: 'Question ajoutee' });
+    setEditingId(null);
   };
 
   const handleToggle = (id: string) => {
@@ -178,7 +186,7 @@ const QuestionsSettings: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Switch checked={q.isActive} onCheckedChange={() => handleToggle(q.id)} />
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(q)} aria-label={`Modifier ${q.question}`}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
@@ -195,10 +203,10 @@ const QuestionsSettings: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setForm({ question: '', type: 'text', isRequired: false }); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter une question</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier la question' : 'Ajouter une question'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -259,7 +267,7 @@ const QuestionsSettings: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={!form.question}>Ajouter</Button>
+            <Button onClick={handleSave} disabled={!form.question}>{editingId ? 'Enregistrer' : 'Ajouter'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

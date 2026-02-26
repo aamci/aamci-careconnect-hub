@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, CalendarDays, Globe, MonitorSmartphone, Users, Stethoscope, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, MonitorSmartphone, Stethoscope, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -45,30 +44,37 @@ const AgendasSettings: React.FC = () => {
     slotDuration: 20,
   });
 
-  const handleCreate = () => {
-    const agenda: AgendaConfig = {
-      id: `agenda-${Date.now()}`,
-      name: newAgenda.name,
-      type: selectedType,
-      specialty: newAgenda.specialty,
-      siteId: 'site-1',
-      siteName: 'Centre Medical Saint-Michel',
-      isOnlineBookable: false,
-      slotDuration: newAgenda.slotDuration,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-      isActive: true,
-    };
-    setAgendas((prev) => [...prev, agenda]);
+  const handleSave = () => {
+    if (!newAgenda.name) return;
+    if (editingId) {
+      setAgendas((prev) =>
+        prev.map((a) =>
+          a.id === editingId
+            ? { ...a, name: newAgenda.name, type: selectedType, specialty: newAgenda.specialty, slotDuration: newAgenda.slotDuration }
+            : a
+        )
+      );
+      toast({ title: 'Agenda modifie', description: `L'agenda "${newAgenda.name}" a ete mis a jour.` });
+    } else {
+      const agenda: AgendaConfig = {
+        id: `agenda-${Date.now()}`,
+        name: newAgenda.name,
+        type: selectedType,
+        specialty: newAgenda.specialty,
+        siteId: 'site-1',
+        siteName: 'CareConnect Hub',
+        isOnlineBookable: false,
+        slotDuration: newAgenda.slotDuration,
+        color: ['#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4'][agendas.length % 6],
+        isActive: true,
+      };
+      setAgendas((prev) => [...prev, agenda]);
+      toast({ title: 'Agenda cree', description: `L'agenda "${agenda.name}" a ete cree.` });
+    }
     setShowCreateDialog(false);
     setCreateStep(1);
+    setEditingId(null);
     setNewAgenda({ name: '', specialty: '', slotDuration: 20 });
-    toast({ title: 'Agenda cree', description: `L'agenda "${agenda.name}" a ete cree.` });
-  };
-
-  const handleToggleOnline = (id: string) => {
-    setAgendas((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, isOnlineBookable: !a.isOnlineBookable } : a))
-    );
   };
 
   const handleDelete = (id: string) => {
@@ -78,6 +84,15 @@ const AgendasSettings: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('created');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const openEditDialog = (agenda: AgendaConfig) => {
+    setEditingId(agenda.id);
+    setSelectedType(agenda.type);
+    setNewAgenda({ name: agenda.name, specialty: agenda.specialty || '', slotDuration: agenda.slotDuration });
+    setCreateStep(2);
+    setShowCreateDialog(true);
+  };
 
   const filtered = agendas.filter((a) =>
     a.name.toLowerCase().includes(searchQuery.toLowerCase()) && a.isActive
@@ -155,7 +170,7 @@ const AgendasSettings: React.FC = () => {
             <span className="w-24 text-center text-xs text-muted-foreground">1 acces</span>
 
             <div className="w-20 flex items-center justify-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(agenda)} aria-label={`Modifier ${agenda.name}`}>
                 <Edit className="h-3.5 w-3.5" />
               </Button>
               <Button
@@ -179,10 +194,10 @@ const AgendasSettings: React.FC = () => {
       </div>
 
       {/* Create Agenda Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) setCreateStep(1); }}>
+      <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) { setCreateStep(1); setEditingId(null); } }}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Ajouter un agenda</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier l\'agenda' : 'Ajouter un agenda'}</DialogTitle>
           </DialogHeader>
 
           {createStep === 1 && (
@@ -262,8 +277,8 @@ const AgendasSettings: React.FC = () => {
             {createStep === 1 ? (
               <Button onClick={() => setCreateStep(2)}>Suivant</Button>
             ) : (
-              <Button onClick={handleCreate} disabled={!newAgenda.name}>
-                Creer l'agenda
+              <Button onClick={handleSave} disabled={!newAgenda.name}>
+                {editingId ? 'Enregistrer' : 'Creer l\'agenda'}
               </Button>
             )}
           </DialogFooter>

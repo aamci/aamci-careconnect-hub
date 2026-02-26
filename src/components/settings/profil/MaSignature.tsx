@@ -32,6 +32,7 @@ const MaSignature: React.FC = () => {
       return;
     }
 
+    if (importedFile?.url) URL.revokeObjectURL(importedFile.url);
     const url = URL.createObjectURL(file);
     setImportedFile({ name: file.name, url });
     toast({ title: 'Document importe', description: `Le fichier "${file.name}" a ete importe.` });

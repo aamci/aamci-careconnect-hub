@@ -212,7 +212,7 @@ const ComptesUtilisateurs: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1 w-20 justify-center">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setNewAccount({ firstName: account.firstName, lastName: account.lastName, email: account.email, role: account.role }); setCreateStep(1); setShowCreateDialog(true); }} aria-label={`Modifier ${account.firstName} ${account.lastName}`}>
                 <Edit className="h-3.5 w-3.5" />
               </Button>
               <Button

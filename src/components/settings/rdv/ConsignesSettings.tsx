@@ -31,23 +31,31 @@ const ConsignesSettings: React.FC = () => {
   const { toast } = useToast();
   const [consignes, setConsignes] = useState<PatientConsigne[]>(mockConsignes);
   const [showDialog, setShowDialog] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', content: '', type: 'before' as PatientConsigne['type'] });
   const [specialtyFilter, setSpecialtyFilter] = useState('Toutes');
   const [agendaFilter, setAgendaFilter] = useState('Tous');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const handleCreate = () => {
+  const openEditDialog = (c: PatientConsigne) => {
+    setEditingId(c.id);
+    setForm({ title: c.title, content: c.content, type: c.type });
+    setShowDialog(true);
+  };
+
+  const handleSave = () => {
     if (!form.title || !form.content) return;
-    const c: PatientConsigne = {
-      id: `cons-${Date.now()}`,
-      ...form,
-      motifIds: [],
-      isActive: true,
-    };
-    setConsignes((prev) => [...prev, c]);
+    if (editingId) {
+      setConsignes((prev) => prev.map((c) => (c.id === editingId ? { ...c, ...form } : c)));
+      toast({ title: 'Consigne modifiee' });
+    } else {
+      const c: PatientConsigne = { id: `cons-${Date.now()}`, ...form, motifIds: [], isActive: true };
+      setConsignes((prev) => [...prev, c]);
+      toast({ title: 'Consigne creee' });
+    }
     setShowDialog(false);
     setForm({ title: '', content: '', type: 'before' });
-    toast({ title: 'Consigne creee' });
+    setEditingId(null);
   };
 
   const handleToggle = (id: string) => {
@@ -155,7 +163,7 @@ const ConsignesSettings: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Switch checked={c.isActive} onCheckedChange={() => handleToggle(c.id)} />
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(c)} aria-label={`Modifier ${c.title}`}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
@@ -172,10 +180,10 @@ const ConsignesSettings: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setForm({ title: '', content: '', type: 'before' }); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter une consigne</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier la consigne' : 'Ajouter une consigne'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -215,7 +223,7 @@ const ConsignesSettings: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={!form.title || !form.content}>Ajouter</Button>
+            <Button onClick={handleSave} disabled={!form.title || !form.content}>{editingId ? 'Enregistrer' : 'Ajouter'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

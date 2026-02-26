@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Database, Shield, Cookie, ExternalLink, ChevronDown } from 'lucide-react';
+import { Database, Shield, Cookie, ExternalLink, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const CentreConfidentialite: React.FC = () => {
   const { toast } = useToast();
-  const [settings, setSettings] = useState(mockPrivacySettings);
+  const [settings] = useState(mockPrivacySettings);
+  const [newsletters, setNewsletters] = useState(true);
+  const [partnerOffers, setPartnerOffers] = useState(false);
 
   const handleSave = () => {
     toast({ title: 'Preferences enregistrees' });
@@ -123,11 +125,11 @@ const CentreConfidentialite: React.FC = () => {
               <p className="text-sm text-muted-foreground">Gerez vos preferences de communication.</p>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Recevoir les newsletters</span>
-                <Switch defaultChecked />
+                <Switch checked={newsletters} onCheckedChange={setNewsletters} />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Recevoir les offres partenaires</span>
-                <Switch />
+                <Switch checked={partnerOffers} onCheckedChange={setPartnerOffers} />
               </div>
             </CardContent>
           </Card>

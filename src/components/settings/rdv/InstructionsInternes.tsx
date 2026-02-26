@@ -16,25 +16,50 @@ import { mockInternalInstructions } from '@/data/settingsMockData';
 import { InternalInstruction } from '@/types/settings';
 import { useToast } from '@/hooks/use-toast';
 
+const emptyForm = { title: '', content: '' };
+
 const InstructionsInternes: React.FC = () => {
   const { toast } = useToast();
   const [instructions, setInstructions] = useState<InternalInstruction[]>(mockInternalInstructions);
   const [showDialog, setShowDialog] = useState(false);
-  const [form, setForm] = useState({ title: '', content: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const handleCreate = () => {
+  const openCreateDialog = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowDialog(true);
+  };
+
+  const openEditDialog = (instr: InternalInstruction) => {
+    setEditingId(instr.id);
+    setForm({ title: instr.title, content: instr.content });
+    setShowDialog(true);
+  };
+
+  const handleSave = () => {
     if (!form.title || !form.content) return;
-    const instr: InternalInstruction = {
-      id: `instr-${Date.now()}`,
-      title: form.title,
-      content: form.content,
-      motifIds: [],
-      isActive: true,
-    };
-    setInstructions((prev) => [...prev, instr]);
+
+    if (editingId) {
+      setInstructions((prev) =>
+        prev.map((i) => (i.id === editingId ? { ...i, ...form } : i))
+      );
+      toast({ title: 'Instruction modifiee' });
+    } else {
+      const instr: InternalInstruction = {
+        id: `instr-${Date.now()}`,
+        title: form.title,
+        content: form.content,
+        motifIds: [],
+        isActive: true,
+      };
+      setInstructions((prev) => [...prev, instr]);
+      toast({ title: 'Instruction creee' });
+    }
+
     setShowDialog(false);
-    setForm({ title: '', content: '' });
-    toast({ title: 'Instruction creee' });
+    setForm(emptyForm);
+    setEditingId(null);
   };
 
   const handleToggle = (id: string) => {
@@ -62,7 +87,7 @@ const InstructionsInternes: React.FC = () => {
       </div>
 
       <div className="mb-6">
-        <Button onClick={() => setShowDialog(true)} className="gap-2">
+        <Button onClick={openCreateDialog} className="gap-2">
           <Plus className="h-4 w-4" />
           Ajouter une instruction
         </Button>
@@ -87,19 +112,20 @@ const InstructionsInternes: React.FC = () => {
                     <Switch
                       checked={instr.isActive}
                       onCheckedChange={() => handleToggle(instr.id)}
+                      aria-label={`Activer ${instr.title}`}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">{instr.content}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(instr)} aria-label={`Modifier ${instr.title}`}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="ghost" size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => handleDelete(instr.id)}
+                    aria-label={`Supprimer ${instr.title}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -110,10 +136,10 @@ const InstructionsInternes: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setForm(emptyForm); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter une instruction interne</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier l\'instruction' : 'Ajouter une instruction interne'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -136,8 +162,8 @@ const InstructionsInternes: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={!form.title || !form.content}>
-              Ajouter
+            <Button onClick={handleSave} disabled={!form.title || !form.content}>
+              {editingId ? 'Enregistrer' : 'Ajouter'}
             </Button>
           </DialogFooter>
         </DialogContent>

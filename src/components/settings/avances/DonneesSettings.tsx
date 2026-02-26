@@ -3,15 +3,7 @@ import { Database, Shield, Cookie, ExternalLink, ChevronDown } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockPrivacySettings } from '@/data/settingsMockData';
 import { PrivacySettings } from '@/types/settings';
@@ -19,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const DonneesSettings: React.FC = () => {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<PrivacySettings>(mockPrivacySettings);
+  const [settings] = useState<PrivacySettings>(mockPrivacySettings);
+  const [newsletters, setNewsletters] = useState(true);
+  const [partnerOffers, setPartnerOffers] = useState(false);
 
   const handleSave = () => {
     toast({ title: 'Parametres enregistres' });
@@ -160,11 +154,11 @@ const DonneesSettings: React.FC = () => {
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Recevoir les newsletters</span>
-                <Switch defaultChecked />
+                <Switch checked={newsletters} onCheckedChange={setNewsletters} />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Recevoir les offres partenaires</span>
-                <Switch />
+                <Switch checked={partnerOffers} onCheckedChange={setPartnerOffers} />
               </div>
             </CardContent>
           </Card>

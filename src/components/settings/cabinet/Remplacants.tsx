@@ -17,33 +17,67 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
+const emptyForm = { firstName: '', lastName: '', email: '', specialty: '', phone: '', startDate: '', endDate: '' };
+
 const Remplacants: React.FC = () => {
   const { toast } = useToast();
   const [replacements, setReplacements] = useState<Replacement[]>(mockReplacements);
   const [showDialog, setShowDialog] = useState(false);
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    specialty: '',
-    phone: '',
-    startDate: '',
-    endDate: '',
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const handleCreate = () => {
+  const openCreateDialog = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowDialog(true);
+  };
+
+  const openEditDialog = (repl: Replacement) => {
+    setEditingId(repl.id);
+    setForm({
+      firstName: repl.firstName,
+      lastName: repl.lastName,
+      email: repl.email,
+      specialty: repl.specialty,
+      phone: repl.phone || '',
+      startDate: format(repl.startDate, 'yyyy-MM-dd'),
+      endDate: format(repl.endDate, 'yyyy-MM-dd'),
+    });
+    setShowDialog(true);
+  };
+
+  const handleSave = () => {
     if (!form.firstName || !form.lastName || !form.email) return;
-    const newRepl: Replacement = {
-      id: `repl-${Date.now()}`,
-      ...form,
-      startDate: new Date(form.startDate),
-      endDate: new Date(form.endDate),
-      isActive: new Date(form.startDate) <= new Date() && new Date(form.endDate) >= new Date(),
-    };
-    setReplacements((prev) => [...prev, newRepl]);
+
+    if (editingId) {
+      setReplacements((prev) =>
+        prev.map((r) =>
+          r.id === editingId
+            ? {
+                ...r,
+                ...form,
+                startDate: new Date(form.startDate),
+                endDate: new Date(form.endDate),
+                isActive: new Date(form.startDate) <= new Date() && new Date(form.endDate) >= new Date(),
+              }
+            : r
+        )
+      );
+      toast({ title: 'Remplacant modifie', description: `${form.firstName} ${form.lastName} a ete mis a jour.` });
+    } else {
+      const newRepl: Replacement = {
+        id: `repl-${Date.now()}`,
+        ...form,
+        startDate: new Date(form.startDate),
+        endDate: new Date(form.endDate),
+        isActive: new Date(form.startDate) <= new Date() && new Date(form.endDate) >= new Date(),
+      };
+      setReplacements((prev) => [...prev, newRepl]);
+      toast({ title: 'Remplacant ajoute', description: `${newRepl.firstName} ${newRepl.lastName} a ete ajoute.` });
+    }
     setShowDialog(false);
-    setForm({ firstName: '', lastName: '', email: '', specialty: '', phone: '', startDate: '', endDate: '' });
-    toast({ title: 'Remplacant ajoute', description: `${newRepl.firstName} ${newRepl.lastName} a ete ajoute.` });
+    setForm(emptyForm);
+    setEditingId(null);
   };
 
   const handleDelete = (id: string) => {
@@ -62,7 +96,7 @@ const Remplacants: React.FC = () => {
       </div>
 
       <div className="mb-6">
-        <Button onClick={() => setShowDialog(true)} className="gap-2">
+        <Button onClick={openCreateDialog} className="gap-2">
           <Plus className="h-4 w-4" />
           Ajouter un remplacant
         </Button>
@@ -93,14 +127,14 @@ const Remplacants: React.FC = () => {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(repl)} aria-label={`Modifier ${repl.firstName} ${repl.lastName}`}>
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="ghost" size="icon"
                   className="h-8 w-8 text-destructive hover:text-destructive"
                   onClick={() => handleDelete(repl.id)}
+                  aria-label={`Supprimer ${repl.firstName} ${repl.lastName}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -110,10 +144,10 @@ const Remplacants: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingId(null); setForm(emptyForm); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter un remplacant</DialogTitle>
+            <DialogTitle>{editingId ? 'Modifier le remplacant' : 'Ajouter un remplacant'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -151,8 +185,8 @@ const Remplacants: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={!form.firstName || !form.lastName || !form.email}>
-              Ajouter
+            <Button onClick={handleSave} disabled={!form.firstName || !form.lastName || !form.email}>
+              {editingId ? 'Enregistrer' : 'Ajouter'}
             </Button>
           </DialogFooter>
         </DialogContent>
