@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Plus, GripVertical, ChevronDown, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, GripVertical, ChevronDown, Settings2, Edit, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,22 @@ import { useToast } from '@/hooks/use-toast';
 
 const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#22C55E', '#06B6D4'];
 
+const MOTIF_SUGGESTIONS = [
+  'Consultation de suivi de medecine generale',
+  'Premiere consultation de medecine generale',
+  'Consultation de medecine generale',
+  'Consultation de pediatrie',
+  'Consultation de geriatrie',
+  'Consultation de medecine du sport',
+  'Consultation d\'homeopathie',
+  'Consultation d\'acupuncture',
+  'Consultation de medecine esthetique',
+  'Consultation pour permis de conduire',
+  'Urgence',
+  'Visite a domicile',
+  'Suivi de traitement',
+];
+
 const MotifsConsultation: React.FC = () => {
   const { toast } = useToast();
   const [motifs, setMotifs] = useState<ConsultationMotifConfig[]>(mockMotifConfigs);
@@ -37,6 +54,14 @@ const MotifsConsultation: React.FC = () => {
     category: '',
   });
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const suggestions = useMemo(() => {
+    if (!newMotif.name || newMotif.name.length < 2) return [];
+    const q = newMotif.name.toLowerCase();
+    return MOTIF_SUGGESTIONS.filter((s) => s.toLowerCase().includes(q));
+  }, [newMotif.name]);
+
   const handleCreate = () => {
     if (!newMotif.name) return;
     const motif: ConsultationMotifConfig = {
@@ -48,6 +73,11 @@ const MotifsConsultation: React.FC = () => {
     setCreateStep(1);
     setNewMotif({ name: '', color: '#3B82F6', duration: 20, isOnlineBookable: true, category: '' });
     toast({ title: 'Motif cree', description: `Le motif "${motif.name}" a ete cree.` });
+  };
+
+  const formatDuration = (min: number) => {
+    if (min >= 60) return `${Math.floor(min / 60)}h${min % 60 > 0 ? min % 60 : ''}`;
+    return `${min} min`;
   };
 
   return (
@@ -64,25 +94,32 @@ const MotifsConsultation: React.FC = () => {
         </button>
       </div>
 
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
         <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Creer un nouveau motif
+        </Button>
+        <Button variant="outline" className="gap-2">
+          <Settings2 className="h-4 w-4" />
+          Options avancees
         </Button>
       </div>
 
       {/* Motifs Table */}
       <div className="border border-border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[auto_auto_1fr] gap-4 px-4 py-3 bg-muted/30 text-sm font-medium text-muted-foreground border-b border-border">
-          <span className="w-8" />
-          <span className="w-8" />
+        <div className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-4 px-4 py-3 bg-muted/30 text-sm font-medium text-muted-foreground border-b border-border">
+          <span className="w-6" />
+          <span className="w-6" />
           <span>Motif de consultation</span>
+          <span className="w-16 text-center">Duree</span>
+          <span className="w-28 text-center">Reservation en ligne</span>
+          <span className="w-20 text-center">Actions</span>
         </div>
 
         {motifs.map((motif) => (
           <div
             key={motif.id}
-            className="grid grid-cols-[auto_auto_1fr] gap-4 px-4 py-3 items-center border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
+            className="grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-4 px-4 py-3 items-center border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
             <Checkbox />
@@ -95,6 +132,22 @@ const MotifsConsultation: React.FC = () => {
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
               <span className="text-sm truncate">{motif.name}</span>
+            </div>
+            <span className="w-16 text-center text-sm text-muted-foreground">
+              {formatDuration(motif.duration)}
+            </span>
+            <div className="w-28 flex justify-center">
+              <Badge variant={motif.isOnlineBookable ? 'default' : 'secondary'} className="text-xs">
+                {motif.isOnlineBookable ? 'Patients' : 'Usage interne'}
+              </Badge>
+            </div>
+            <div className="w-20 flex items-center justify-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
         ))}
@@ -133,17 +186,34 @@ const MotifsConsultation: React.FC = () => {
 
           {createStep === 1 && (
             <div className="space-y-4">
-              <div>
+              <p className="text-xs text-muted-foreground">
+                Pour debuter la creation de votre motif renseignez son nom. Des suggestions standardisees apparaitront.
+              </p>
+              <div className="relative">
                 <Label>Nom</Label>
                 <Input
                   value={newMotif.name}
-                  onChange={(e) => setNewMotif((p) => ({ ...p, name: e.target.value }))}
+                  onChange={(e) => { setNewMotif((p) => ({ ...p, name: e.target.value })); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
                   placeholder="Renseigner un motif"
                   maxLength={255}
                 />
                 <p className="text-xs text-muted-foreground text-right mt-1">
                   {newMotif.name.length}/255
                 </p>
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-50 left-0 right-0 top-[calc(100%-1.25rem)] bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                        onClick={() => { setNewMotif((p) => ({ ...p, name: s })); setShowSuggestions(false); }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
