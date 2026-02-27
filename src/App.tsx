@@ -20,6 +20,7 @@ import PatientTraitementTab from "./components/patients/dossier/PatientTraitemen
 import PatientBiologieTab from "./components/patients/dossier/PatientBiologieTab";
 import PatientVaccinationTab from "./components/patients/dossier/PatientVaccinationTab";
 import PatientFacturesTab from "./components/patients/dossier/PatientFacturesTab";
+import PatientMessagingTab from "./components/patients/dossier/PatientMessagingTab";
 import WaitingRoomPage from "./pages/WaitingRoomPage";
 import VideoRoomPage from "./pages/VideoRoomPage";
 import TeleconsultationListPage from "./pages/TeleconsultationListPage";
@@ -48,6 +49,9 @@ import MonCompte from "./components/settings/profil/MonCompte";
 import CentreConfidentialite from "./components/settings/profil/CentreConfidentialite";
 import JournalSecurite from "./components/settings/profil/JournalSecurite";
 import MaSignature from "./components/settings/profil/MaSignature";
+import NotesPage from "./pages/NotesPage";
+import TasksPage from "./pages/TasksPage";
+import MessagesPage from "./pages/MessagesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +66,9 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+            <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/patients" element={<ProtectedRoute><PatientsPage /></ProtectedRoute>} />
             <Route path="/patients/:patientId" element={<ProtectedRoute><PatientDossierPage /></ProtectedRoute>}>
               <Route index element={<Navigate to="home" replace />} />
@@ -77,6 +84,7 @@ const App = () => (
               <Route path="biologie" element={<PatientBiologieTab />} />
               <Route path="vaccination" element={<PatientVaccinationTab />} />
               <Route path="factures" element={<PatientFacturesTab />} />
+              <Route path="messagerie" element={<PatientMessagingTab />} />
             </Route>
             {/* Stats/Activity route */}
             <Route path="/stats" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />

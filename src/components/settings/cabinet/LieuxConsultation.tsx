@@ -59,8 +59,8 @@ const LieuxConsultation: React.FC = () => {
 
       <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
         <p className="text-sm font-medium text-foreground mb-1">Besoin d'aide ?</p>
-        <button className="text-sm text-primary hover:underline block">Programmer un demenagement</button>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Contactez le support pour programmer un demenagement.' })} className="text-sm text-primary hover:underline block">Programmer un demenagement</button>
+        <button onClick={() => toast({ title: 'Aide', description: 'Utilisez le bouton Ajouter un lieu ci-dessous.' })} className="text-sm text-primary hover:underline block">
           Creer un nouvel agenda pour un nouveau praticien et/ou un nouveau lieu
         </button>
       </div>

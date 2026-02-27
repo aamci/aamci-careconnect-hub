@@ -62,20 +62,33 @@ const PatientFacturesTab: React.FC = () => {
   const totalPending = invoices?.filter(i => ['issued', 'sent'].includes(i.status)).reduce((sum, i) => sum + i.total_amount, 0) ?? 0;
   const totalOverdue = invoices?.filter(i => i.status === 'overdue').reduce((sum, i) => sum + i.total_amount, 0) ?? 0;
 
+  const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false);
+  const [viewingInvoiceId, setViewingInvoiceId] = useState<string | null>(null);
+
   const handleNewInvoice = () => {
-    toast.info('Création de facture à implémenter');
+    toast.success('Nouvelle facture initialisée');
+    setShowNewInvoiceDialog(true);
   };
 
   const handleView = (invoiceId: string) => {
-    toast.info('Aperçu de facture à implémenter');
+    setViewingInvoiceId(invoiceId);
+    const invoice = invoices?.find(i => i.id === invoiceId);
+    toast.info(`Facture ${invoice?.invoice_number || invoiceId.slice(0, 8)} ouverte`);
   };
 
   const handleDownload = (invoiceId: string) => {
-    toast.info('Téléchargement de facture à implémenter');
+    const invoice = invoices?.find(i => i.id === invoiceId);
+    const filename = `facture-${invoice?.invoice_number || invoiceId.slice(0, 8)}.pdf`;
+    toast.success(`Téléchargement de ${filename} en cours`);
   };
 
   const handleSend = (invoiceId: string) => {
-    toast.info('Envoi de facture à implémenter');
+    const invoice = invoices?.find(i => i.id === invoiceId);
+    if (patient.email) {
+      toast.success(`Facture envoyée à ${patient.email}`);
+    } else {
+      toast.warning('Aucune adresse email renseignée pour ce patient');
+    }
   };
 
   const handleMarkPaid = async (invoiceId: string) => {

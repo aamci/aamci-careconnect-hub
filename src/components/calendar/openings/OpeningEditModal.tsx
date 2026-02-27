@@ -319,7 +319,16 @@ const OpeningEditModal: React.FC<OpeningEditModalProps> = ({
 
                 {substituteId && (
                   <div className="flex items-center gap-4 pl-32">
-                    <Button variant="link" className="text-primary p-0 h-auto text-sm">
+                    <Button
+                      variant="link"
+                      className="text-primary p-0 h-auto text-sm"
+                      onClick={() => {
+                        toast({
+                          title: 'Gestion des remplaçants',
+                          description: 'Rendez-vous dans Paramètres > Cabinet > Comptes utilisateurs pour gérer vos remplaçants.',
+                        });
+                      }}
+                    >
                       Ajouter/supprimer des remplaçants
                     </Button>
                   </div>

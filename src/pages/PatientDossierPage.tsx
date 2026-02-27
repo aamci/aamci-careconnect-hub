@@ -22,7 +22,7 @@ const PatientDossierPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <MainLayout activeNav="patients" onNavChange={() => {}}>
+      <MainLayout activeNav="patients" onNavChange={(nav) => navigate(nav === 'agenda' ? '/' : `/${nav}`)}>
         <div className="h-full flex bg-background">
           <div className="hidden lg:block w-72 p-4 space-y-4">
             <Skeleton className="h-20 w-full" />
@@ -39,7 +39,7 @@ const PatientDossierPage: React.FC = () => {
 
   if (!patient || error) {
     return (
-      <MainLayout activeNav="patients" onNavChange={() => {}}>
+      <MainLayout activeNav="patients" onNavChange={(nav) => navigate(nav === 'agenda' ? '/' : `/${nav}`)}>
         <div className="h-full flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Patient non trouvé</h2>
@@ -53,7 +53,7 @@ const PatientDossierPage: React.FC = () => {
   }
 
   return (
-    <MainLayout activeNav="patients" onNavChange={() => {}}>
+    <MainLayout activeNav="patients" onNavChange={(nav) => navigate(nav === 'agenda' ? '/' : `/${nav}`)}>
       <div className="h-full flex bg-background">
         {/* Mobile header bar with menu toggle */}
         {!isDesktop && (
@@ -92,7 +92,7 @@ const PatientDossierPage: React.FC = () => {
         )}
 
         {/* Main Content Area */}
-        <div className={cn('flex-1 overflow-y-auto bg-muted/30', isDesktop ? '' : 'pt-12')}>
+        <div className={cn('flex-1 overflow-y-auto bg-muted/30 relative', isDesktop ? '' : 'pt-12')}>
           <Outlet context={{ patient }} />
         </div>
       </div>

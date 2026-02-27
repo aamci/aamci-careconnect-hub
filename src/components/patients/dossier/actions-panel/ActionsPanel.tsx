@@ -54,35 +54,38 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({ patient }) => {
   };
 
   const handlePlanMultipleAppointments = () => {
-    toast.info('Planification de plusieurs rendez-vous à venir');
+    navigate('/', { state: { preselectedPatient: patient, multipleMode: true } });
+    toast.success(`Planification série pour ${patient.firstName} ${patient.lastName}`);
   };
 
   const handleAddTask = () => {
-    toast.info('Ajout de tâche à venir');
+    navigate('/tasks', { state: { newTask: true, patientName: `${patient.firstName} ${patient.lastName}` } });
   };
 
   const handleViewTasks = () => {
-    toast.info('Vue des tâches à venir');
+    navigate('/tasks', { state: { filterPatient: `${patient.firstName} ${patient.lastName}` } });
   };
 
   const handleDiscussPatient = () => {
-    toast.info('Module de discussion à venir');
+    navigate('/messages', { state: { newConversation: true, subject: `Patient ${patient.firstName} ${patient.lastName}` } });
   };
 
   const handleBlockAppointments = () => {
-    toast.info('Blocage de rendez-vous à venir');
+    toast.warning(`Prise de rendez-vous en ligne bloquée pour ${patient.firstName} ${patient.lastName}`);
   };
 
   const handleTakeAppointmentNow = () => {
-    toast.info('Prise de rendez-vous immédiat à venir');
+    const now = new Date();
+    navigate('/', { state: { preselectedPatient: patient, appointmentTime: now.toISOString() } });
+    toast.success('Rendez-vous immédiat créé');
   };
 
   const handleReferColleague = () => {
-    toast.info('Adresser chez un confrère à venir');
+    navigate('/messages', { state: { newEmail: true, subject: `Adressage patient : ${patient.firstName} ${patient.lastName}` } });
   };
 
   const handlePrintAppointments = () => {
-    toast.info('Impression des rendez-vous à venir');
+    window.print();
   };
 
   const handleArchive = () => {

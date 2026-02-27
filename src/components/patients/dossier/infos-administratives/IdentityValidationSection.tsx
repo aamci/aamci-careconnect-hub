@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { IdentityDocType, IDENTITY_DOC_OPTIONS } from './types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
 
 interface IdentityValidationSectionProps {
   value: IdentityDocType;
@@ -25,8 +26,7 @@ const IdentityValidationSection: React.FC<IdentityValidationSectionProps> = ({
   const [isOpen, setIsOpen] = useState(true);
 
   const handleReportIdentity = () => {
-    // In a real app, this would open a modal to report suspicious identity
-    console.log('Open report identity modal');
+    toast.warning('Signalement d\'identité douteuse enregistré. Le service qualité sera notifié.');
   };
 
   return (

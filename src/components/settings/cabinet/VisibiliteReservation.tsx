@@ -50,7 +50,7 @@ const VisibiliteReservation: React.FC = () => {
 
       <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
         <p className="text-sm font-medium text-foreground mb-1">Besoin d'aide ?</p>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Rendez votre profil visible en activant les options ci-dessous.' })} className="text-sm text-primary hover:underline block">
           Comment rendre votre profil visible aux patients en ligne
         </button>
       </div>

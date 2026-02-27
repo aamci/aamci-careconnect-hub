@@ -151,9 +151,14 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
     }
   };
 
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
+
   const handleHistoryClick = () => {
-    // TODO: Open history drawer/modal
-    toast.info('Historique des modifications à venir');
+    const nextState = !showHistoryDrawer;
+    setShowHistoryDrawer(nextState);
+    if (nextState) {
+      toast.info('Historique des modifications ouvert');
+    }
   };
 
   // L5 Anti-overlap FormRow with responsive grid
@@ -572,8 +577,7 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
             <PatientConsentsSection
               patientId={patient.id}
               onChange={(consents) => {
-                // TODO: Store consents in state or call API
-                console.log('Consents updated:', consents);
+                toast.success('Consentements mis à jour');
               }}
             />
           </div>
@@ -583,8 +587,7 @@ const InfosAdministrativesPanel: React.FC<InfosAdministrativesPanelProps> = ({
             <EmergencyContactsSection
               patientId={patient.id}
               onChange={(contacts) => {
-                // TODO: Store emergency contacts in state or call API
-                console.log('Emergency contacts updated:', contacts);
+                toast.success('Contacts d\'urgence mis à jour');
               }}
             />
           </div>

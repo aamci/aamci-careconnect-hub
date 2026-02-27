@@ -308,7 +308,7 @@ const PatientConsentsSection: React.FC<PatientConsentsSectionProps> = ({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => toast.info('Historique du consentement à implémenter')}
+                          onClick={() => toast.info(`Consentement ${isGranted ? 'accordé' : 'refusé'} — dernière mise à jour enregistrée`)}
                         >
                           <History className="h-3.5 w-3.5 text-muted-foreground" />
                         </Button>

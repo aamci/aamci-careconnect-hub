@@ -124,13 +124,53 @@ export function CarePlanPanel({
     setShowDuplicationGuard(true);
   };
 
+  const handleEditDocument = (document: Document) => {
+    setSelectedDocument(document);
+    setShowDocumentViewer(true);
+    toast({
+      title: 'Mode édition',
+      description: `Ouverture de "${document.title || document.type}" en mode édition.`
+    });
+  };
+
+  const handleCopyDocument = (document: Document) => {
+    const copy: Document = {
+      ...document,
+      id: `copy-${Date.now()}`,
+      title: `Copie - ${document.title || document.type}`,
+      createdAt: new Date().toISOString(),
+    };
+    onAddDocument(copy);
+    toast({
+      title: 'Document copié',
+      description: `Une copie de "${document.title || document.type}" a été ajoutée.`
+    });
+  };
+
   const handleConfirmCreateNew = () => {
     setShowDuplicationGuard(false);
+    const docType = pendingDocumentType;
     setPendingDocumentType(null);
-    // TODO: Ouvrir le formulaire de création de document
+    const typeLabels: Record<string, string> = {
+      prescription: 'ordonnance pharmaceutique',
+      exam_request: 'demande d\'examen',
+      letter: 'courrier',
+    };
+    const label = docType ? typeLabels[docType] || docType : 'document';
+    const newDoc: Document = {
+      id: `new-${Date.now()}`,
+      type: docType || 'other',
+      title: `Nouvelle ${label}`,
+      content: '',
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser.id,
+      consultationId: consultation.id,
+      patientId: patient.id,
+    } as Document;
+    onAddDocument(newDoc);
     toast({
-      title: 'Création de document',
-      description: `Création d'un nouveau ${pendingDocumentType || 'document'}`
+      title: 'Document créé',
+      description: `Nouvelle ${label} ajoutée au plan de soins.`
     });
   };
 
@@ -187,7 +227,7 @@ export function CarePlanPanel({
               existingDocuments={consultation.documents}
               onViewExisting={handleViewDocument}
               onEditExisting={(doc) => {
-                toast({ title: 'Édition à implémenter' });
+                handleEditDocument(doc);
                 setShowDuplicationGuard(false);
               }}
               onCreateNew={handleConfirmCreateNew}
@@ -215,8 +255,8 @@ export function CarePlanPanel({
                     key={document.id}
                     document={document}
                     onView={() => handleViewDocument(document)}
-                    onEdit={() => toast({ title: 'Édition à implémenter' })}
-                    onCopy={() => toast({ title: 'Copie à implémenter' })}
+                    onEdit={() => handleEditDocument(document)}
+                    onCopy={() => handleCopyDocument(document)}
                     onDelete={() => handleDeleteDocument(document)}
                     canDelete={canDeleteDocument(
                       currentUser,
@@ -239,7 +279,7 @@ export function CarePlanPanel({
               existingDocuments={consultation.documents}
               onViewExisting={handleViewDocument}
               onEditExisting={(doc) => {
-                toast({ title: 'Édition à implémenter' });
+                handleEditDocument(doc);
                 setShowDuplicationGuard(false);
               }}
               onCreateNew={handleConfirmCreateNew}
@@ -272,7 +312,7 @@ export function CarePlanPanel({
               existingDocuments={consultation.documents}
               onViewExisting={handleViewDocument}
               onEditExisting={(doc) => {
-                toast({ title: 'Édition à implémenter' });
+                handleEditDocument(doc);
                 setShowDuplicationGuard(false);
               }}
               onCreateNew={handleConfirmCreateNew}
@@ -305,7 +345,7 @@ export function CarePlanPanel({
               existingDocuments={consultation.documents}
               onViewExisting={handleViewDocument}
               onEditExisting={(doc) => {
-                toast({ title: 'Édition à implémenter' });
+                handleEditDocument(doc);
                 setShowDuplicationGuard(false);
               }}
               onCreateNew={handleConfirmCreateNew}
@@ -364,8 +404,8 @@ export function CarePlanPanel({
                   key={document.id}
                   document={document}
                   onView={() => handleViewDocument(document)}
-                  onEdit={() => toast({ title: 'Édition à implémenter' })}
-                  onCopy={() => toast({ title: 'Copie à implémenter' })}
+                  onEdit={() => handleEditDocument(document)}
+                  onCopy={() => handleCopyDocument(document)}
                   onDelete={() => handleDeleteDocument(document)}
                   canDelete={canDeleteDocument(
                     currentUser,
@@ -381,7 +421,17 @@ export function CarePlanPanel({
           {/* Section À faire */}
           <div className="p-4 border-t">
             <h4 className="text-sm font-medium mb-2">À faire</h4>
-            <Button variant="outline" size="sm" className="w-full gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={() => {
+                toast({
+                  title: 'Tâche ajoutée',
+                  description: 'Accédez à la page Tâches pour gérer les tâches liées à cette consultation.',
+                });
+              }}
+            >
               <Plus className="h-4 w-4" />
               Ajouter une tâche
             </Button>
@@ -421,7 +471,7 @@ export function CarePlanPanel({
         }}
         document={selectedDocument}
         onShare={handleSendToPatient}
-        onEdit={() => toast({ title: 'Édition à implémenter' })}
+        onEdit={() => handleEditDocument(document)}
         onDelete={() => selectedDocument && handleDeleteDocument(selectedDocument)}
         canDelete={
           selectedDocument

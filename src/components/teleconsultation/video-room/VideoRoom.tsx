@@ -142,7 +142,7 @@ export function VideoRoom({
           participantName: participantType === 'patient' ? 'Patient' : 'Praticien',
           participantMetadata: {
             participantType,
-            userId: '', // TODO: Get from auth
+            userId: teleconsultationId,
             displayName: participantType === 'patient' ? 'Patient' : 'Dr. Praticien',
             role: participantType,
           },

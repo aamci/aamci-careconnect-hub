@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Patient } from '@/types';
 import { format } from 'date-fns';
@@ -48,8 +48,11 @@ const PatientTraitementTab: React.FC = () => {
 
   const isLoading = loadingActive || loadingAll;
 
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
+
   const handleNewPrescription = () => {
-    toast.info('Création d\'ordonnance à implémenter');
+    setShowPrescriptionForm(true);
+    toast.success(`Nouvelle ordonnance pour ${patient.firstName} ${patient.lastName}`);
   };
 
   const handleStopMedication = (prescriptionId: string, medication: string) => {

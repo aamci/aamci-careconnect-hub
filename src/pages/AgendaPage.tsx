@@ -470,14 +470,9 @@ const AgendaPage: React.FC = () => {
               return;
             }
 
-            console.log('Current user:', userData.user.id);
-            console.log('Available practitioners:', practitioners);
-
             // Find practitioner associated with current user
             const currentUserPractitioner = practitioners.find(p => p.userId === userData.user.id);
             const practitionerId = currentUserPractitioner?.id || activePractitioner?.id || practitioners[0]?.id;
-
-            console.log('Selected practitioner ID:', practitionerId);
 
             if (!practitionerId) {
               toast({
@@ -494,16 +489,6 @@ const AgendaPage: React.FC = () => {
 
             const endTime = new Date(startTime);
             endTime.setMinutes(startTime.getMinutes() + data.duration);
-
-            console.log('Creating appointment with:', {
-              patientId: data.patient.id,
-              practitionerId,
-              motifId: data.motif,
-              startTime,
-              endTime,
-              duration: data.duration,
-              type: 'consultation',
-            });
 
             // Create appointment in database
             const createdAppointment = await createAppointmentMutation.mutateAsync({

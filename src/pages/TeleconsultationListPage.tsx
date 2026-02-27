@@ -111,7 +111,7 @@ const TeleconsultationListPage: React.FC = () => {
   };
 
   return (
-    <MainLayout activeNav="teleconsult" onNavChange={() => {}}>
+    <MainLayout activeNav="teleconsult" onNavChange={(nav) => navigate(nav === 'agenda' ? '/' : `/${nav}`)}>
       <div className="h-full p-6 bg-muted/30 overflow-y-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}

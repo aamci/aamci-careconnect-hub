@@ -112,7 +112,18 @@ const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
         </div>
 
         {/* Settings */}
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 text-muted-foreground"
+          onClick={() => {
+            let next: CalendarView;
+            if (view === 'day') next = 'week';
+            else if (view === 'week') next = '3days';
+            else next = 'day';
+            onViewChange(next);
+          }}
+        >
           <Settings2 className="w-4 h-4" />
           <span className="hidden lg:inline text-xs">Affichage</span>
         </Button>

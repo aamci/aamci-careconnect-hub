@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Shield, Key } from 'lucide-react';
+import { User, Mail, Shield, Key, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { mockPractitionerProfile } from '@/data/settingsMockData';
 import { PractitionerProfile } from '@/types/settings';
 import { useToast } from '@/hooks/use-toast';
@@ -169,12 +175,138 @@ const MonCompte: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" onClick={() => toast({ title: 'Fonctionnalite', description: 'Un lien de reinitialisation vous sera envoye par email.' })}>
+          <Button variant="outline" onClick={() => setShowPasswordDialog(true)}>
             Changer le mot de passe
           </Button>
         </CardContent>
       </Card>
+
+      <PasswordChangeDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+      />
     </div>
+  );
+};
+
+// ── Password Change Dialog ──────────────────────
+const PasswordChangeDialog: React.FC<{ open: boolean; onOpenChange: (o: boolean) => void }> = ({ open, onOpenChange }) => {
+  const { toast } = useToast();
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [error, setError] = useState('');
+
+  const isValid = currentPwd.length >= 1 && newPwd.length >= 8 && newPwd === confirmPwd;
+
+  const handleSubmit = () => {
+    setError('');
+    if (newPwd.length < 8) {
+      setError('Le nouveau mot de passe doit contenir au moins 8 caracteres.');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    if (!/[A-Z]/.test(newPwd) || !/[0-9]/.test(newPwd)) {
+      setError('Le mot de passe doit contenir au moins une majuscule et un chiffre.');
+      return;
+    }
+    toast({ title: 'Mot de passe modifie', description: 'Votre mot de passe a ete mis a jour avec succes.' });
+    setCurrentPwd('');
+    setNewPwd('');
+    setConfirmPwd('');
+    onOpenChange(false);
+  };
+
+  const reset = () => {
+    setCurrentPwd('');
+    setNewPwd('');
+    setConfirmPwd('');
+    setError('');
+    setShowCurrent(false);
+    setShowNew(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Changer le mot de passe</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Mot de passe actuel</Label>
+            <div className="relative">
+              <Input
+                type={showCurrent ? 'text' : 'password'}
+                value={currentPwd}
+                onChange={(e) => setCurrentPwd(e.target.value)}
+                placeholder="Saisissez votre mot de passe actuel"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(!showCurrent)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <Label>Nouveau mot de passe</Label>
+            <div className="relative">
+              <Input
+                type={showNew ? 'text' : 'password'}
+                value={newPwd}
+                onChange={(e) => { setNewPwd(e.target.value); setError(''); }}
+                placeholder="Minimum 8 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="mt-2 space-y-1">
+              <p className={`text-xs ${newPwd.length >= 8 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {newPwd.length >= 8 ? '\u2713' : '\u2022'} Au moins 8 caracteres
+              </p>
+              <p className={`text-xs ${/[A-Z]/.test(newPwd) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {/[A-Z]/.test(newPwd) ? '\u2713' : '\u2022'} Au moins une majuscule
+              </p>
+              <p className={`text-xs ${/[0-9]/.test(newPwd) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {/[0-9]/.test(newPwd) ? '\u2713' : '\u2022'} Au moins un chiffre
+              </p>
+            </div>
+          </div>
+          <div>
+            <Label>Confirmer le nouveau mot de passe</Label>
+            <Input
+              type="password"
+              value={confirmPwd}
+              onChange={(e) => { setConfirmPwd(e.target.value); setError(''); }}
+              placeholder="Ressaisissez le nouveau mot de passe"
+            />
+            {confirmPwd && newPwd !== confirmPwd && (
+              <p className="text-xs text-destructive mt-1">Les mots de passe ne correspondent pas.</p>
+            )}
+          </div>
+          {error && (
+            <p className="text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button onClick={handleSubmit} disabled={!isValid}>Confirmer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

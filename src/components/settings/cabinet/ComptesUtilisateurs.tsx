@@ -114,10 +114,10 @@ const ComptesUtilisateurs: React.FC = () => {
       <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6 flex items-start gap-4">
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground mb-1">Besoin d'aide ?</p>
-          <button className="text-sm text-primary hover:underline block">
+          <button onClick={() => toast({ title: 'Aide', description: 'Utilisez le bouton Creer un compte ci-dessous.' })} className="text-sm text-primary hover:underline block">
             Ajouter ou supprimer un compte utilisateur
           </button>
-          <button className="text-sm text-primary hover:underline block">
+          <button onClick={() => toast({ title: 'Aide', description: 'Cliquez sur un compte pour modifier ses droits.' })} className="text-sm text-primary hover:underline block">
             Modifier les droits d'acces d'un compte utilisateur
           </button>
         </div>

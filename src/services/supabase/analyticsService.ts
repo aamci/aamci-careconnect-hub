@@ -531,6 +531,33 @@ export function exportToCSV(data: any[], filename: string): void {
 }
 
 export function exportToPDF(data: any[], filename: string): void {
-  // À implémenter avec une librairie comme jsPDF ou pdfmake
-  console.log('PDF export to be implemented', data, filename);
+  // Build a printable HTML table and trigger browser print dialog
+  const headers = data.length > 0 ? Object.keys(data[0]) : [];
+  const rows = data.map(row => headers.map(h => String(row[h] ?? '')));
+
+  const html = `
+    <!DOCTYPE html>
+    <html><head><title>${filename}</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      h1 { font-size: 18px; margin-bottom: 16px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { background-color: #f4f4f4; font-weight: bold; }
+      @media print { body { padding: 0; } }
+    </style></head>
+    <body>
+      <h1>${filename} — ${format(new Date(), 'dd/MM/yyyy')}</h1>
+      <table>
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </body></html>`;
+
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
+  }
 }

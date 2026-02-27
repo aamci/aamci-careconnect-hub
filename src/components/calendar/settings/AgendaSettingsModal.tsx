@@ -122,7 +122,6 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
 
   // Handle zoom change with immediate effect
   const handleZoomChange = ([value]: number[]) => {
-    console.log('[AgendaSettings] Zoom changed to:', value);
     updatePreference('zoomLevel', value);
   };
 
@@ -302,7 +301,6 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
                 <Select
                   value={preferences.displayStartTime}
                   onValueChange={(value) => {
-                    console.log('[AgendaSettings] Start time changed to:', value);
                     updatePreference('displayStartTime', value);
                   }}
                 >
@@ -323,7 +321,6 @@ const AgendaSettingsModal: React.FC<AgendaSettingsModalProps> = ({
                 <Select
                   value={preferences.displayEndTime}
                   onValueChange={(value) => {
-                    console.log('[AgendaSettings] End time changed to:', value);
                     updatePreference('displayEndTime', value);
                   }}
                 >

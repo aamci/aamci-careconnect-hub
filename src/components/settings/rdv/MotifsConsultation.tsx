@@ -102,10 +102,10 @@ const MotifsConsultation: React.FC = () => {
 
       <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
         <p className="text-sm font-medium text-foreground mb-1">Besoin d'aide ?</p>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Utilisez le bouton Creer un nouveau motif ci-dessous.' })} className="text-sm text-primary hover:underline block">
           Ajouter et parametrer les motifs de consultation
         </button>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Le delai d\'annulation se configure dans les parametres de chaque motif.' })} className="text-sm text-primary hover:underline block">
           Personnaliser le delai d'annulation maximum d'un rendez-vous par motif
         </button>
       </div>
@@ -115,7 +115,16 @@ const MotifsConsultation: React.FC = () => {
           <Plus className="h-4 w-4" />
           Creer un nouveau motif
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => {
+            toast({
+              title: 'Options avancees',
+              description: 'Delais d\'annulation, regles de reservation en ligne et plages horaires specifiques sont configurables depuis chaque motif.',
+            });
+          }}
+        >
           <Settings2 className="h-4 w-4" />
           Options avancees
         </Button>

@@ -102,11 +102,11 @@ const DonneesSettings: React.FC = () => {
                   <span className="text-sm font-medium">Protection des donnees personnelles</span>
                 </div>
                 <div className="space-y-2">
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                  <button onClick={() => toast({ title: 'Document', description: 'Accord sur la Protection des Donnees a Caractere Personnel' })} className="text-sm text-primary hover:underline flex items-center gap-1">
                     Accord sur la Protection des Donnees a Caractere Personnel
                     <ExternalLink className="h-3 w-3" />
                   </button>
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                  <button onClick={() => toast({ title: 'Document', description: 'Politique de confidentialite' })} className="text-sm text-primary hover:underline flex items-center gap-1">
                     Confidentialite
                     <ExternalLink className="h-3 w-3" />
                   </button>
@@ -123,11 +123,11 @@ const DonneesSettings: React.FC = () => {
                   <Cookie className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Gestion des cookies</span>
                 </div>
-                <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button onClick={() => toast({ title: 'Cookies', description: 'Gestion des cookies et du consentement' })} className="text-sm text-primary hover:underline flex items-center gap-1">
                   Gestion des cookies et du consentement
                   <ExternalLink className="h-3 w-3" />
                 </button>
-                <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button onClick={() => toast({ title: 'Document', description: 'Politique de cookies' })} className="text-sm text-primary hover:underline flex items-center gap-1">
                   Politique de cookies
                   <ExternalLink className="h-3 w-3" />
                 </button>

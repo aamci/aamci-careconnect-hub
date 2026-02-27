@@ -58,8 +58,12 @@ const PatientHistoriqueTab: React.FC = () => {
     navigate('/', { state: { selectedAppointment: appointment } });
   };
 
+  const [showAuditPanel, setShowAuditPanel] = useState(false);
+
   const handleViewAudit = () => {
-    toast.info('Historique des modifications à venir');
+    const nextState = !showAuditPanel;
+    setShowAuditPanel(nextState);
+    toast.info(`Historique d'audit ${nextState ? 'ouvert' : 'fermé'} pour ${patient.firstName} ${patient.lastName}`);
   };
 
   // Calculs

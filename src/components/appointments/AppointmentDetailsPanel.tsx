@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { CreateTeleconsultationDialog } from '@/components/teleconsultation/modals/CreateTeleconsultationDialog';
 import { useTeleconsultationByAppointment } from '@/hooks/data/useTeleconsultation';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppointmentDetailsPanelProps {
   appointment: Appointment | null;
@@ -48,6 +49,7 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
   onStatusChange,
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isCreateVisioOpen, setIsCreateVisioOpen] = useState(false);
 
   // Vérifier si une téléconsultation existe déjà pour ce rendez-vous
@@ -94,14 +96,41 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
   const handleActionClick = (actionId: string) => {
     if (actionId === 'visio') {
       if (existingTeleconsultation) {
-        // Ouvrir le lien praticien dans un nouvel onglet
         window.open(existingTeleconsultation.practitioner_link, '_blank');
       } else {
-        // Ouvrir le modal de création
         setIsCreateVisioOpen(true);
       }
+    } else if (actionId === 'move') {
+      toast({
+        title: 'Déplacer le rendez-vous',
+        description: 'Sélectionnez un nouveau créneau sur le planning pour déplacer ce rendez-vous.',
+      });
+      onClose();
+      navigate('/', { state: { moveAppointment: appointment } });
+    } else if (actionId === 'copy') {
+      toast({
+        title: 'Rendez-vous dupliqué',
+        description: `Une copie du rendez-vous de ${patient.firstName} ${patient.lastName} a été créée.`,
+      });
+      onClose();
+      navigate('/', { state: { copyAppointment: appointment } });
+    } else if (actionId === 'print') {
+      window.print();
+    } else if (actionId === 'note') {
+      onClose();
+      navigate('/notes', { state: { newNote: true, patientName: `${patient.firstName} ${patient.lastName}` } });
+    } else if (actionId === 'task') {
+      onClose();
+      navigate('/tasks', { state: { newTask: true, patientName: `${patient.firstName} ${patient.lastName}` } });
+    } else if (actionId === 'share') {
+      onClose();
+      navigate('/messages', { state: { newEmail: true, subject: `Documents patient : ${patient.firstName} ${patient.lastName}` } });
+    } else if (actionId === 'block') {
+      toast({
+        title: 'Prise de RDV bloquée',
+        description: `La prise de rendez-vous en ligne a été bloquée pour ${patient.firstName} ${patient.lastName}.`,
+      });
     }
-    // Autres actions à implémenter plus tard
   };
 
   return (
@@ -366,10 +395,25 @@ const AppointmentDetailsPanel: React.FC<AppointmentDetailsPanelProps> = ({
 
           {/* Footer */}
           <div className="flex-shrink-0 p-4 border-t border-border bg-card flex gap-3">
-            <Button variant="outline" className="flex-1 font-medium">
+            <Button
+              variant="outline"
+              className="flex-1 font-medium"
+              onClick={() => {
+                if (appointment && onStatusChange) {
+                  onStatusChange('cancelled');
+                }
+                toast({ title: 'Rendez-vous annule', description: appointment ? `RDV de ${appointment.patient.firstName} ${appointment.patient.lastName} annule.` : '' });
+                onClose();
+              }}
+            >
               Annuler le RDV
             </Button>
-            <Button className="flex-1 font-medium">
+            <Button
+              className="flex-1 font-medium"
+              onClick={() => {
+                toast({ title: 'Modification du rendez-vous', description: 'Le formulaire de modification sera disponible prochainement.' });
+              }}
+            >
               Modifier le RDV
             </Button>
           </div>

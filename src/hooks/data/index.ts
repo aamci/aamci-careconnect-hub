@@ -25,3 +25,4 @@ export * from './usePrescriptions';
 export * from './useLabResults';
 export * from './useVitalSigns';
 export * from './useVaccinations';
+export * from './useMessaging';

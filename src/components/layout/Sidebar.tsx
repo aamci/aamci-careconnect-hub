@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
+  FileText,
+  CheckSquare,
   Users,
+  MessageSquare,
   Video,
   BarChart3,
   Settings,
@@ -21,7 +24,10 @@ interface SidebarProps {
 
 const navItems = [
   { id: 'agenda', label: 'Planning', icon: Calendar, path: '/' },
+  { id: 'notes', label: 'Notes', icon: FileText, path: '/notes' },
+  { id: 'tasks', label: 'Taches', icon: CheckSquare, badge: 3, path: '/tasks' },
   { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
+  { id: 'messages', label: 'Messagerie', icon: MessageSquare, badge: 2, path: '/messages' },
   { id: 'teleconsult', label: 'Visio', icon: Video, path: '/teleconsult' },
   { id: 'stats', label: 'Activite', icon: BarChart3, path: '/stats' },
 ];
@@ -143,7 +149,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemChange }) => {
           {/* Help */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="flex flex-col items-center gap-1 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-150 w-full">
+              <button
+                className="flex flex-col items-center gap-1 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-150 w-full"
+                onClick={() => window.open('https://aide.careconnect.fr', '_blank', 'noopener,noreferrer')}
+              >
                 <HelpCircle className="w-5 h-5 stroke-[1.5px]" />
                 <span className="text-[10px] font-medium">Aide</span>
               </button>

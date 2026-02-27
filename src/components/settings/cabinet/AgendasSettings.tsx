@@ -104,10 +104,10 @@ const AgendasSettings: React.FC = () => {
 
       <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
         <p className="text-sm font-medium text-foreground mb-1">Besoin d'aide ?</p>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Contactez le support pour gerer le depart d\'un collaborateur.' })} className="text-sm text-primary hover:underline block">
           Vous ou un collaborateur quittez le cabinet, que faire ?
         </button>
-        <button className="text-sm text-primary hover:underline block">
+        <button onClick={() => toast({ title: 'Aide', description: 'Utilisez le bouton Creer un agenda ci-dessous.' })} className="text-sm text-primary hover:underline block">
           Creer un nouvel agenda pour un nouveau praticien et/ou un nouveau lieu
         </button>
       </div>

@@ -16,7 +16,7 @@ const SettingsPage: React.FC = () => {
   const isDesktop = ['laptop', 'desktop', 'wide'].includes(breakpoint);
 
   return (
-    <MainLayout activeNav="settings" onNavChange={() => {}}>
+    <MainLayout activeNav="settings" onNavChange={(nav) => navigate(nav === 'agenda' ? '/' : `/${nav}`)}>
       <div className="h-full flex bg-background">
         {/* Mobile header bar */}
         {!isDesktop && (

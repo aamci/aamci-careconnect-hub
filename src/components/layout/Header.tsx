@@ -1,48 +1,180 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Search, Bell, Users, HelpCircle, Settings, ChevronDown, Headphones, Lock } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Bell, Users, Headphones, Lock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { currentPractitioner } from '@/data/mockData';
+import { usePatients } from '@/hooks/data/usePatients';
 
-interface HeaderProps {
-  onSearch?: (query: string) => void;
-  searchPlaceholder?: string;
-}
+const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const { data: patients = [] } = usePatients();
 
-const Header: React.FC<HeaderProps> = ({ 
-  onSearch, 
-  searchPlaceholder = "Rechercher un patient" 
-}) => {
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    onSearch?.(e.target.value);
+  const filteredPatients = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 1) return [];
+    return patients.filter((patient) => {
+      const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
+      const reverseName = `${patient.lastName} ${patient.firstName}`.toLowerCase();
+      const phone = patient.phone?.replace(/\s/g, '') || '';
+      return (
+        fullName.includes(q) ||
+        reverseName.includes(q) ||
+        phone.includes(q.replace(/\s/g, '')) ||
+        patient.email?.toLowerCase().includes(q) ||
+        patient.city?.toLowerCase().includes(q)
+      );
+    }).slice(0, 8);
+  }, [searchQuery, patients]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectPatient = (patientId: string) => {
+    setShowResults(false);
+    setSearchQuery('');
+    navigate(`/patients/${patientId}/home`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showResults || filteredPatients.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => Math.min(prev + 1, filteredPatients.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      e.preventDefault();
+      handleSelectPatient(filteredPatients[highlightedIndex].id);
+    } else if (e.key === 'Escape') {
+      setShowResults(false);
+    }
+  };
+
+  const computeAge = (dob: Date) => {
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  };
+
+  const formatDob = (dob: Date) => {
+    const d = dob instanceof Date ? dob : new Date(dob);
+    return d.toLocaleDateString('fr-FR');
   };
 
   return (
     <TooltipProvider delayDuration={100}>
       <header className="h-14 bg-sidebar px-4 flex items-center justify-between relative z-50">
         {/* Search Bar */}
-        <motion.div 
+        <motion.div
+          ref={searchRef}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex-1 max-w-xl"
+          className="flex-1 max-w-xl relative"
         >
           <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 focus-within:bg-white/15 transition-colors">
             <Search className="w-4 h-4 text-white/60 flex-shrink-0" />
             <Input
               type="text"
-              placeholder={searchPlaceholder}
+              placeholder="Rechercher un patient"
               value={searchQuery}
-              onChange={handleSearch}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowResults(true);
+                setHighlightedIndex(-1);
+              }}
+              onFocus={() => { if (searchQuery.trim().length >= 1) setShowResults(true); }}
+              onKeyDown={handleKeyDown}
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 text-sm text-white placeholder:text-white/50 w-full h-auto py-0"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => { setSearchQuery(''); setShowResults(false); }}
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
+
+          {/* Patient search results dropdown */}
+          <AnimatePresence>
+            {showResults && searchQuery.trim().length >= 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 right-0 top-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto z-[60]"
+              >
+                {filteredPatients.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    Aucun patient correspondant
+                  </div>
+                ) : (
+                  <>
+                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border">
+                      {filteredPatients.length} patient{filteredPatients.length > 1 ? 's' : ''} trouve{filteredPatients.length > 1 ? 's' : ''}
+                    </div>
+                    {filteredPatients.map((patient, index) => {
+                      const dob = patient.dateOfBirth instanceof Date ? patient.dateOfBirth : new Date(patient.dateOfBirth);
+                      const age = computeAge(dob);
+                      return (
+                        <button
+                          key={patient.id}
+                          type="button"
+                          className={cn(
+                            'w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors',
+                            highlightedIndex === index && 'bg-muted/50'
+                          )}
+                          onMouseDown={(e) => { e.preventDefault(); handleSelectPatient(patient.id); }}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                        >
+                          <Avatar className="h-9 w-9 flex-shrink-0">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                              {patient.firstName[0]}{patient.lastName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {patient.lastName} {patient.firstName}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {age} ans &middot; {formatDob(dob)}
+                              {patient.phone && ` \u00B7 ${patient.phone}`}
+                            </p>
+                          </div>
+                          {patient.city && (
+                            <span className="text-xs text-muted-foreground flex-shrink-0">{patient.city}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Right Actions */}

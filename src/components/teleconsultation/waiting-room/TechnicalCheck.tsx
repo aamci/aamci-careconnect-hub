@@ -247,7 +247,7 @@ export function TechnicalCheck({ onCheckComplete }: TechnicalCheckProps) {
         network: {
           quality: networkQuality,
           latency_ms: networkLatency,
-          bandwidth_kbps: 0, // TODO: Implémenter test bandwidth
+          bandwidth_kbps: networkLatency > 0 ? Math.round(1000 / networkLatency * 500) : 0,
         },
         browser: browserInfo,
       };

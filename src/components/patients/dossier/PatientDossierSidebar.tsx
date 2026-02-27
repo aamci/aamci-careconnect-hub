@@ -16,6 +16,7 @@ import {
   FlaskConical,
   Syringe,
   Receipt,
+  MessageCircle,
   AlertTriangle,
   Info,
   Eye,
@@ -76,6 +77,7 @@ const navItems: NavItem[] = [
   { id: 'biologie', label: 'BIOLOGIE ET BIOMÉTRIE', icon: FlaskConical, path: 'biologie', hasChildren: true },
   { id: 'vaccination', label: 'CARNET DE VACCINATION', icon: Syringe, path: 'vaccination' },
   { id: 'factures', label: 'FACTURES', icon: Receipt, path: 'factures' },
+  { id: 'messagerie', label: 'MESSAGERIE', icon: MessageCircle, path: 'messagerie' },
 ];
 
 // Info field component for compact display
