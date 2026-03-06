@@ -1,18 +1,29 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, Users, Headphones, Lock, X } from 'lucide-react';
+import { Search, Bell, Users, Headphones, Lock, X, LogOut, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { currentPractitioner } from '@/data/mockData';
 import { usePatients } from '@/hooks/data/usePatients';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const { data: patients = [] } = usePatients();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth', { replace: true });
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -245,18 +256,47 @@ const Header: React.FC = () => {
             </Tooltip>
           </div>
 
-          {/* User Avatar */}
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 ml-2"
-          >
-            <Avatar className="w-9 h-9 ring-2 ring-white/20 hover:ring-white/40 transition-all">
-              <AvatarFallback className="bg-gradient-to-br from-primary-light to-accent text-white text-sm font-semibold">
-                {currentPractitioner.firstName[0]}{currentPractitioner.lastName[0]}
-              </AvatarFallback>
-            </Avatar>
-          </motion.button>
+          {/* User Avatar + Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-2 ml-2 outline-none"
+              >
+                <Avatar className="w-9 h-9 ring-2 ring-white/20 hover:ring-white/40 transition-all cursor-pointer">
+                  <AvatarFallback className="bg-gradient-to-br from-primary-light to-accent text-white text-sm font-semibold">
+                    {currentPractitioner.firstName[0]}{currentPractitioner.lastName[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold">
+                    {currentPractitioner.title} {currentPractitioner.firstName} {currentPractitioner.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{currentPractitioner.email}</p>
+                  <p className="text-xs text-muted-foreground">{currentPractitioner.specialty}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Mon profil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Parametres
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Se deconnecter
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </motion.div>
       </header>
     </TooltipProvider>
