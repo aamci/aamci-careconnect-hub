@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, isBefore, startOfDay, getDay } from 'date-fns';
+import { Patient } from '@/types';
 import MainLayout from '@/components/layout/MainLayout';
 import SecondaryHeader from '@/components/calendar/SecondaryHeader';
 import MiniCalendar from '@/components/calendar/MiniCalendar';
@@ -35,6 +37,7 @@ import * as teleconsultationService from '@/services/supabase/teleconsultationSe
 
 const AgendaPage: React.FC = () => {
   const { toast } = useToast();
+  const location = useLocation();
   const { preferences } = useAgendaPreferences();
   const calendar = useCalendar({ weekStartsOn: preferences.firstDayOfWeek });
   const hoverPreview = useHoverPreview();
@@ -77,6 +80,21 @@ const AgendaPage: React.FC = () => {
   
   // Settings modal
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+
+  // Preselected patient from navigation state (e.g., from patient dossier actions)
+  const [preselectedPatient, setPreselectedPatient] = React.useState<Patient | null>(null);
+
+  React.useEffect(() => {
+    const state = location.state as { preselectedPatient?: Patient; openCreateModal?: boolean } | null;
+    if (state?.preselectedPatient && state?.openCreateModal) {
+      setPreselectedPatient(state.preselectedPatient);
+      const now = new Date();
+      setSelectedSlot({ date: now, hour: now.getHours() });
+      setIsCreateAppointmentOpen(true);
+      // Clear location state to avoid re-trigger on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
   
   // Filters - initialize with all motifs when loaded
   const [selectedMotifs, setSelectedMotifs] = React.useState<string[]>([]);
@@ -446,11 +464,15 @@ const AgendaPage: React.FC = () => {
 
       <CreateAppointmentModal
         open={isCreateAppointmentOpen}
-        onOpenChange={setIsCreateAppointmentOpen}
+        onOpenChange={(open) => {
+          setIsCreateAppointmentOpen(open);
+          if (!open) setPreselectedPatient(null);
+        }}
         selectedDate={selectedSlot?.date || null}
         selectedHour={selectedSlot?.hour || null}
         patients={patients}
         motifs={motifs}
+        preselectedPatient={preselectedPatient}
         onCreateNewPatient={() => {
           setIsCreateAppointmentOpen(false);
           setIsNewPatientOpen(true);

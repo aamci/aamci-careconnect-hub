@@ -34,6 +34,7 @@ export interface ConsultationData {
 interface UseConsultationOptions {
   patientId: string;
   consultationId?: string;
+  disableNavigate?: boolean;
   onSave?: (data: ConsultationData) => Promise<void>;
   onComplete?: (data: ConsultationData) => Promise<void>;
 }
@@ -142,23 +143,28 @@ export function useConsultation(options: UseConsultationOptions) {
   }, [consultation]);
 
   const save = useCallback(async () => {
-    if (!consultationData) return;
-
     setIsSaving(true);
     try {
       if (options.onSave) {
         await options.onSave(consultation);
-      } else {
+      } else if (consultationData) {
         await updateMutation.mutateAsync({
           id: consultationData.id,
+          patientId: options.patientId,
+          updates: buildUpdates()
+        });
+      } else {
+        // Local-only save (no Supabase consultation yet) - update local state
+        await updateMutation.mutateAsync({
+          id: consultation.id,
           patientId: options.patientId,
           updates: buildUpdates()
         });
       }
 
       toast({
-        title: 'Consultation sauvegardée',
-        description: 'Les modifications ont été enregistrées.'
+        title: 'Consultation sauvegardee',
+        description: 'Les modifications ont ete enregistrees.'
       });
     } catch (error) {
       toast({
@@ -173,22 +179,22 @@ export function useConsultation(options: UseConsultationOptions) {
   }, [consultation, consultationData, options, toast, updateMutation, buildUpdates]);
 
   const complete = useCallback(async () => {
-    if (!consultationData) return;
-
     if (!consultation.reason.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Consultation incomplète',
+        title: 'Consultation incomplete',
         description: 'Le motif de consultation est obligatoire.'
       });
       return;
     }
 
+    const consultId = consultationData?.id || consultation.id;
+
     setIsCompleting(true);
     try {
       // Save all fields first
       await updateMutation.mutateAsync({
-        id: consultationData.id,
+        id: consultId,
         patientId: options.patientId,
         updates: buildUpdates()
       });
@@ -201,7 +207,7 @@ export function useConsultation(options: UseConsultationOptions) {
         });
       } else {
         await endMutation.mutateAsync({
-          id: consultationData.id,
+          id: consultId,
           patientId: options.patientId
         });
       }
@@ -211,10 +217,12 @@ export function useConsultation(options: UseConsultationOptions) {
         description: 'La consultation a été finalisée avec succès.'
       });
 
-      // Navigate back to home page after completion
-      setTimeout(() => {
-        navigate(`/patients/${options.patientId}/home`);
-      }, 1000);
+      // Navigate back to home page after completion (unless disabled for teleconsultation context)
+      if (!options.disableNavigate) {
+        setTimeout(() => {
+          navigate(`/patients/${options.patientId}/home`);
+        }, 1000);
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -228,8 +236,10 @@ export function useConsultation(options: UseConsultationOptions) {
   }, [consultation, consultationData, options, toast, updateMutation, endMutation, navigate, buildUpdates]);
 
   const cancel = useCallback(() => {
-    navigate(`/patients/${options.patientId}/home`);
-  }, [navigate, options.patientId]);
+    if (!options.disableNavigate) {
+      navigate(`/patients/${options.patientId}/home`);
+    }
+  }, [navigate, options.patientId, options.disableNavigate]);
 
   return {
     consultation,

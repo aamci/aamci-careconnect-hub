@@ -125,7 +125,7 @@ export function WaitingRoom({ teleconsultationId, token, participantType }: Wait
       });
 
       // Rediriger vers la salle de consultation
-      navigate(`/visio/${teleconsultationId}?token=${token}&type=${participantType}`);
+      navigate(`/visio/${teleconsultationId}?token=${token}&type=${participantType}&sessionId=${session.id}`);
     } catch (error) {
       console.error('Error joining consultation:', error);
       toast.error('Erreur lors de la connexion');

@@ -33,12 +33,16 @@ import {
   Heart,
   Stethoscope,
   Check,
+  Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { usePatientHistory } from '@/hooks/data/usePatientHistory';
 import { useNotesByPatient } from '@/hooks/data/useNotes';
+import { useTeleconsultations } from '@/hooks/data/useTeleconsultation';
+import { StatusWorkflowBadge } from '@/components/teleconsultation/StatusWorkflowBadge';
+import { format as formatDate } from 'date-fns';
 import PatientAllergiesBadge from '@/components/patients/PatientAllergiesBadge';
 import CriticalAllergyBanner from '@/components/patients/CriticalAllergyBanner';
 import PatientStatusBadges from '@/components/patients/PatientStatusBadges';
@@ -84,6 +88,24 @@ const PatientHomeTab: React.FC = () => {
   const totalAppointments = upcomingAppointments.length + pastAppointments.length;
   const recentNotes = notesData?.slice(0, isCompact ? 2 : 3) ?? [];
   const totalNotes = notesData?.length ?? 0;
+
+  // Teleconsultation detection for this patient
+  const { data: allTeleconsultations = [] } = useTeleconsultations();
+  const activeTeleconsultation = React.useMemo(() => {
+    const validStatuses = ['scheduled', 'waiting', 'ready', 'in_progress'];
+    const nowMs = Date.now();
+    const thirtyMinMs = 30 * 60 * 1000;
+
+    return allTeleconsultations.find((tc) => {
+      if (tc.patient_id !== patient.id) return false;
+      if (!validStatuses.includes(tc.status)) return false;
+      // Active statuses are always shown
+      if (['waiting', 'ready', 'in_progress'].includes(tc.status)) return true;
+      // Scheduled: show only if within 30 minutes
+      const scheduledMs = new Date(tc.scheduled_start).getTime();
+      return scheduledMs - nowMs <= thirtyMinMs;
+    });
+  }, [allTeleconsultations, patient.id]);
 
   // Handlers
   const handleNewAppointment = () => {
@@ -183,6 +205,45 @@ const PatientHomeTab: React.FC = () => {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Teleconsultation Quick Access Banner */}
+        {activeTeleconsultation && (
+          <div
+            className="bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between"
+            style={{ padding: `var(--density-space-sm) var(--density-space-md)` }}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Video className="h-4.5 w-4.5 text-primary" style={{ width: 18, height: 18 }} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    Teleconsultation
+                  </span>
+                  <StatusWorkflowBadge status={activeTeleconsultation.status} size="sm" />
+                </div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {activeTeleconsultation.consultation_reason || 'Consultation video'}
+                  {' - Prevu a '}
+                  {formatDate(new Date(activeTeleconsultation.scheduled_start), 'HH:mm')}
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="gap-1.5 flex-shrink-0 ml-3"
+              onClick={() =>
+                navigate(
+                  `/visio/${activeTeleconsultation.id}?token=${activeTeleconsultation.room_token}&type=practitioner`
+                )
+              }
+            >
+              <Video style={{ width: 14, height: 14 }} />
+              Rejoindre
+            </Button>
           </div>
         )}
 

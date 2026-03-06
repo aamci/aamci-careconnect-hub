@@ -32,6 +32,7 @@ interface CreateAppointmentModalProps {
   selectedHour: number | null;
   patients: Patient[];
   motifs: any[];
+  preselectedPatient?: Patient | null;
   onCreateNewPatient: () => void;
   onCreateAppointment: (data: {
     patient: Patient;
@@ -50,6 +51,7 @@ export function CreateAppointmentModal({
   selectedHour,
   patients,
   motifs,
+  preselectedPatient,
   onCreateNewPatient,
   onCreateAppointment,
 }: CreateAppointmentModalProps) {
@@ -58,6 +60,14 @@ export function CreateAppointmentModal({
   const [selectedMotif, setSelectedMotif] = useState<string>('');
   const [duration, setDuration] = useState(30);
   const [createTeleconsultation, setCreateTeleconsultation] = useState(false);
+
+  // Pre-fill patient when provided from navigation
+  React.useEffect(() => {
+    if (preselectedPatient && open) {
+      setSelectedPatient(preselectedPatient);
+      setSearchQuery(`${preselectedPatient.lastName} ${preselectedPatient.firstName}`);
+    }
+  }, [preselectedPatient, open]);
 
   // Filter patients based on search
   const filteredPatients = patients.filter((p) => {

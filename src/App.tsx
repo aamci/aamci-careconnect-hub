@@ -21,6 +21,7 @@ import PatientBiologieTab from "./components/patients/dossier/PatientBiologieTab
 import PatientVaccinationTab from "./components/patients/dossier/PatientVaccinationTab";
 import PatientFacturesTab from "./components/patients/dossier/PatientFacturesTab";
 import PatientMessagingTab from "./components/patients/dossier/PatientMessagingTab";
+import PatientPlanningTab from "./components/patients/dossier/PatientPlanningTab";
 import WaitingRoomPage from "./pages/WaitingRoomPage";
 import VideoRoomPage from "./pages/VideoRoomPage";
 import TeleconsultationListPage from "./pages/TeleconsultationListPage";
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="vaccination" element={<PatientVaccinationTab />} />
               <Route path="factures" element={<PatientFacturesTab />} />
               <Route path="messagerie" element={<PatientMessagingTab />} />
+              <Route path="planning" element={<PatientPlanningTab />} />
             </Route>
             {/* Stats/Activity route */}
             <Route path="/stats" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />

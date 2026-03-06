@@ -144,12 +144,14 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  type: 'call' | 'document' | 'preparation' | 'followup' | 'administrative' | 'other';
+  type: 'call' | 'document' | 'preparation' | 'followup' | 'administrative' | 'other' | 'rendez-vous' | 'patient-contact' | 'facturation' | 'resultats' | 'autre';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'todo' | 'in-progress' | 'done';
   assigneeId?: string;
   assigneeName?: string;
   patientId?: string;
+  patientName?: string;
+  isPersonal?: boolean;
   appointmentId?: string;
   dueDate?: Date;
   completedAt?: Date;
